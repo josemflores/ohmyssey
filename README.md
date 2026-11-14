@@ -92,6 +92,27 @@ A later pass can grade the hints the way the team planned: attempts 1–2 stay a
 
 The optional `GEMINI_MODEL` variable overrides the model. The default is `gemini-3.5-flash-lite`, set in `api/athenaLogic.js`.
 
+If the study screen sends `cannedHints` and the key is missing, or Gemini does not answer, the route returns the next canned line itself (`source: "canned"`). The bench still sends no canned lines, so a missing key stays `{ fallback: true, reason: "no_key" }` and the bench uses its own hint list.
+
+## Study with Athena
+
+The title screen’s **Study with Athena** button is the learning interface for all six islands. The bench voyage is unchanged: islands 1 and 2 are playable there, and 3–6 stay sketches until their `check()` functions win.
+
+Study islands, in brief order 0–5 and voyage order 1–6:
+
+| Voyage | Brief | Island | Puzzle |
+| --- | --- | --- | --- |
+| 1 | 0 | Leaving Troy | Drag a battery, switch, and LED into the loop, then flip a backwards LED |
+| 2 | 1 | Cyclops' Cave | Pick 47 Ω, 390 Ω, or 10 kΩ on a 9 V supply |
+| 3 | 2 | The Sirens | Two 1 kΩ resistors, series (2 kΩ) or parallel (500 Ω) |
+| 4 | 3 | Aeolus' Bag of Winds | Choose R and C so τ = R × C hits the asked time. 100 kΩ × 10 µF = 1 s |
+| 5 | 4 | Charybdis | Aim the flyback diode |
+| 6 | 5 | Lighthouse of Ithaca | Pick R1, R2, and C so f = 1.44 / ((R1 + 2 R2) C) is between 0.5 and 2 Hz |
+
+Easy, normal, and hard change hints, truth tables, decoys, and when the worked solution opens. Concepts and collected parts stay in `localStorage` under `ohmyssey.learn.v1`, separate from the bench key.
+
+Level text is JSON (`src/learn/mock/levels.json`), described by `src/learn/level-data.schema.json`. The app requests `VITE_LEVELS_API_URL`, or `GET /api/levels` when that variable is unset. A failed or ill-shaped response uses the bundled file, so the six islands still open. Set `VITE_LEVELS_API_URL` to an empty value to skip the network. Do not put `GEMINI_API_KEY` behind a `VITE_` prefix.
+
 ## Add or edit a level
 
 Levels are JavaScript objects, not a separate content tool. Story, lessons, hints, part values, and the win rule live in the object, so you can change an island without a new screen. The map, the locks, the lesson cards, and the board all read that object.

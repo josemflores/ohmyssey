@@ -1,5 +1,10 @@
 {
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/levels.js": {
+      "includeFiles": "src/learn/mock/levels.json"
+    }
+  }
 }

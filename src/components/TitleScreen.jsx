@@ -1,4 +1,4 @@
-export default function TitleScreen({ hasProgress, onBegin }) {
+export default function TitleScreen({ hasProgress, hasStudy, onBegin, onStudy }) {
   return (
     <main className="title-screen">
       <div className="title-sea" aria-hidden="true">
@@ -22,10 +22,20 @@ export default function TitleScreen({ hasProgress, onBegin }) {
           <li>Set the parts into the loop and watch the milliamps.</li>
           <li>Ask Athena if the lamp will not behave.</li>
         </ol>
-        <button className="btn btn-primary btn-large" type="button" onClick={onBegin}>
-          {hasProgress ? 'Continue the voyage' : 'Begin the voyage'}
-        </button>
-        <p className="fine">Progress stays in this browser. Nothing is sent away except an optional hint.</p>
+        <div className="title-actions">
+          <button className="btn btn-primary btn-large" type="button" onClick={onBegin}>
+            {hasProgress ? 'Continue the voyage' : 'Begin the voyage'}
+          </button>
+          {onStudy && (
+            <button className="btn btn-quiet btn-large" type="button" onClick={onStudy}>
+              {hasStudy ? 'Continue studying' : 'Study with Athena'}
+            </button>
+          )}
+        </div>
+        <p className="fine">
+          The bench builds the early lamps. Study with Athena is the lesson for all six islands.
+          Progress stays in this browser.
+        </p>
       </section>
     </main>
   );

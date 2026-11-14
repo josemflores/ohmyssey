@@ -22,7 +22,11 @@ Rules for every reply:
 - No slang, no emoji, no bullet list, no heading.`;
 
 export async function createAthenaReply({ body, apiKey, model, fetchImpl = fetch }) {
+  const safeBody = body && typeof body === 'object' ? body : {};
+  const canned = pickCanned(safeBody);
+
   if (!apiKey) {
+    if (canned) return { hint: canned, source: 'canned', reason: 'no_key' };
     return { fallback: true, reason: 'no_key' };
   }
 
@@ -30,15 +34,28 @@ export async function createAthenaReply({ body, apiKey, model, fetchImpl = fetch
     const hint = await requestHint({
       apiKey,
       model: model || DEFAULT_MODEL,
-      body: body && typeof body === 'object' ? body : {},
+      body: safeBody,
       fetchImpl,
     });
-    if (!hint) return { fallback: true, reason: 'empty' };
+    if (!hint) {
+      if (canned) return { hint: canned, source: 'canned', reason: 'empty' };
+      return { fallback: true, reason: 'empty' };
+    }
     return { hint, source: 'gemini' };
   } catch (error) {
     console.error('Athena could not reach Gemini:', error instanceof Error ? error.message : 'unknown error');
+    if (canned) return { hint: canned, source: 'canned', reason: 'upstream' };
     return { fallback: true, reason: 'upstream' };
   }
+}
+
+function pickCanned(body) {
+  const lines = Array.isArray(body.cannedHints)
+    ? body.cannedHints.map((line) => (typeof line === 'string' ? line.trim() : '')).filter(Boolean)
+    : [];
+  if (lines.length === 0) return '';
+  const attempt = Math.max(1, Number(body.attempt) || 1);
+  return lines[(attempt - 1) % lines.length];
 }
 
 async function requestHint({ apiKey, model, body, fetchImpl }) {
@@ -85,6 +102,7 @@ function buildUserPrompt(body) {
     `Tutor note, do not read this aloud: ${body.athenaNote || ''}`,
     `Player's circuit: ${JSON.stringify(body.circuit || {})}`,
     `Feedback already on the player's screen: ${body.feedback || ''}`,
+    body.question ? `The player asked: ${String(body.question).slice(0, 500)}` : '',
     `This is hint request number ${attempt}. If it is past 1, take a different angle than a first hint would.`,
     'Give one hint now.',
   ].join('\n');

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { createAthenaReply } from './api/athenaLogic.js';
@@ -50,6 +52,27 @@ function athenaDevPlugin({ apiKey, model }) {
   };
 }
 
+function levelsDevPlugin() {
+  const file = fileURLToPath(new URL('./src/learn/mock/levels.json', import.meta.url));
+  return {
+    name: 'ohmyssey-levels',
+    configureServer(server) {
+      server.middlewares.use('/api/levels', (req, res) => {
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+          sendJson(res, 405, { error: 'Use GET' });
+          return;
+        }
+        try {
+          const levels = JSON.parse(readFileSync(file, 'utf8'));
+          sendJson(res, 200, { levels });
+        } catch {
+          sendJson(res, 500, { error: 'Level pack missing' });
+        }
+      });
+    },
+  };
+}
+
 function sendJson(res, status, payload) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json');
@@ -63,6 +86,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      levelsDevPlugin(),
       athenaDevPlugin({
         apiKey: env.GEMINI_API_KEY || '',
         model: env.GEMINI_MODEL || '',

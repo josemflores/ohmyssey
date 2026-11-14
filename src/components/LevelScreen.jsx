@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import CircuitBuilder from './CircuitBuilder.jsx';
 import AthenaPanel from './AthenaPanel.jsx';
 
-export default function LevelScreen({ level, onComplete, onBack }) {
+export default function LevelScreen({ level, onComplete, onBack, onStudy }) {
   const [slots, setSlots] = useState(() => level.slots.map((slot) => ({ id: slot.id, part: null })));
 
   const result = level.check({
@@ -24,9 +24,16 @@ export default function LevelScreen({ level, onComplete, onBack }) {
   return (
     <main className="level-screen">
       <header className="level-bar">
-        <button className="btn btn-quiet" type="button" onClick={onBack}>
-          ← The map
-        </button>
+        <div className="level-actions">
+          <button className="btn btn-quiet" type="button" onClick={onBack}>
+            ← The map
+          </button>
+          {onStudy && (
+            <button className="btn btn-quiet" type="button" onClick={onStudy}>
+              Study this idea
+            </button>
+          )}
+        </div>
         <div>
           <p className="eyebrow">
             Island {level.id}

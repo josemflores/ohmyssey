@@ -1,0 +1,458 @@
+[
+  {
+    "id": 1,
+    "specIndex": 0,
+    "slug": "leaving-troy",
+    "title": "Leaving Troy",
+    "epithet": "Closed loop, LED polarity",
+    "place": "The beach at Troy",
+    "concept": "Current flows only in a closed loop, and an LED lights in only one direction.",
+    "goal": "Place a battery, a switch, and an LED. Close the switch and point the LED so current can enter the anode.",
+    "story": "The wooden horse has done its work. On the beach the boat still has no lamp. Odysseus has a battery, a switch, and one red LED. The lamp will not light because he hopes it will. Current has to leave the battery and come back, and the LED has to face the way the current is going.",
+    "greeting": "Start at the battery and walk the wire until you are back at the battery. I will not tell you which way the lamp faces.",
+    "athenaNote": "Do not say which slot gets which part, and do not say to flip the LED until the player has already placed it backwards. You may say that a gap or an open switch means zero current, and that an LED is a diode.",
+    "lessons": [
+      {
+        "title": "A closed loop",
+        "body": "Current is a round trip. It leaves the positive terminal, passes through every part, and returns to the negative terminal. An empty slot is a gap. An open switch is a gap. Either one makes the current zero."
+      },
+      {
+        "title": "The LED has a direction",
+        "body": "An LED is a diode that lights. Conventional current enters the anode, the wide side of the triangle, and leaves at the bar, the cathode. Turn the triangle against the current and the LED behaves like an open switch."
+      }
+    ],
+    "objectives": [
+      { "id": "parts", "text": "Place the battery, the switch, and the LED" },
+      { "id": "switch", "text": "Close the switch" },
+      { "id": "polarity", "text": "Point the LED so current enters the anode" },
+      { "id": "truth", "text": "Finish the truth table", "when": "truth" }
+    ],
+    "hints": [
+      "Follow the wire with your finger, starting at the battery. Every slot has to hold a part, or the round trip is broken.",
+      "An open switch is a hole in the wire. Close it before you judge the lamp.",
+      "Look at the triangle on the LED. Current wants to enter the wide side and leave at the bar."
+    ],
+    "workedSolution": {
+      "title": "How the beach lamp closes",
+      "steps": [
+        "Put the battery, the switch, and the LED into the three slots. A wire or a resistor leaves the lamp unfinished.",
+        "Close the switch. Until it closes, the current is zero.",
+        "Flip the LED if the bar is on the upstream side. The triangle points with the current, from anode to cathode.",
+        "The truth table has one lit row: switch closed, LED forward. The other rows stay dark."
+      ]
+    },
+    "notebook": {
+      "concept": "Closed loop and LED polarity",
+      "summary": "Current needs an unbroken path out of the battery and back. An LED lights only when current enters the anode and leaves the cathode."
+    },
+    "reward": {
+      "id": "red-led",
+      "name": "Red LED",
+      "note": "Lights only when current enters the anode."
+    },
+    "results": {
+      "title": "Troy is behind you",
+      "body": "The loop is closed and the LED faces the current. The boat can leave the beach."
+    },
+    "map": { "x": 84, "y": 32 },
+    "tuning": {
+      "easy": { "hintsShown": 1, "solutionAfterFails": 1, "requireTruth": false, "hideDecoys": true, "ledStartsReversed": false },
+      "normal": { "hintsShown": 0, "solutionAfterFails": 3, "requireTruth": true, "hideDecoys": true, "ledStartsReversed": true },
+      "hard": { "hintsShown": 0, "solutionAfterFails": null, "requireTruth": true, "hideDecoys": false, "ledStartsReversed": true }
+    },
+    "puzzle": {
+      "kind": "closed-loop",
+      "supplyVolts": 9,
+      "slotIds": ["s1", "s2", "s3"],
+      "parts": [
+        { "id": "battery", "label": "Battery", "decoy": false },
+        { "id": "switch", "label": "Switch", "decoy": false },
+        { "id": "led", "label": "LED", "decoy": false },
+        { "id": "wire", "label": "Wire", "decoy": true },
+        { "id": "resistor", "label": "Resistor", "decoy": true }
+      ],
+      "truth": {
+        "prompt": "Will the lamp light?",
+        "columns": ["Switch", "LED", "Lamp"],
+        "choices": ["Dark", "Lit"],
+        "rows": [
+          { "inputs": ["Open", "Forward"], "answer": "Dark" },
+          { "inputs": ["Closed", "Backward"], "answer": "Dark" },
+          { "inputs": ["Closed", "Forward"], "answer": "Lit" }
+        ]
+      }
+    }
+  },
+  {
+    "id": 2,
+    "specIndex": 1,
+    "slug": "cyclops-cave",
+    "title": "Cyclops' Cave",
+    "epithet": "Ohm's law",
+    "place": "The cave of Polyphemus",
+    "concept": "Ohm's law, V = I R, sizes the resistor that keeps an LED in a safe current.",
+    "goal": "On a 9 V supply with a 2 V red LED, choose 47 Ω, 390 Ω, or 10 kΩ so the LED lights and does not burn.",
+    "story": "Polyphemus keeps one great eye. In this telling the eye is a red LED, and it has to glow bright enough to find the mouth of the cave without burning out. The ship carries a 9 V battery. The LED still holds about 2 V. The only choice is the resistor.",
+    "greeting": "The LED keeps about 2 V for itself. I will not name the resistor. Divide the volts that remain by the current you want.",
+    "athenaNote": "The winning value is 390 ohms. Do not say 390, 47, or 10 kΩ as the pick. You may ask the player to compute R = 7 V / 0.018 A and to notice that more ohms means less current.",
+    "lessons": [
+      {
+        "title": "Ohm's law",
+        "body": "Voltage, current, and resistance move together: V = I × R. Current in amps is the resistor's voltage divided by its ohms. 18 mA is 0.018 A, not 18 A."
+      },
+      {
+        "title": "The LED keeps 2 volts",
+        "body": "The resistor does not see the full 9 V. A red LED holds about 2 V, so the resistor gets 9 − 2 = 7 V. A current above about 30 mA burns this lamp. Under about 5 mA it is only a coal."
+      }
+    ],
+    "objectives": [
+      { "id": "choice", "text": "Choose a resistor" },
+      { "id": "safe", "text": "Keep the LED between about 5 mA and 30 mA" },
+      { "id": "prediction", "text": "Set your predicted current within a few milliamps of the meter", "when": "prediction" }
+    ],
+    "hints": [
+      "Ohm's law says the voltage across the resistor, the current through it, and its resistance move together: V = I × R.",
+      "Subtract the LED's 2 V from the 9 V battery before you blame the resistor for the whole supply.",
+      "Turn about 18 mA into amps before you divide. Resistance is 7 V divided by that current. Then pick the nearest pouch value."
+    ],
+    "workedSolution": {
+      "title": "The eye at about 18 mA",
+      "steps": [
+        "The resistor sees 9 V − 2 V = 7 V.",
+        "Aim near 18 mA, which is 0.018 A. R = 7 / 0.018 = 389 Ω.",
+        "The pouch value next to 389 Ω is 390 Ω.",
+        "Check it forward: I = 7 / 390 = 17.9 mA. 47 Ω gives about 149 mA and burns the LED. 10 kΩ gives about 0.7 mA and stays dim."
+      ]
+    },
+    "notebook": {
+      "concept": "Ohm's law for an LED",
+      "summary": "I = (Vsupply − Vled) / R. With 9 V and a 2 V red LED, 390 Ω gives about 18 mA. Much less resistance burns the lamp. Much more leaves it dim."
+    },
+    "reward": {
+      "id": "resistor-390",
+      "name": "390 Ω resistor",
+      "note": "Sets a 2 V red LED near 18 mA on a 9 V battery."
+    },
+    "results": {
+      "title": "The eye glows at the mark",
+      "body": "The current is inside the working range. Slip past the sleeper."
+    },
+    "map": { "x": 66, "y": 62 },
+    "tuning": {
+      "easy": { "hintsShown": 1, "solutionAfterFails": 1, "requirePrediction": false },
+      "normal": { "hintsShown": 0, "solutionAfterFails": 3, "requirePrediction": false },
+      "hard": { "hintsShown": 0, "solutionAfterFails": null, "requirePrediction": true, "predictionToleranceMa": 3 }
+    },
+    "puzzle": {
+      "kind": "ohms",
+      "supplyVolts": 9,
+      "ledVf": 2,
+      "choices": [
+        { "ohms": 47, "label": "47 Ω", "detail": "A small value" },
+        { "ohms": 390, "label": "390 Ω", "detail": "A pouch value" },
+        { "ohms": 10000, "label": "10 kΩ", "detail": "A large value" }
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "specIndex": 2,
+    "slug": "the-sirens",
+    "title": "The Sirens",
+    "epithet": "Series and parallel",
+    "place": "The Sirens' rocks",
+    "concept": "Series shares one current and adds resistance. Parallel shares one voltage, and one open branch does not darken the others.",
+    "goal": "Wire two 1 kΩ resistors so one lantern can go dark without taking the other with it.",
+    "story": "Two songs reach the ship at once, and the crew hangs a lantern at each oar. If the lanterns share one path, one broken lamp darkens every oar. Odysseus wants the other wiring: two paths, so a dark lantern leaves its neighbor lit.",
+    "greeting": "Ask what is shared. Series shares the current. Parallel shares the voltage. I will not tell you which one the crew needs.",
+    "athenaNote": "The crew lanterns must be in parallel, 500 ohms. Do not say the word parallel as the answer, and do not say 500 ohms, until the player has already tried series. You may contrast one path with two paths.",
+    "lessons": [
+      {
+        "title": "Series adds",
+        "body": "Series means one path. The current is the same in each resistor, and the voltages add. Two 1 kΩ resistors in series are 1 kΩ + 1 kΩ = 2 kΩ. Open either one and the whole string goes dark."
+      },
+      {
+        "title": "Parallel shares the voltage",
+        "body": "Parallel means each branch is tied across the same two nodes. For two equal resistors, R = R1 / 2, so two 1 kΩ resistors in parallel are 500 Ω. Open one branch and the other branch is still a closed loop."
+      }
+    ],
+    "objectives": [
+      { "id": "topology", "text": "Choose series or parallel" },
+      { "id": "parallel", "text": "Give the crew two paths so one dark lantern does not darken the other" },
+      { "id": "truth", "text": "Finish the truth table", "when": "truth" }
+    ],
+    "hints": [
+      "In series there is only one path, so the current has nowhere else to go. Open one lantern and you open that only path.",
+      "In parallel each lantern is its own loop across the battery. Both branches feel the same voltage.",
+      "Two equal resistors in parallel are half of one of them. The crew asked for the arrangement that survives a single dark lantern."
+    ],
+    "workedSolution": {
+      "title": "Crew lanterns in parallel",
+      "steps": [
+        "Series: R = 1 kΩ + 1 kΩ = 2 kΩ. One path. One open lantern darkens both.",
+        "Parallel: R = (1 kΩ × 1 kΩ) / (1 kΩ + 1 kΩ) = 500 Ω. Two paths.",
+        "Choose parallel. If one lantern opens, the other stays across the battery and stays lit.",
+        "The table's series row goes dark. The parallel row stays lit."
+      ]
+    },
+    "notebook": {
+      "concept": "Series versus parallel",
+      "summary": "Series adds: two 1 kΩ resistors make 2 kΩ, and one break darkens the string. Parallel of the same pair is 500 Ω, and each lantern keeps its own path."
+    },
+    "reward": {
+      "id": "crew-lanterns",
+      "name": "Pair of lanterns",
+      "note": "Wired in parallel so one failure does not darken the other."
+    },
+    "results": {
+      "title": "The oars stay lit",
+      "body": "The crew has two paths. One lantern can fail and the ship still has a light."
+    },
+    "map": { "x": 48, "y": 22 },
+    "tuning": {
+      "easy": { "hintsShown": 1, "solutionAfterFails": 1, "requireTruth": false },
+      "normal": { "hintsShown": 0, "solutionAfterFails": 3, "requireTruth": true },
+      "hard": { "hintsShown": 0, "solutionAfterFails": null, "requireTruth": true }
+    },
+    "puzzle": {
+      "kind": "series-parallel",
+      "supplyVolts": 9,
+      "resistors": [1000, 1000],
+      "topologies": [
+        { "id": "series", "label": "Series", "detail": "One path. Resistances add to 2 kΩ." },
+        { "id": "parallel", "label": "Parallel", "detail": "Two paths. The pair becomes 500 Ω." }
+      ],
+      "truth": {
+        "prompt": "If one lantern opens, what does the other do?",
+        "columns": ["Wiring", "One lantern", "The other lantern"],
+        "choices": ["Goes dark", "Stays lit"],
+        "rows": [
+          { "inputs": ["Series", "Opens"], "answer": "Goes dark" },
+          { "inputs": ["Parallel", "Opens"], "answer": "Stays lit" }
+        ]
+      }
+    }
+  },
+  {
+    "id": 4,
+    "specIndex": 3,
+    "slug": "aeolus-bag",
+    "title": "Aeolus' Bag of Winds",
+    "epithet": "The RC time constant",
+    "place": "The island of Aeolus",
+    "concept": "A capacitor charges through a resistor with time constant τ = R × C, about 63% charged after one τ.",
+    "goal": "Choose R and C so the capacitor reaches about 63% in the time the winds ask for. The lesson's example is 1 s = 100 kΩ × 10 µF.",
+    "story": "Aeolus hands over a tied sack. It does not burst open the moment the knot loosens. Charge trickles in through a resistor, fast at first, then slower, toward the battery voltage. The time that brings the sack to about 63% is τ, and τ is resistance times capacitance.",
+    "greeting": "The sack fills on a curve, not on a step. I will not multiply the parts for you. τ = R × C, and one τ is about 63%.",
+    "athenaNote": "Do not name a winning resistor and capacitor pair. You may say τ = R × C, that ohms times farads is seconds, and that 63% happens at one time constant. On hard the target is 0.5 s, not the 1 s example.",
+    "lessons": [
+      {
+        "title": "Charge takes time",
+        "body": "A capacitor stores energy in an electric field. While it charges through a resistor, its voltage rises quickly at first and then eases toward the battery. V(t) = V (1 − e^(−t / RC))."
+      },
+      {
+        "title": "τ = R × C",
+        "body": "Multiply ohms by farads and you get seconds. After one time constant the capacitor is about 63% charged. A 100 kΩ resistor and a 10 µF capacitor make τ = 100000 × 0.00001 = 1 s. Other pairs with the same product agree."
+      }
+    ],
+    "objectives": [
+      { "id": "parts", "text": "Set both a resistor and a capacitor" },
+      { "id": "tau", "text": "Make one time constant match the time the winds asked for" }
+    ],
+    "hints": [
+      "A capacitor does not jump to the battery voltage. The filling takes time, and the curve is steepest at the start.",
+      "The time scale is resistance times capacitance. Ohms times farads is seconds.",
+      "About 63% of the way to the supply is the mark for one τ. If you arrive early, the product R × C is too small."
+    ],
+    "workedSolution": {
+      "title": "One second, and the same product",
+      "steps": [
+        "τ = R × C. The lesson's target is 1 s, which is about 63% of the way to 9 V.",
+        "100 kΩ × 10 µF = 100000 × 0.00001 = 1 s.",
+        "The same product shows up in other pairs: 10 kΩ × 100 µF, and 1 MΩ × 1 µF.",
+        "On a hard wind the target moves to 0.5 s. Halve R, or halve C, and the product follows. 50 kΩ × 10 µF is one such pair."
+      ]
+    },
+    "notebook": {
+      "concept": "RC time constant",
+      "summary": "τ = R × C, in seconds when R is in ohms and C is in farads. At t = τ the capacitor has reached about 63% of the supply. 100 kΩ × 10 µF = 1 s."
+    },
+    "reward": {
+      "id": "capacitor-10u",
+      "name": "10 µF capacitor",
+      "note": "With 100 kΩ, one time constant is 1 s."
+    },
+    "results": {
+      "title": "The sack opens on time",
+      "body": "The curve crosses 63% when Aeolus said it would. The knot was only a resistor and a capacitor."
+    },
+    "map": { "x": 34, "y": 76 },
+    "tuning": {
+      "easy": { "hintsShown": 1, "solutionAfterFails": 1, "control": "picker" },
+      "normal": { "hintsShown": 0, "solutionAfterFails": 3, "control": "slider", "sliderMode": "detent", "initialOhms": 10000, "initialFarads": 0.000001 },
+      "hard": { "hintsShown": 0, "solutionAfterFails": null, "control": "slider", "sliderMode": "log", "targetTau": 0.5, "tolerance": 0.12, "initialOhms": 10000, "initialFarads": 0.000001 }
+    },
+    "puzzle": {
+      "kind": "rc",
+      "supplyVolts": 9,
+      "targetTau": 1,
+      "tolerance": 0.02,
+      "resistorOhms": [10000, 100000, 1000000],
+      "capacitorFarads": [0.000001, 0.00001, 0.0001],
+      "rSlider": { "min": 1000, "max": 1000000, "unit": "Ω" },
+      "cSlider": { "min": 0.000001, "max": 0.0001, "unit": "F" }
+    }
+  },
+  {
+    "id": 5,
+    "specIndex": 4,
+    "slug": "charybdis",
+    "title": "Charybdis",
+    "epithet": "Inductor flyback",
+    "place": "The whirlpool",
+    "concept": "An inductor resists a change in current. A flyback diode gives that current a safe loop when the switch opens.",
+    "goal": "Place a diode across the coil so the switch survives the spike when it opens.",
+    "story": "The whirlpool does not like a sudden stop. The coil in the hold has been pushing current, and opening the switch asks that current to become zero in an instant. It will not. The voltage spikes, unless a diode is waiting, pointed so it conducts only after the switch opens.",
+    "greeting": "The coil stores its quarrel in a magnetic field. I will not aim the diode for you. Ask which way it must point so it is idle while the switch is closed.",
+    "athenaNote": "The winning placement is the flyback diode with the cathode toward the positive supply. Do not say cathode, top rail, or flyback as the pick. You may say that interrupting an inductor makes a voltage spike and that the diode should be reverse-biased while the switch is closed.",
+    "lessons": [
+      {
+        "title": "The coil fights a change",
+        "body": "An inductor stores energy in a magnetic field while current flows. The stored energy is ½ L I². It resists a change in that current. Open the switch and the current still wants a path. V = L di/dt can jump high enough to arc the switch."
+      },
+      {
+        "title": "The flyback diode",
+        "body": "A diode across the coil, cathode toward the positive supply, is off while the switch is closed. When the switch opens, the coil's voltage reverses, the diode conducts, and the current loops locally instead of spiking across the switch. Point it the other way and it shorts the supply the whole time the switch is closed."
+      }
+    ],
+    "objectives": [
+      { "id": "choice", "text": "Choose what sits across the coil" },
+      { "id": "direction", "text": "Aim the diode so it waits for the spike" },
+      { "id": "truth", "text": "Finish the truth table", "when": "truth" }
+    ],
+    "hints": [
+      "A coil fights a sudden change in current. Opening the switch does not make the current vanish politely.",
+      "When the path opens, the current needs a second door. That door has to be shut during normal operation.",
+      "If the diode already conducts while the switch is closed, it is fighting the battery. The shelter conducts only after the field collapses."
+    ],
+    "workedSolution": {
+      "title": "Cathode toward the supply",
+      "steps": [
+        "With no diode, opening the switch interrupts the coil current and the voltage spikes.",
+        "A diode that conducts while the switch is closed is forward across the coil. It shorts the supply. On this board that is the arrow toward the bottom rail.",
+        "The flyback diode points the other way: arrow toward the top rail, cathode on the positive side.",
+        "While the switch is closed the diode is reverse-biased. When the switch opens, the spike forward-biases it and the current has a safe loop."
+      ]
+    },
+    "notebook": {
+      "concept": "Flyback diode",
+      "summary": "Opening a switch in series with an inductor spikes the voltage. A diode across the coil, cathode toward the supply, is idle while the switch is closed and conducts when the field collapses."
+    },
+    "reward": {
+      "id": "flyback-diode",
+      "name": "Flyback diode",
+      "note": "Cathode toward the supply, across the coil."
+    },
+    "results": {
+      "title": "The switch survives",
+      "body": "The diode was waiting in the right direction. The whirlpool still turns, and the contacts do not arc."
+    },
+    "map": { "x": 24, "y": 30 },
+    "tuning": {
+      "easy": { "hintsShown": 1, "solutionAfterFails": 1, "requireTruth": false, "labelStyle": "guided" },
+      "normal": { "hintsShown": 0, "solutionAfterFails": 3, "requireTruth": true, "labelStyle": "plain" },
+      "hard": { "hintsShown": 0, "solutionAfterFails": null, "requireTruth": true, "labelStyle": "plain" }
+    },
+    "puzzle": {
+      "kind": "flyback",
+      "supplyVolts": 9,
+      "choices": [
+        { "id": "none", "label": "No diode", "guided": "Leave the coil with no second path" },
+        { "id": "forward", "label": "Arrow toward the bottom rail", "guided": "Diode conducting while the switch is closed" },
+        { "id": "flyback", "label": "Arrow toward the top rail", "guided": "Cathode toward the supply" }
+      ],
+      "truth": {
+        "prompt": "What happens with each placement?",
+        "columns": ["Placement", "While the switch is closed", "When the switch opens"],
+        "choices": ["Voltage spike", "Safe loop", "Shorts the supply"],
+        "rows": [
+          { "inputs": ["No diode", "Coil current flows"], "answer": "Voltage spike" },
+          { "inputs": ["Arrow toward the top rail", "Diode is off"], "answer": "Safe loop" },
+          { "inputs": ["Arrow toward the bottom rail", "Diode conducts"], "answer": "Shorts the supply" }
+        ]
+      }
+    }
+  },
+  {
+    "id": 6,
+    "specIndex": 5,
+    "slug": "lighthouse-of-ithaca",
+    "title": "Lighthouse of Ithaca",
+    "epithet": "The 555 beacon",
+    "place": "Ithaca",
+    "concept": "A 555 timer in astable mode blinks on its own. f = 1.44 / ((R1 + 2 R2) C).",
+    "goal": "Choose R1, R2, and C so the beacon blinks between 0.5 Hz and 2 Hz.",
+    "story": "Ithaca is a dark coast until the lighthouse blinks. A 555 charges a capacitor through R1 and R2, then discharges it through R2, over and over, with nobody at the switch. The worked example near 1 Hz is R1 = 1 kΩ, R2 = 68 kΩ, and C = 10 µF. Any blink between half a hertz and two hertz can guide the ship.",
+    "greeting": "The lighthouse keeps its own watch. I will not hand you R1, R2, and C. The blink rate is 1.44 over (R1 + 2 R2) times C.",
+    "athenaNote": "Do not give a finished triple such as 1 kΩ, 68 kΩ, and 10 µF. You may state the formula f = 1.44 / ((R1 + 2 R2) C) and say that a larger R2 or a larger C slows the blink. The window is 0.5 Hz to 2 Hz.",
+    "lessons": [
+      {
+        "title": "The beacon blinks itself",
+        "body": "An astable 555 charges and discharges a capacitor forever. The output is high while the capacitor charges, and low while it discharges. Nobody has to press the switch. The high time is 0.693 (R1 + R2) C. The low time is 0.693 R2 C."
+      },
+      {
+        "title": "The frequency formula",
+        "body": "f = 1.44 / ((R1 + 2 R2) C), with R in ohms and C in farads. R2 is doubled because it is in both halves of the cycle. R1 = 1 kΩ, R2 = 68 kΩ, and C = 10 µF land near 1.05 Hz, inside the 0.5 to 2 Hz window. A larger C, or a larger R2, blinks more slowly."
+      }
+    ],
+    "objectives": [
+      { "id": "parts", "text": "Set R1, R2, and C" },
+      { "id": "frequency", "text": "Put the blink between 0.5 Hz and 2 Hz" }
+    ],
+    "hints": [
+      "The 555 will blink on its own once R1, R2, and the capacitor set the time. Read the frequency the meter is already showing.",
+      "R2 counts twice in the denominator. It is in the charge path and it is the whole discharge path.",
+      "If the coast flashes too slowly, shrink C or R2. If it flickers too fast, grow one of them. The window is 0.5 Hz to 2 Hz."
+    ],
+    "workedSolution": {
+      "title": "About one blink a second",
+      "steps": [
+        "Use R1 = 1 kΩ, R2 = 68 kΩ, and C = 10 µF.",
+        "R1 + 2 R2 = 1000 + 2 × 68000 = 137 kΩ.",
+        "(R1 + 2 R2) C = 137000 × 0.00001 = 1.37.",
+        "f = 1.44 / 1.37 ≈ 1.05 Hz, inside 0.5 to 2 Hz. Other triples in that window also bring the ship home."
+      ]
+    },
+    "notebook": {
+      "concept": "555 astable blink rate",
+      "summary": "f = 1.44 / ((R1 + 2 R2) C). High time is 0.693 (R1 + R2) C and low time is 0.693 R2 C. 1 kΩ, 68 kΩ, and 10 µF blink at about 1 Hz."
+    },
+    "reward": {
+      "id": "timer-555",
+      "name": "555 timer",
+      "note": "Astable beacon. The lighthouse blinks without a hand on the switch."
+    },
+    "results": {
+      "title": "Ithaca answers",
+      "body": "The beacon sits between half a hertz and two hertz. The coast is no longer a rumor."
+    },
+    "map": { "x": 13, "y": 64 },
+    "tuning": {
+      "easy": { "hintsShown": 1, "solutionAfterFails": 1, "control": "picker" },
+      "normal": { "hintsShown": 0, "solutionAfterFails": 3, "control": "slider", "sliderMode": "detent", "initialR1": 100000, "initialR2": 470000, "initialFarads": 0.0001 },
+      "hard": { "hintsShown": 0, "solutionAfterFails": null, "control": "slider", "sliderMode": "log", "initialR1": 100000, "initialR2": 200000, "initialFarads": 0.0001 }
+    },
+    "puzzle": {
+      "kind": "astable",
+      "supplyVolts": 9,
+      "targetMinHz": 0.5,
+      "targetMaxHz": 2,
+      "r1Ohms": [1000, 10000, 100000],
+      "r2Ohms": [10000, 68000, 470000],
+      "capacitorFarads": [0.000001, 0.00001, 0.0001],
+      "r1Slider": { "min": 1000, "max": 200000, "unit": "Ω" },
+      "r2Slider": { "min": 10000, "max": 500000, "unit": "Ω" },
+      "cSlider": { "min": 0.000001, "max": 0.0001, "unit": "F" }
+    }
+  }
+]

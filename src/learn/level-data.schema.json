@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ohmyssey.tech/schema/level-data.json",
+  "title": "LevelData",
+  "description": "One Ohmyssey study island. The brief numbers islands 0-5; specIndex stores that, and id is the voyage number 1-6 used by the map. puzzle.kind selects the grader. There is no function in this document.",
+  "type": "object",
+  "required": ["id", "specIndex", "title", "epithet", "place", "concept", "goal", "story", "objectives", "hints", "puzzle", "map"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "specIndex": { "type": "integer", "minimum": 0, "description": "0 Leaving Troy through 5 Lighthouse of Ithaca." },
+    "slug": { "type": "string" },
+    "title": { "type": "string" },
+    "epithet": { "type": "string" },
+    "place": { "type": "string" },
+    "concept": { "type": "string" },
+    "goal": { "type": "string" },
+    "story": { "type": "string" },
+    "greeting": { "type": "string", "description": "Athena's opening line. She does not reveal the winning part." },
+    "athenaNote": { "type": "string", "description": "Private note for the model. The player does not see it." },
+    "lessons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "body"],
+        "properties": {
+          "title": { "type": "string" },
+          "body": { "type": "string" }
+        }
+      }
+    },
+    "objectives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string" },
+          "when": { "type": "string", "enum": ["truth", "prediction"], "description": "Hide this objective unless the difficulty asks for it." }
+        }
+      }
+    },
+    "hints": { "type": "array", "items": { "type": "string" } },
+    "workedSolution": {
+      "type": "object",
+      "required": ["title", "steps"],
+      "properties": {
+        "title": { "type": "string" },
+        "steps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "notebook": {
+      "type": "object",
+      "required": ["concept", "summary"],
+      "properties": {
+        "concept": { "type": "string" },
+        "summary": { "type": "string" }
+      }
+    },
+    "reward": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "results": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "body": { "type": "string" }
+      }
+    },
+    "map": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "tuning": {
+      "type": "object",
+      "description": "Per-difficulty overrides. solutionAfterFails null means the worked steps stay shut until the island is won.",
+      "properties": {
+        "easy": { "$ref": "#/$defs/tune" },
+        "normal": { "$ref": "#/$defs/tune" },
+        "hard": { "$ref": "#/$defs/tune" }
+      }
+    },
+    "puzzle": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["closed-loop", "ohms", "series-parallel", "rc", "flyback", "astable"] },
+        "supplyVolts": { "type": "number" },
+        "ledVf": { "type": "number" },
+        "slotIds": { "type": "array", "items": { "type": "string" } },
+        "parts": { "type": "array" },
+        "choices": { "type": "array" },
+        "truth": { "type": "object" },
+        "resistors": { "type": "array", "items": { "type": "number" } },
+        "resistorOhms": { "type": "array", "items": { "type": "number" } },
+        "capacitorFarads": { "type": "array", "items": { "type": "number" } },
+        "r1Ohms": { "type": "array", "items": { "type": "number" } },
+        "r2Ohms": { "type": "array", "items": { "type": "number" } },
+        "targetTau": { "type": "number" },
+        "tolerance": { "type": "number" },
+        "targetMinHz": { "type": "number" },
+        "targetMaxHz": { "type": "number" },
+        "rSlider": { "$ref": "#/$defs/slider" },
+        "cSlider": { "$ref": "#/$defs/slider" },
+        "r1Slider": { "$ref": "#/$defs/slider" },
+        "r2Slider": { "$ref": "#/$defs/slider" }
+      }
+    }
+  },
+  "$defs": {
+    "tune": {
+      "type": "object",
+      "properties": {
+        "hintsShown": { "type": "integer", "minimum": 0 },
+        "solutionAfterFails": { "type": ["integer", "null"] },
+        "requireTruth": { "type": "boolean" },
+        "hideDecoys": { "type": "boolean" },
+        "ledStartsReversed": { "type": "boolean" },
+        "requirePrediction": { "type": "boolean" },
+        "predictionToleranceMa": { "type": "number" },
+        "control": { "enum": ["picker", "slider"] },
+        "sliderMode": { "enum": ["detent", "log"] },
+        "labelStyle": { "enum": ["plain", "guided"] },
+        "targetTau": { "type": "number" },
+        "tolerance": { "type": "number" },
+        "initialOhms": { "type": "number" },
+        "initialFarads": { "type": "number" },
+        "initialR1": { "type": "number" },
+        "initialR2": { "type": "number" }
+      }
+    },
+    "slider": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "unit": { "type": "string" }
+      }
+    }
+  }
+}

@@ -65,4 +65,18 @@ const down = await createAthenaReply({
 assert.equal(down.fallback, true);
 assert.equal(down.reason, 'upstream');
 
+const canned = await createAthenaReply({
+  body: { ...sample, cannedHints: ['Count the gaps.', 'Close the switch.'] },
+  apiKey: '',
+});
+assert.equal(canned.source, 'canned');
+assert.equal(canned.reason, 'no_key');
+assert.equal(canned.hint, 'Count the gaps.');
+
+const cannedLater = await createAthenaReply({
+  body: { ...sample, attempt: 2, cannedHints: ['Count the gaps.', 'Close the switch.'] },
+  apiKey: '',
+});
+assert.equal(cannedLater.hint, 'Close the switch.');
+
 console.log('Athena checks passed.');
