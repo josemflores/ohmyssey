@@ -161,6 +161,8 @@ Level 1 is won by a closed switch, one resistor, one LED, and a current from 5 m
 
 ## Team
 
+AI agents follow the coordination rules in [AGENTS.md](AGENTS.md).
+
 | Role | Name |
 | --- | --- |
 | Content and physics lead | _Person A_ |
