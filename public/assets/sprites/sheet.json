@@ -1,0 +1,31 @@
+{
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "framesPerDirection": 4,
+  "directions": [
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE",
+    "E",
+    "SE"
+  ],
+  "directionAxis": "rows top to bottom",
+  "frameAxis": "columns left to right, walk cycle",
+  "origin": "bottom-center",
+  "npcs": {
+    "siren": "sprites/npcs/siren/siren_32.png",
+    "crew_lantern": "sprites/npcs/crew_lantern/crew_lantern_32.png",
+    "aeolus": "sprites/npcs/aeolus/aeolus_32.png"
+  },
+  "props": {
+    "bag_of_winds": {
+      "image": "props/bag_of_winds_32.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 4
+    }
+  }
+}

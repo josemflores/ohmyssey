@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Generate Ohmyssey Level 3 (Sirens) and Level 4 (Aeolus) pixel art.
+"""Generate Ohmyssey Level 3 and Level 4 character and prop sprites.
 
-Spec from the team Message Board (issue #2):
-  Tiled maps 40x30, tile size 16, layers Ground / Decor / Collision / Objects
-  (spawn plus NPC points). Characters 32x32, 8 directions, high top-down.
-  Palette taken from src/index.css.
+Jose builds the Tiled maps. This script writes only the PNG sheets:
+  public/assets/sprites/npcs/<name>/
+  public/assets/props/
 
-Collision layers are saved hidden. Any gid > 0 on Collision blocks movement.
-Character sheets are 4 walk frames by 8 directions:
+Sheets are 32x32, 4 walk frames by 8 directions:
   S, SW, W, NW, N, NE, E, SE. Origin is bottom-center.
+Palette is taken from src/index.css.
 
 Requires Pillow. Does not touch shared app files.
 """
@@ -1630,46 +1629,28 @@ def legend_for(names):
     return "voyage_16 gids " + " ".join(parts)
 
 
-def manifest(names):
+def sheet_manifest():
     return {
-        "tileSize": TILE,
-        "mapSize": [W, H],
-        "tileset": {
-            "name": "voyage_16",
-            "image": "tilesets/voyage_16.png",
-            "columns": COLS,
-            "rows": ROWS,
-            "tileWidth": TILE,
-            "tileHeight": TILE,
-            "gids": {name: gid for name, gid in sorted(names.items(), key=lambda kv: kv[1])},
-        },
-        "characters": {
-            "frameWidth": 32,
-            "frameHeight": 32,
-            "framesPerDirection": 4,
-            "directions": DIRS,
-            "directionAxis": "rows top to bottom",
-            "frameAxis": "columns left to right, walk cycle",
-            "origin": "bottom-center",
-            "sheets": {
-                "siren": "sprites/siren_32.png",
-                "crew_lantern": "sprites/crew_lantern_32.png",
-                "aeolus": "sprites/aeolus_32.png",
-            },
+        "frameWidth": 32,
+        "frameHeight": 32,
+        "framesPerDirection": 4,
+        "directions": DIRS,
+        "directionAxis": "rows top to bottom",
+        "frameAxis": "columns left to right, walk cycle",
+        "origin": "bottom-center",
+        "npcs": {
+            "siren": "sprites/npcs/siren/siren_32.png",
+            "crew_lantern": "sprites/npcs/crew_lantern/crew_lantern_32.png",
+            "aeolus": "sprites/npcs/aeolus/aeolus_32.png",
         },
         "props": {
             "bag_of_winds": {
-                "image": "sprites/bag_of_winds_32.png",
+                "image": "props/bag_of_winds_32.png",
                 "frameWidth": 32,
                 "frameHeight": 32,
                 "frames": 4,
             }
         },
-        "collision": "Collision layer is hidden. Any gid > 0 blocks movement. Do not render the layer.",
-        "maps": [
-            "maps/level3_sirens.json",
-            "maps/level4_aeolus.json",
-        ],
     }
 
 
@@ -1679,71 +1660,30 @@ def main():
     parser.add_argument("--artifacts", type=Path, required=True)
     args = parser.parse_args()
     root = args.root
-    art = root / "public" / "assets"
-    (art / "tilesets").mkdir(parents=True, exist_ok=True)
-    (art / "sprites").mkdir(parents=True, exist_ok=True)
-    (art / "maps").mkdir(parents=True, exist_ok=True)
+    assets = root / "public" / "assets"
+    npc = assets / "sprites" / "npcs"
+    for name in ("siren", "crew_lantern", "aeolus"):
+        (npc / name).mkdir(parents=True, exist_ok=True)
+    (assets / "props").mkdir(parents=True, exist_ok=True)
     args.artifacts.mkdir(parents=True, exist_ok=True)
-
-    sheet, names = build_tileset()
-    sheet.save(art / "tilesets" / "voyage_16.png")
 
     siren = character_sheet(draw_siren)
     crew = character_sheet(draw_crew)
     aeolus = character_sheet(draw_aeolus)
     bag = bag_sheet()
-    siren.save(art / "sprites" / "siren_32.png")
-    crew.save(art / "sprites" / "crew_lantern_32.png")
-    aeolus.save(art / "sprites" / "aeolus_32.png")
-    bag.save(art / "sprites" / "bag_of_winds_32.png")
+    siren.save(npc / "siren" / "siren_32.png")
+    crew.save(npc / "crew_lantern" / "crew_lantern_32.png")
+    aeolus.save(npc / "aeolus" / "aeolus_32.png")
+    bag.save(assets / "props" / "bag_of_winds_32.png")
+    (assets / "sprites" / "sheet.json").write_text(json.dumps(sheet_manifest(), indent=2) + "\n")
 
-    sheets = {
-        "tiles": (sheet, names),
+    sprite_preview({
         "siren": siren,
         "crew_lantern": crew,
         "aeolus": aeolus,
         "bag": bag,
-    }
-    legend = legend_for(names)
-
-    g3, d3, c3, o3 = build_level3(names)
-    g4, d4, c4, o4 = build_level4(names)
-    write_json(art / "maps" / "level3_sirens.json", g3, d3, c3, o3, legend)
-    write_tmx(art / "maps" / "level3_sirens.tmx", g3, d3, c3, o3, legend)
-    write_json(art / "maps" / "level4_aeolus.json", g4, d4, c4, o4, legend)
-    write_tmx(art / "maps" / "level4_aeolus.tmx", g4, d4, c4, o4, legend)
-    (art / "sprites" / "manifest.json").write_text(json.dumps(manifest(names), indent=2) + "\n")
-
-    p3 = captioned(
-        render_map(g3, d3, o3, sheets, names),
-        "Level 3  —  The Sirens' rocks",
-        "Jagged stacks, crashing waves, crew lanterns. 40x30, 16px tiles.",
-    )
-    p4 = captioned(
-        render_map(g4, d4, o4, sheets, names),
-        "Level 4  —  Aeolus' floating island",
-        "Bronze walls, sky, clouds, and the bag of winds. 40x30, 16px tiles.",
-    )
-    p3.save(args.artifacts / "level3_sirens_preview.png")
-    p4.save(args.artifacts / "level4_aeolus_preview.png")
-    tileset_index(sheet, names).save(args.artifacts / "voyage_16_tileset.png")
-    sprite_preview(sheets).save(args.artifacts / "sprites_preview.png")
-
-    # QA zooms
-    zoom_dir = args.artifacts / "zoom"
-    zoom_dir.mkdir(exist_ok=True)
-    render_map(g3, d3, o3, sheets, names).crop((16, 80, 176, 320)).resize((640, 960), Image.NEAREST).save(zoom_dir / "l3_ship.png")
-    render_map(g3, d3, o3, sheets, names).crop((280, 60, 560, 360)).resize((560, 600), Image.NEAREST).save(zoom_dir / "l3_rocks.png")
-    render_map(g4, d4, o4, sheets, names).crop((140, 100, 520, 440)).resize((760, 680), Image.NEAREST).save(zoom_dir / "l4_island.png")
-    siren.crop((0, 64, 32, 96)).resize((256, 256), Image.NEAREST).save(zoom_dir / "siren_W.png")
-    crew.crop((0, 192, 32, 224)).resize((256, 256), Image.NEAREST).save(zoom_dir / "crew_E.png")
-    aeolus.crop((0, 0, 32, 32)).resize((256, 256), Image.NEAREST).save(zoom_dir / "aeolus_S.png")
-    bag.crop((0, 0, 32, 32)).resize((256, 256), Image.NEAREST).save(zoom_dir / "bag.png")
-
-    print("tiles", len(names), "block", names["block"])
-    print("level3 objects", [o["name"] for o in o3])
-    print("level4 objects", [o["name"] for o in o4])
-    print("wrote", art)
+    }).save(args.artifacts / "sprites_preview.png")
+    print("wrote npc sheets and bag_of_winds")
 
 
 if __name__ == "__main__":
