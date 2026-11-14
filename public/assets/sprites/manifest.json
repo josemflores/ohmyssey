@@ -1,0 +1,113 @@
+{
+  "tileSize": 16,
+  "mapSize": [
+    40,
+    30
+  ],
+  "tileset": {
+    "name": "voyage_16",
+    "image": "tilesets/voyage_16.png",
+    "columns": 16,
+    "rows": 8,
+    "tileWidth": 16,
+    "tileHeight": 16,
+    "gids": {
+      "deep": 1,
+      "sea": 2,
+      "sea_b": 3,
+      "shallow": 4,
+      "shallow_b": 5,
+      "wave": 6,
+      "sea_dark": 7,
+      "shore": 8,
+      "rock": 17,
+      "rock_b": 18,
+      "rock_crack": 19,
+      "rock_wet": 20,
+      "cliff_s": 21,
+      "cliff_n": 22,
+      "cliff_w": 23,
+      "cliff_e": 24,
+      "cliff_sw": 25,
+      "cliff_se": 26,
+      "cliff_nw": 27,
+      "cliff_ne": 28,
+      "peak": 29,
+      "peak_b": 30,
+      "rock_light": 31,
+      "perch_ground": 32,
+      "deck": 33,
+      "deck_b": 34,
+      "hull": 35,
+      "hull_s": 36,
+      "bow": 37,
+      "stern": 38,
+      "floor": 49,
+      "floor_b": 50,
+      "inlay": 51,
+      "wall": 52,
+      "tower": 53,
+      "gate": 54,
+      "sky": 55,
+      "sky_b": 56,
+      "sky_deep": 57,
+      "dock": 58,
+      "dock_b": 59,
+      "foam": 65,
+      "crash": 66,
+      "cloud": 67,
+      "cloud_sm": 68,
+      "lantern": 69,
+      "column": 70,
+      "perch": 71,
+      "wind": 72,
+      "wind_b": 73,
+      "olive": 74,
+      "sail": 75,
+      "oar": 76,
+      "rope": 77,
+      "reeds": 78,
+      "bag_tl": 81,
+      "bag_tr": 82,
+      "bag_bl": 83,
+      "bag_br": 84,
+      "block": 128
+    }
+  },
+  "characters": {
+    "frameWidth": 32,
+    "frameHeight": 32,
+    "framesPerDirection": 4,
+    "directions": [
+      "S",
+      "SW",
+      "W",
+      "NW",
+      "N",
+      "NE",
+      "E",
+      "SE"
+    ],
+    "directionAxis": "rows top to bottom",
+    "frameAxis": "columns left to right, walk cycle",
+    "origin": "bottom-center",
+    "sheets": {
+      "siren": "sprites/siren_32.png",
+      "crew_lantern": "sprites/crew_lantern_32.png",
+      "aeolus": "sprites/aeolus_32.png"
+    }
+  },
+  "props": {
+    "bag_of_winds": {
+      "image": "sprites/bag_of_winds_32.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 4
+    }
+  },
+  "collision": "Collision layer is hidden. Any gid > 0 blocks movement. Do not render the layer.",
+  "maps": [
+    "maps/level3_sirens.json",
+    "maps/level4_aeolus.json"
+  ]
+}
