@@ -8,6 +8,9 @@ import { level1 } from '../src/levels/level1.js';
 import { level2 } from '../src/levels/level2.js';
 import { level3 } from '../src/levels/level3.js';
 import { seriesLedCurrentMa } from '../src/lib/ohm.js';
+// Level 6 lives in its own file. Importing it here is how `npm test` runs
+// those checks without a package.json change.
+import './check-level6.js';
 
 const supply = { volts: 9 };
 const ledVf = 2;
