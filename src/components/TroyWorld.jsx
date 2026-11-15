@@ -16,6 +16,8 @@ import BattleLog from './BattleLog.jsx';
 import CircuitDiagram from './CircuitDiagram.jsx';
 
 const MOVES = [ATTACKS.light, ATTACKS.heavy];
+// How long the victory proclamation stays up (the usual notice is 2.8 s).
+const VICTORY_MS = 8000;
 
 const MOVE_KEYS = new Set([
   'KeyW', 'KeyA', 'KeyS', 'KeyD',
@@ -45,6 +47,8 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
   const [runHint, setRunHint] = useState(false);
   const sailed = useRef(false);
   const [banner, setBanner] = useState('');
+  // The big "Troy is won" proclamation. It stays up long enough to read.
+  const [victory, setVictory] = useState(null);
   const [place, setPlace] = useState('horse');
   const [objective, setObjective] = useState({
     title: 'Reach the gate',
@@ -193,6 +197,10 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       setQuestDone(true);
     });
     game.events.on('notice', (text) => setBanner(text || ''));
+    game.events.on('victory', (payload) => {
+      setBanner('');
+      setVictory({ ...payload, key: Date.now() });
+    });
     game.events.on('levelComplete', () => setComplete(true));
     game.events.on('gameOver', () => {
       setFight(null);
@@ -217,6 +225,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       game.events.off('fightEnd', onFightEnd);
       game.events.off('questDone');
       game.events.off('notice');
+      game.events.off('victory');
       game.events.off('levelComplete');
       game.events.off('gameOver');
       game.events.off('objective');
@@ -312,6 +321,12 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
   }, []);
 
   useEffect(() => {
+    if (!victory) return undefined;
+    const timer = setTimeout(() => setVictory(null), VICTORY_MS);
+    return () => clearTimeout(timer);
+  }, [victory]);
+
+  useEffect(() => {
     if (!banner) return undefined;
     const timer = setTimeout(() => setBanner(''), 2800);
     return () => clearTimeout(timer);
@@ -394,6 +409,16 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
       {runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
       {banner && <p className="troy-banner">{banner}</p>}
+      {victory && (
+        <div className="troy-victory" key={victory.key} role="status" aria-live="polite">
+          <div className="q-card troy-victory-card">
+            <p className="q-eyebrow">Ω · Victory</p>
+            <h2 className="q-title">{victory.title}</h2>
+            <div className="q-rule" aria-hidden="true" />
+            <p className="troy-victory-line">{victory.line}</p>
+          </div>
+        </div>
+      )}
       {talk && (
         <div className="troy-talk" role="dialog" aria-label={talk.id}>
           <p className="troy-talk-id">{talk.id}</p>

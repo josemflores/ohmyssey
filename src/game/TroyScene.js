@@ -781,7 +781,10 @@ export class TroyScene extends Phaser.Scene {
         // The last group is down: the duels end, the Trojans run, and the
         // Greeks fall back to the ship (gateBattle.js).
         endGateBattle(this);
-        this.game.events.emit('notice', 'Troy is won. The Greeks fall back to the ship.');
+        this.game.events.emit('victory', {
+          title: 'Troy is won',
+          line: 'The Greeks fall back to the ship. Follow them to the shore.',
+        });
         if (this.shipMark) this.shipMark.setVisible(true);
       }
       return;
