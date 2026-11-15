@@ -8,6 +8,7 @@
 // The picture is taller than the box, so he can stand "behind" columns and roofs.
 
 import Phaser from 'phaser';
+import { ENCOUNTER_RESULT_EVENT, requestEncounter } from '../learn/encounters/bus.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -18,6 +19,7 @@ import {
   MAP_W,
   PROPS,
   SPAWN,
+  TILE,
   WALKABLE,
   buildMap,
 } from './map.js';
@@ -28,6 +30,9 @@ import { buildWorldTextures } from './textures.js';
 
 // Pixels per second. Diagonals are scaled so they are not faster.
 const SPEED = 80;
+// About one fight per half minute of walking, and never twice inside the cooldown.
+const STEP_CHANCE = 0.005;
+const ENCOUNTER_COOLDOWN = 22000;
 // The LPC figure fills about 25 of the 32px cell. 4/3 brings him in line
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
@@ -187,8 +192,17 @@ export class TroyScene extends Phaser.Scene {
     // A dialogue or puzzle sets this so he stops walking.
     // E still works while locked: it asks React to close the box.
     this.inputLocked = false;
+    this.encounterOpen = false;
+    this.encounterReadyAt = 0;
+    this.lastTile = null;
     this.nearest = null;
     this.prompt = makePrompt(this);
+    this.onEncounterResult = () => {
+      this.encounterOpen = false;
+      this.encounterReadyAt = this.time.now + ENCOUNTER_COOLDOWN;
+      if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
+    };
+    window.addEventListener(ENCOUNTER_RESULT_EVENT, this.onEncounterResult);
 
     const lockInput = () => { this.inputLocked = true; };
     const unlockInput = () => { this.inputLocked = false; };
@@ -200,6 +214,8 @@ export class TroyScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('lockInput', lockInput);
       this.game.events.off('unlockInput', unlockInput);
+      window.removeEventListener(ENCOUNTER_RESULT_EVENT, this.onEncounterResult);
+      if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -207,6 +223,13 @@ export class TroyScene extends Phaser.Scene {
   init(data) {
     // HorseScene sends him back here, beside the horse, instead of the beach.
     this.arrive = data && Number.isFinite(data.x) ? data : null;
+  }
+
+  openEncounter() {
+    this.encounterOpen = true;
+    this.feet.setVelocity(0, 0);
+    if (this.input.keyboard) this.input.keyboard.enabled = false;
+    requestEncounter(1);
   }
 
   // React listens for this. payload.id is the spot from map.js.
@@ -242,6 +265,13 @@ export class TroyScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    // A monster question covers the city. Feet and the standoff both wait.
+    if (document.body.dataset.encounter === 'open' || this.encounterOpen) {
+      this.feet.setVelocity(0, 0);
+      if (this.input.keyboard) this.input.keyboard.enabled = false;
+      return;
+    }
+
     // While a box is open he stands still. Keys do nothing until it closes.
     const locked = this.inputLocked;
     const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);
@@ -302,6 +332,16 @@ export class TroyScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
       if (locked) this.game.events.emit('closeInteract');
       else if (this.nearest) this.interact(this.nearest);
+    }
+
+    // New tiles can start a fight. Not during a dialog, and not again until the cooldown.
+    if (!locked && moving && time >= this.encounterReadyAt) {
+      const tileKey = `${Math.round(this.feet.x / TILE)},${Math.round(this.feet.y / TILE)}`;
+      if (this.lastTile == null) this.lastTile = tileKey;
+      else if (tileKey !== this.lastTile) {
+        this.lastTile = tileKey;
+        if (Math.random() < STEP_CHANCE) this.openEncounter();
+      }
     }
 
     const dt = delta / 1000;
