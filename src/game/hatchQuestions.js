@@ -8,6 +8,7 @@ export const HATCH_QUESTIONS = [
     prompt: 'The beach lamp uses a 9 V battery and a red LED that keeps 2 V. A 1 kΩ resistor gets the other 7 V. What is the current?',
     choices: ['7 mA', '70 mA', '0.7 A', '9 A'],
     answer: 0,
+    hint: '7 volts left across 1 kΩ is 7 mA. Current is voltage divided by resistance.',
   },
   {
     id: 'open-switch',
@@ -19,6 +20,7 @@ export const HATCH_QUESTIONS = [
       '9 volts is too small to move any charge',
     ],
     answer: 0,
+    hint: 'An open switch breaks the loop, so charge cannot travel out of the battery and back in.',
   },
   {
     id: 'bigger-resistor',
@@ -30,6 +32,7 @@ export const HATCH_QUESTIONS = [
       'It becomes zero, because 1 kΩ is an open circuit',
     ],
     answer: 0,
+    hint: 'A larger resistor leaves less current for the same voltage. I = V / R.',
   },
 ];
 
@@ -50,5 +53,6 @@ function copyQuestion(question) {
     prompt: question.prompt,
     choices: question.choices.slice(),
     answer: question.answer,
+    hint: question.hint,
   };
 }

@@ -148,7 +148,7 @@ export default function TroyWorld() {
           </div>
           {quiz.status === 'wrong' && (
             <>
-              <p className="troy-quiz-note">That answer is marked. One more question opens the hatch.</p>
+              <p className="troy-quiz-note">{quiz.question.hint} The hatch stays shut until an answer is right.</p>
               <button type="button" className="btn btn-quiet troy-quiz-next" onClick={anotherQuestion}>
                 Another question
               </button>

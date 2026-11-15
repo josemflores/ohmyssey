@@ -5,7 +5,7 @@
 // so the room feels tight.
 //
 // The trap door shows "Press E" when he stands on it.
-// That press asks a question until a correct answer unlocks the hatch.
+// A correct answer unlocks it. Then that press climbs back out.
 
 import Phaser from 'phaser';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
@@ -212,7 +212,6 @@ export class HorseScene extends Phaser.Scene {
     this.input.keyboard.addCapture([
       'W', 'A', 'S', 'D', 'E', 'UP', 'DOWN', 'LEFT', 'RIGHT',
     ]);
-
     // The question box locks his feet. A right answer opens the hatch.
     this.inputLocked = false;
     this.hatchUnlocked = false;
@@ -432,9 +431,10 @@ function paintDark() {
   const ctx = canvas.getContext('2d');
   // The picture is stretched over the whole screen, so the bright hole
   // has to be a small part of this canvas or the room will not feel tight.
-  const g = ctx.createRadialGradient(128, 128, 6, 128, 128, 34);
+  // Wide enough that Odysseus, the three Greeks, and the hatch stay in the light.
+  const g = ctx.createRadialGradient(128, 128, 20, 128, 128, 96);
   g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(0.4, 'rgba(0,0,0,0.45)');
+  g.addColorStop(0.62, 'rgba(0,0,0,0.28)');
   g.addColorStop(1, 'rgba(0,0,0,1)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 256, 256);
