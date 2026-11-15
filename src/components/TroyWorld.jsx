@@ -15,6 +15,7 @@ export default function TroyWorld() {
   const gameRef = useRef(null);
   const [hint, setHint] = useState(true);
   const [talk, setTalk] = useState(null);
+  const [place, setPlace] = useState('troy');
 
   useEffect(() => {
     const parent = host.current;
@@ -33,9 +34,11 @@ export default function TroyWorld() {
     }
     game.events.on('interact', onInteract);
     game.events.on('closeInteract', onCloseRequest);
+    game.events.on('place', setPlace);
     return () => {
       game.events.off('interact', onInteract);
       game.events.off('closeInteract', onCloseRequest);
+      game.events.off('place', setPlace);
       game.destroy(true);
       gameRef.current = null;
     };
@@ -71,8 +74,8 @@ export default function TroyWorld() {
     <div className="troy" data-screen="world">
       <div ref={host} className="troy-host" />
       <h1 className="troy-plaque">
-        Troy
-        <span>at night</span>
+        {place === 'horse' ? 'The horse' : 'Troy'}
+        <span>{place === 'horse' ? 'inside' : 'at night'}</span>
       </h1>
       <p className={hint ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
       {talk && (

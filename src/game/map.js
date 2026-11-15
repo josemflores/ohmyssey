@@ -135,16 +135,17 @@ export const INTERACTABLES = [
     prompt: 'Press E to approach the temple',
     type: 'place',
   },
-  // The Trojan horse hatch is not playable yet. A later PR removes the slashes.
-  // Stand just south of the horse. That prop is x 480, baseY 228.
-  // {
-  //   id: 'horse_hatch',
-  //   x: 480,
-  //   y: 252,
-  //   radius: INTERACT_RADIUS,
-  //   prompt: 'Press E to open the hatch',
-  //   type: 'hatch',
-  // },
+  // Just south of the horse wheels (the horse prop is x 480, baseY 228).
+  // Press E here to climb into the belly. The button inside the horse is
+  // onTrapDoor() in HorseScene.js — that one is left empty on purpose.
+  {
+    id: 'horse_hatch',
+    x: 480,
+    y: 252,
+    radius: 36,
+    prompt: 'Press E to climb inside',
+    type: 'hatch',
+  },
 ];
 
 // Every entry is a real standing lamp. The glow is drawn on its flame.

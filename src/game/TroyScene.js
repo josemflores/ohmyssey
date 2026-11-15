@@ -40,13 +40,17 @@ export class TroyScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
-      frameWidth: ANIM_CONFIG.frameWidth,
-      frameHeight: ANIM_CONFIG.frameHeight,
-    });
+    // Coming back from the horse, these pictures are already loaded.
+    // Loading them again wipes the texture other scenes are still using.
+    if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
+      this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
+        frameWidth: ANIM_CONFIG.frameWidth,
+        frameHeight: ANIM_CONFIG.frameHeight,
+      });
+    }
 
     const walk = ANIM_CONFIG.walk;
-    if (walk) {
+    if (walk && !this.textures.exists('odysseus-walk')) {
       this.load.spritesheet('odysseus-walk', walk.path, {
         frameWidth: walk.frameWidth,
         frameHeight: walk.frameHeight,
@@ -55,7 +59,7 @@ export class TroyScene extends Phaser.Scene {
 
     // Real PixelLab sheets. See warriorConfig.js. Greek is red, Trojan is teal.
     for (const team of Object.values(WARRIOR_CONFIG.teams)) {
-      if (!team.path) continue;
+      if (!team.path || this.textures.exists(team.key)) continue;
       this.load.spritesheet(team.key, team.path, {
         frameWidth: WARRIOR_CONFIG.frameWidth,
         frameHeight: WARRIOR_CONFIG.frameHeight,
@@ -63,10 +67,12 @@ export class TroyScene extends Phaser.Scene {
     }
 
     // Eight facings. The plaza uses frame 0 (south). Native 128px, no rescale.
-    this.load.spritesheet('horse', '/assets/sprites/trojan_horse.png', {
-      frameWidth: 128,
-      frameHeight: 128,
-    });
+    if (!this.textures.exists('horse')) {
+      this.load.spritesheet('horse', '/assets/sprites/trojan_horse.png', {
+        frameWidth: 128,
+        frameHeight: 128,
+      });
+    }
   }
 
   create() {
@@ -75,14 +81,16 @@ export class TroyScene extends Phaser.Scene {
       console.warn(`Troy layout problem:\n${report.problems.join('\n')}`);
     }
 
-    buildWorldTextures(this);
-    if (ANIM_CONFIG.walk) this.createWalkAnims();
-    this.anims.create({
-      key: 'lamp-flicker',
-      frames: this.anims.generateFrameNumbers('oil-lamp', { start: 0, end: 2 }),
-      frameRate: 5,
-      repeat: -1,
-    });
+    if (!this.textures.exists('tiles')) buildWorldTextures(this);
+    if (ANIM_CONFIG.walk && !this.anims.exists('walk-s')) this.createWalkAnims();
+    if (!this.anims.exists('lamp-flicker')) {
+      this.anims.create({
+        key: 'lamp-flicker',
+        frames: this.anims.generateFrameNumbers('oil-lamp', { start: 0, end: 2 }),
+        frameRate: 5,
+        repeat: -1,
+      });
+    }
     const horseTex = this.textures.get('horse');
     if (horseTex) horseTex.setFilter(Phaser.Textures.FilterMode.NEAREST);
 
@@ -125,7 +133,8 @@ export class TroyScene extends Phaser.Scene {
     this.scale.on('resize', fitVignette);
 
     // Feet are the body. The picture is drawn separately, from the ankles up.
-    this.feet = this.physics.add.image(SPAWN.x, SPAWN.y, 'feet');
+    const start = this.arrive || SPAWN;
+    this.feet = this.physics.add.image(start.x, start.y, 'feet');
     this.feet.setVisible(false);
     this.feet.setCollideWorldBounds(true);
     this.feet.body.setAllowGravity(false);
@@ -135,14 +144,14 @@ export class TroyScene extends Phaser.Scene {
     // A smaller bias so the short feet-box does not get shoved off thin gaps.
     this.physics.world.TILE_BIAS = 4;
 
-    this.heroRim = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
+    this.heroRim = this.add.sprite(start.x, start.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.heroRim.setOrigin(0.5, 1);
     this.heroRim.setTint(0xd0e6ff);
     this.heroRim.setScale(HERO_SCALE * 1.07);
-    this.hero = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
+    this.hero = this.add.sprite(start.x, start.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.hero.setOrigin(0.5, 1);
     this.hero.setScale(HERO_SCALE);
-    this.heroShadow = this.add.ellipse(SPAWN.x, SPAWN.y, 24, 7, 0x0c1424, 0.55);
+    this.heroShadow = this.add.ellipse(start.x, start.y, 24, 7, 0x0c1424, 0.55);
 
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
@@ -195,9 +204,18 @@ export class TroyScene extends Phaser.Scene {
     });
   }
 
+  init(data) {
+    // HorseScene sends him back here, beside the horse, instead of the beach.
+    this.arrive = data && Number.isFinite(data.x) ? data : null;
+  }
+
   // React listens for this. payload.id is the spot from map.js.
   interact(target) {
     if (!target || this.inputLocked) return;
+    if (target.id === 'horse_hatch') {
+      this.scene.start('horse');
+      return;
+    }
     this.game.events.emit('interact', {
       id: target.id,
       type: target.type,
