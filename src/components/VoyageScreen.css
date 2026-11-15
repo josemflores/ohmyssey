@@ -113,11 +113,18 @@
   position: absolute;
   left: 28%;
   bottom: 78px;
-  width: min(460px, 52vw);
+  width: min(384px, 64vw);
   z-index: 2;
   pointer-events: none;
   filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.45));
   animation: voyage-bob 3.4s ease-in-out infinite;
+}
+.voyage-ship img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  transform: scaleX(-1);
 }
 @keyframes voyage-bob {
   0%, 100% { transform: translateY(0) rotate(-1.2deg); }
