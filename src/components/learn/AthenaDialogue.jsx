@@ -81,7 +81,7 @@ export default function AthenaDialogue({ level, result, misses }) {
         <Owl />
         <div>
           <h2>Athena</h2>
-          <p>She explains the mistake. She does not name the winning part.</p>
+          <p>Ask about this board. She points you at the idea, not the answer.</p>
         </div>
       </div>
       <ol className="dialogue-log">
