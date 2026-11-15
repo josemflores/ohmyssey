@@ -62,7 +62,8 @@
   100% { transform: translateX(0); }
 }
 .battle-screen.is-counter .battle-sprite.battle-hero.battle-archer {
-  background-image: url('/assets/battle/odysseus_hit_e.png');
+  /* Knocked back, the bow still in his hand. */
+  background-image: url('/assets/battle/odysseus_bow_hit_e.png');
   background-size: calc(var(--sp) * 3) var(--sp);
   animation:
     odysseus-hit 0.64s steps(2) forwards,

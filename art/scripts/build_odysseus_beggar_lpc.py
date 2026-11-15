@@ -254,6 +254,17 @@ def king_bow_frame(col: int, row: int, arrow: bool = True) -> Image.Image:
     return archer_frame(king_shoot_layers(), ids.index("body"), ids.index("head"), col, row, arrow)
 
 
+def flinch(frame: Image.Image, back: int, lean: int, waist: int = 19) -> Image.Image:
+    """Struck: the whole body pushed `back` pixels (west, away from the
+    suitors) and the upper body thrown back `lean` more, bow still in hand."""
+    out = Image.new("RGBA", frame.size)
+    legs = frame.crop((0, waist, OUT, OUT))
+    top = frame.crop((0, 0, OUT, waist))
+    out.alpha_composite(legs, (-back, waist))
+    out.alpha_composite(top, (-back - lean, 1 if lean else 0))
+    return out
+
+
 def breathe(frame: Image.Image, waist: int = 19) -> Image.Image:
     """The second idle frame: everything above the waist sinks one pixel."""
     out = frame.copy()
@@ -266,7 +277,8 @@ def breathe(frame: Image.Image, waist: int = 19) -> Image.Image:
 def build_bow_sheets() -> None:
     """For the fight in the hall: odysseus_bow_idle_e.png (2 frames, the bow
     held at his side) and odysseus_bow_shoot_e.png (12 frames: bring the bow
-    up, nock, draw, release, lower it again), 32x32, facing east. In battle he is the king again, so
+    up, nock, draw, release, lower it again) and odysseus_bow_hit_e.png (3
+    frames, knocked back holding the bow), 32x32, facing east. In battle he is the king again, so
     these use his armoured LPC look, not the beggar's rags."""
     east = lpc.LPC_ROWS["right"]
     BOW_DIR.mkdir(parents=True, exist_ok=True)
@@ -274,6 +286,9 @@ def build_bow_sheets() -> None:
     sheets = {
         "odysseus_bow_idle_e": strip([rest, breathe(rest)]),
         "odysseus_bow_shoot_e": strip([king_bow_frame(c, east, a) for c, a in BOW_SHOOT]),
+        # Hit by a suitor: knocked back with the bow still at his side, then
+        # recovering (3 frames, like odysseus_hit_e.png for the sword).
+        "odysseus_bow_hit_e": strip([flinch(rest, 1, 1), flinch(rest, 2, 2), flinch(rest, 1, 0)]),
     }
     for name, sheet in sheets.items():
         sheet.save(BOW_DIR / f"{name}.png")

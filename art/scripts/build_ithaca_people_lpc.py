@@ -29,6 +29,8 @@ code reads them the same way). Each row is the LPC idle breath: frames
   penelope/penelope_bow_s.png        3 frames facing south, holding out the
                                      great bow in both hands (cutscenes)
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
+  athena/athena_32.png               Athena (4x8 idle sheet)
+  athena/athena_head.png             her head at full size, for the chat icon
 
 Run from the repo root (needs Pillow):
 
@@ -153,6 +155,49 @@ def penelope() -> list[dict]:
         {"id": "hair", "path": "hair/long/adult/idle.png", "ramp": HAIR_DARK, "head": True},
         {"id": "circlet", "path": "hat/formal/tiara/adult/idle/gold.png", "ramp": CIRCLET_GOLD, "head": True},
     ]
+
+
+# Athena, goddess of wisdom, as she appears to Odysseus on Ithaca: a bronze
+# helmet with a tall blue crest, a gold breastplate (the aegis) over a white
+# peplos, a storm-gray mantle, long dark hair, sandals.
+ATHENA_BRONZE = ramp("#3a2408", "#6a4612", "#9a6c1e", "#c49434", "#e2bc5a", "#f8e098")
+ATHENA_CREST = ramp("#060c1e", "#0e1a3a", "#1a2c58", "#284276", "#3c5c96")
+ATHENA_MANTLE = ramp("#10141c", "#1e2430", "#2e3646", "#424a5c", "#5a6476", "#7a8494")
+
+
+def athena() -> list[dict]:
+    return [
+        {"id": "mantle-bg", "path": "cape/solid/bg/idle.png", "ramp": ATHENA_MANTLE},
+        {"id": "body", "path": "body/bodies/female/idle.png"},
+        {"id": "sandals", "path": "feet/sandals/thin/idle.png", "ramp": LEATHER},
+        {"id": "gown", "path": "dress/slit/female/idle/white.png", "ramp": QUEEN_WHITE},
+        {"id": "aegis", "path": "torso/armour/plate/female/idle.png", "ramp": ATHENA_BRONZE},
+        {"id": "mantle-fg", "path": "cape/solid/fg/idle.png", "ramp": ATHENA_MANTLE},
+        {"id": "head", "path": "head/heads/human/female/idle.png", "head": True},
+        {"id": "hair", "path": "hair/long/adult/idle.png", "ramp": HAIR_DARK, "head": True},
+        {"id": "helmet", "path": "hat/helmet/legion/adult/idle.png", "ramp": ATHENA_BRONZE, "head": True},
+        {"id": "crest", "path": "hat/accessory/crest/adult/idle.png", "ramp": ATHENA_CREST, "head": True},
+    ]
+
+
+def athena_head() -> Image.Image:
+    """Athena's face, facing the viewer, at full LPC size (64 px cell),
+    cropped to her head and helmet: the icon of the Ask Athena chat."""
+    canvas = Image.new("RGBA", (SRC, SRC))
+    for layer in athena():
+        if not layer.get("head"):
+            continue
+        image = fetch(layer["path"])
+        if layer.get("ramp"):
+            image = by_lightness(image, layer["ramp"])
+        down = lpc.LPC_ROWS["down"]
+        canvas.alpha_composite(image.crop((0, down * SRC, SRC, (down + 1) * SRC)))
+    box = canvas.getbbox()
+    head = canvas.crop(box)
+    side = max(head.size)
+    square = Image.new("RGBA", (side, side))
+    square.alpha_composite(head, ((side - head.width) // 2, side - head.height))
+    return square
 
 
 def suitor(outfit: str, main: list[str], accent: list[str]) -> list[dict]:
@@ -331,6 +376,12 @@ def main() -> None:
     walk_path = NPCS / "penelope" / "penelope_walk_32.png"
     build_walk_sheet(penelope()).save(walk_path)
     print(f"wrote {walk_path.relative_to(lpc.ROOT)}")
+    path = NPCS / "athena" / "athena_32.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    built["athena"] = build_sheet(athena())
+    built["athena"].save(path)
+    athena_head().save(NPCS / "athena" / "athena_head.png")
+    print(f"wrote {path.relative_to(lpc.ROOT)} and athena_head.png")
     bow_path = NPCS / "penelope" / "penelope_bow_s.png"
     build_penelope_bow().save(bow_path)
     print(f"wrote {bow_path.relative_to(lpc.ROOT)}")

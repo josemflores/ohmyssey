@@ -101,10 +101,10 @@ export default function AthenaChat({ topic, place }) {
   return (
     <section className="card athena-chat" aria-label="Ask Athena">
       <header className="athena-chat-head">
-        <Owl />
+        <AthenaFace />
         <div>
           <h2>Athena</h2>
-          <p>Goddess of wisdom · your guide on the voyage</p>
+          <p>Goddess of wisdom</p>
         </div>
       </header>
 
@@ -160,17 +160,15 @@ export default function AthenaChat({ topic, place }) {
   );
 }
 
-function Owl() {
+// Her face from the game sprite (art/scripts/build_ithaca_people_lpc.py):
+// bronze helmet, blue crest, at full LPC size, scaled up crisp.
+function AthenaFace() {
   return (
-    <svg className="owl" viewBox="0 0 48 48" aria-hidden="true">
-      <circle cx="24" cy="26" r="14" fill="#1f3d4d" />
-      <circle cx="18" cy="24" r="5" fill="#f4e6c8" />
-      <circle cx="30" cy="24" r="5" fill="#f4e6c8" />
-      <circle cx="18" cy="24" r="2" fill="#1c1612" />
-      <circle cx="30" cy="24" r="2" fill="#1c1612" />
-      <path d="M22 30 h4 l-2 3 z" fill="#e6c27a" />
-      <path d="M10 20 q6-14 14-8" fill="none" stroke="#e6c27a" strokeWidth="2" />
-      <path d="M38 20 q-6-14-14-8" fill="none" stroke="#e6c27a" strokeWidth="2" />
-    </svg>
+    <img
+      className="athena-face"
+      src="/assets/sprites/npcs/athena/athena_head.png"
+      alt=""
+      aria-hidden="true"
+    />
   );
 }

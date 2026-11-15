@@ -97,6 +97,13 @@ export class Level2Scene extends Phaser.Scene {
         frameHeight: 32,
       });
     }
+    // Athena, when she appears to Odysseus (4 breathing frames x 8 facings).
+    if (!this.textures.exists('athena')) {
+      this.load.spritesheet('athena', '/assets/sprites/npcs/athena/athena_32.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
     if (!this.textures.exists('odysseus-beggar')) {
       this.load.spritesheet('odysseus-beggar', '/assets/sprites/odysseus_beggar/idle.png', {
         frameWidth: 32,
@@ -310,25 +317,37 @@ export class Level2Scene extends Phaser.Scene {
     else show();
   }
 
+  // Athena stands beside Odysseus while she speaks: her LPC sprite, facing
+  // him (row 2 of her sheet faces west), fading in and out like a vision.
   showAthena() {
-    if (this.athenaGlow) return;
-    this.athenaGlow = this.add.ellipse(this.hero.x + 34, this.hero.y - 24, 16, 36, 0xf0d48a, 0.55);
-    this.athenaGlow.setBlendMode(Phaser.BlendModes.ADD);
-    this.athenaGlow.setDepth(12000);
-    this.tweens.add({
-      targets: this.athenaGlow,
-      alpha: 0.2,
-      scaleY: 1.12,
-      yoyo: true,
-      repeat: -1,
-      duration: 620,
-    });
+    if (this.athena) return;
+    if (!this.anims.exists('athena-idle')) {
+      this.anims.create({
+        key: 'athena-idle',
+        frames: this.anims.generateFrameNumbers('athena', { start: 8, end: 11 }),
+        frameRate: 4,
+        repeat: -1,
+      });
+    }
+    this.athena = this.add.sprite(this.hero.x + 34, this.hero.y, 'athena', 8)
+      .setOrigin(0.5, 1)
+      .setScale(HERO_SCALE)
+      .setDepth(this.hero.depth + 1)
+      .setAlpha(0);
+    this.athena.play('athena-idle');
+    this.tweens.add({ targets: this.athena, alpha: 1, duration: 500, ease: 'Sine.easeOut' });
   }
 
   hideAthena() {
-    if (!this.athenaGlow) return;
-    this.athenaGlow.destroy();
-    this.athenaGlow = null;
+    if (!this.athena) return;
+    const athena = this.athena;
+    this.athena = null;
+    this.tweens.add({
+      targets: athena,
+      alpha: 0,
+      duration: 450,
+      onComplete: () => athena.destroy(),
+    });
   }
 
   playShimmer(done) {
