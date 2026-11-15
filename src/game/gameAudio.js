@@ -1,5 +1,6 @@
 const AUDIO_PATH = import.meta.env.BASE_URL + 'assets/audio/';
 const COMBAT = 'combat-trojan-charge';
+const FOOTSTEPS = ['footstep', 'footstep-2', 'footstep-3'];
 
 function audioClip(name, volume, loop = false) {
   const clip = new Audio(AUDIO_PATH + name + '.wav');
@@ -13,6 +14,7 @@ export function attachGameAudio(game, { world, level }) {
   const playing = new Set();
   let worldTrack = audioClip(world, 0.26, true);
   const combatTrack = audioClip(COMBAT, 0.29, true);
+  const doorTrack = audioClip('door-the-gates-of-troy', 0.43);
   let activeTrack = worldTrack;
 
   function startMusic() {
@@ -42,11 +44,26 @@ export function attachGameAudio(game, { world, level }) {
   }
 
   let nextStep = 0;
+  let stepIndex = 0;
   function footsteps(time, moving, running) {
     if (!moving || time < nextStep) return;
     nextStep = time + (running ? 220 : 335);
-    play('footstep', 0.19);
+    play(FOOTSTEPS[stepIndex], running ? 0.36 : 0.31);
+    stepIndex = (stepIndex + 1) % FOOTSTEPS.length;
   }
+
+  function doorOpening() {
+    if (activeTrack === combatTrack || activeTrack === doorTrack) return;
+    doorTrack.currentTime = 0;
+    useTrack(doorTrack);
+  }
+
+  function finishDoorCue() {
+    if (activeTrack === doorTrack) useTrack(worldTrack);
+  }
+
+  doorTrack.addEventListener('ended', finishDoorCue);
+  doorTrack.addEventListener('error', finishDoorCue);
 
   function fightStart() {
     if (activeTrack === combatTrack) return;
@@ -63,13 +80,14 @@ export function attachGameAudio(game, { world, level }) {
   function leaveHorse(place) {
     if (place !== 'troy') return;
     const nextTrack = audioClip('world-harbor', 0.26, true);
+    const wasExploring = activeTrack === worldTrack;
     worldTrack = nextTrack;
-    useTrack(nextTrack);
-    play('world-transition', 0.33);
+    if (wasExploring) useTrack(nextTrack);
   }
 
   const events = {
     audioStep: footsteps,
+    audioDoorOpen: doorOpening,
     audioCombatStart: fightStart,
     audioCombatEnd: () => useTrack(worldTrack),
     fightBlow,
@@ -98,6 +116,8 @@ export function attachGameAudio(game, { world, level }) {
   game.events.once('destroy', () => {
     window.removeEventListener('keydown', startMusic);
     window.removeEventListener('pointerdown', startMusic);
+    doorTrack.removeEventListener('ended', finishDoorCue);
+    doorTrack.removeEventListener('error', finishDoorCue);
     for (const [name, handler] of Object.entries(events)) game.events.off(name, handler);
     activeTrack.pause();
     for (const voice of playing) voice.pause();

@@ -592,6 +592,7 @@ export class Level2Scene extends Phaser.Scene {
 
   // Walk into the hall: fade, step through the doors, fade back in.
   enterHall() {
+    this.game.events.emit('audioDoorOpen');
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);
     this.moveTo(HALL_AREA, HALL_SPAWN, 'n', () => {
