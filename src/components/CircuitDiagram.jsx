@@ -26,7 +26,9 @@ export default function CircuitDiagram({ circuit }) {
   const parallel = circuit.layout === 'parallel';
   return (
     <figure className="q-circuit">
-      <svg viewBox="0 0 280 166" role="img" aria-label={describe(circuit)}>
+      {/* A timed drawing gets an 18px strip on top for its tag, so the tag
+          never sits on a part's label. */}
+      <svg viewBox={circuit.moment ? '0 -20 280 186' : '0 0 280 166'} role="img" aria-label={describe(circuit)}>
         <defs>
           <marker id="q-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill={ASK} />
@@ -37,7 +39,7 @@ export default function CircuitDiagram({ circuit }) {
         </defs>
         {parallel ? <Parallel circuit={circuit} /> : <Series circuit={circuit} />}
         {circuit.moment && (
-          <text x="8" y="14" className="q-circuit-text q-circuit-moment" fontSize="11.5" fill={INK} fontStyle="italic">
+          <text x="140" y="-6" textAnchor="middle" className="q-circuit-text q-circuit-moment" fontSize="11.5" fill={INK} fontStyle="italic">
             {circuit.moment === 'start' ? 'just after switch-on' : 'long after switch-on'}
           </text>
         )}

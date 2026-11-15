@@ -631,6 +631,9 @@ export class Level2Scene extends Phaser.Scene {
             line: 'The doors are shut, and the suitors would mock a stranger. Find shelter with Eumaeus first.',
           });
         }
+      } else if (this.nearest.id === 'penelope' && this.hallWon) {
+        // Odyssey 23: the secret of the bed. Level2World plays the ending.
+        this.game.events.emit('reunion');
       } else if (this.nearest.id === 'bow' && !this.hallWon) {
         // Odyssey 21: Penelope sets the contest of the bow. Level2World runs
         // the contest and the fight, then sends 'hallWon'.

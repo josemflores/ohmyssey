@@ -130,7 +130,14 @@
   margin-left: auto;
   margin-right: auto;
 }
-.l2-battle-miss .q-note { margin: 0 0 0.6rem; }
+/* The battle sets light text for its cards (TroyWorld.css); this card is
+   parchment, so the note goes back to dark ink to stay readable. */
+.battle-screen .battle-question.l2-battle-miss p.q-note {
+  margin: 0 0 0.7rem;
+  color: var(--ink, #2a1c0c);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .l2-arrow { animation-duration: 0.01s; }
