@@ -753,6 +753,34 @@ const PROP_ART = {
   'gate-door': paintGateDoor,
 };
 
+// Cut off empty rows at the bottom of a picture, so its lowest painted pixel
+// sits exactly on baseY. Without this, a picture with blank rows under it
+// stands above its own shadow and looks like it is floating.
+export function trimBottom(canvas) {
+  const { width, height } = canvas;
+  const data = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+  let last = height - 1;
+  while (last > 0) {
+    let filled = false;
+    for (let x = 0; x < width; x += 1) {
+      if (data[(last * width + x) * 4 + 3] > 0) {
+        filled = true;
+        break;
+      }
+    }
+    if (filled) break;
+    last -= 1;
+  }
+  if (last === height - 1) return canvas;
+  const out = document.createElement('canvas');
+  out.width = width;
+  out.height = last + 1;
+  const ctx = out.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(canvas, 0, 0);
+  return out;
+}
+
 function addCanvas(scene, key, canvas) {
   if (scene.textures.exists(key)) scene.textures.remove(key);
   const tex = scene.textures.addCanvas(key, canvas);
@@ -787,6 +815,6 @@ export function buildWorldTextures(scene) {
     addSheet(scene, WARRIOR_CONFIG.teams.trojan.key, paintWarriorSheet(TEAMS.trojan));
   }
   for (const [id, paint] of Object.entries(PROP_ART)) {
-    addCanvas(scene, id, paint());
+    addCanvas(scene, id, trimBottom(paint()));
   }
 }

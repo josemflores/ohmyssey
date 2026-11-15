@@ -157,7 +157,8 @@ function pose(man) {
   }
   man.sprite.setPosition(x, y);
   man.rim.setPosition(x, y);
-  man.shadow.setPosition(x + 3, y + 1);
+  // Under his feet (LPC feet are 1 px above the frame bottom).
+  man.shadow.setPosition(x + 1, y - 1);
   const sort = 7000 + groundY;
   man.shadow.setDepth(sort - 2);
   man.rim.setDepth(sort - 1);

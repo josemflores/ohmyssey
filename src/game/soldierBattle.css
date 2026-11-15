@@ -70,20 +70,20 @@
 /* How the red works: a CSS filter recolors only the drawn pixels of a
    sprite, never its transparent box. brightness(0.5) darkens it, sepia
    turns it brownish, saturate pushes that to a strong color, and
-   hue-rotate swings brown over to red. The drop-shadow at the end is the
-   same ground shadow every battle sprite already has. Every keyframe lists
+   hue-rotate swings brown over to red. The empty drop-shadow at the end
+   keeps the filter list the same length in every keyframe. Every keyframe lists
    the same filters (calm values when not red) so the browser can fade
    smoothly between them instead of snapping. */
 @keyframes sprite-hurt {
-  0%, 28% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
-  40% { filter: brightness(0.55) sepia(1) saturate(9) hue-rotate(-28deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
-  62%, 100% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+  0%, 28% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
+  40% { filter: brightness(0.55) sepia(1) saturate(9) hue-rotate(-28deg) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
+  62%, 100% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
 }
 /* Same flash, timed for the slower heavy blow. */
 @keyframes sprite-hurt-late {
-  0%, 54% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
-  64% { filter: brightness(0.55) sepia(1) saturate(9) hue-rotate(-28deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
-  82%, 100% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+  0%, 54% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
+  64% { filter: brightness(0.55) sepia(1) saturate(9) hue-rotate(-28deg) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
+  82%, 100% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 0 0 rgba(0, 0, 0, 0)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -476,4 +476,42 @@
   .troy .battle-screen.is-entering .battle-dock { animation: none; }
   .battle-screen .battle-sprite.battle-hero,
   .battle-screen .battle-member:not(.is-down) .battle-sprite.battle-trojan { animation: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Shadows in battle. The old shadow was a dark copy of each sprite drawn
+   18px lower, which read as a second figure and made everyone look like
+   they were hovering. Now each fighter has a soft oval on the ground right
+   under his feet (the LPC feet are on the frame's last row, about 97% down).
+   --------------------------------------------------------------------------- */
+.battle-screen .battle-sprite { filter: none; }
+.troy .battle-screen .battle-stage::before { display: none; }
+.battle-screen .battle-fighter::after,
+.battle-screen .battle-member::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  z-index: 0;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 45%, transparent 72%);
+  transform: translateX(-46%);
+  pointer-events: none;
+}
+/* Odysseus: his sprite starts 16px down the fighter box (TroyWorld.css). */
+.battle-screen .battle-fighter::after {
+  top: calc(16px + var(--sp) * 0.97 - 7px);
+  width: calc(var(--sp) * 0.5);
+}
+/* A Trojan: his sprite starts 8px down on phones, at the top on desktop. */
+.battle-screen .battle-member { --sprite-top: 8px; }
+.battle-screen .battle-member::before {
+  top: calc(var(--sprite-top) + var(--foe) * 0.97 - 6px);
+  width: calc(var(--foe) * 0.55);
+  height: 12px;
+  transition: opacity 0.6s ease-in;
+}
+.battle-screen .battle-member.is-down::before { opacity: 0; }
+@media (min-width: 721px) {
+  .troy .battle-screen .battle-member { --sprite-top: 0px; }
 }

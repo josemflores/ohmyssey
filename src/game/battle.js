@@ -309,7 +309,7 @@ export class Battle {
       unit.rim.setFrame(frame);
       unit.rim.setPosition(px, py);
       // Moon is up-left, so the shadow sits a little down and to the right.
-      unit.shadow.setPosition(px + 4, py + 1);
+      unit.shadow.setPosition(px + 1, py - 1);
       const sort = 7000 + groundY;
       unit.shadow.setDepth(sort - 2);
       unit.rim.setDepth(sort - 1);

@@ -399,11 +399,11 @@ export class Level2Scene extends Phaser.Scene {
 
   addSwineherd() {
     const depth = SORT + EUMAEUS_AT.y;
-    this.add.ellipse(EUMAEUS_AT.x + 3, EUMAEUS_AT.y + 1, 18, 6, 0x0c1424, 0.5).setDepth(5200);
+    this.add.ellipse(EUMAEUS_AT.x + 1, EUMAEUS_AT.y - 1, 18, 6, 0x0c1424, 0.5).setDepth(5200);
     this.eumaeus = this.add.sprite(EUMAEUS_AT.x, EUMAEUS_AT.y, 'eumaeus', 0)
       .setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(depth);
     this.eumaeus.play('eumaeus-idle');
-    this.sonShadow = this.add.ellipse(SON_FROM.x + 3, SON_FROM.y + 1, 16, 5, 0x0c1424, 0.5)
+    this.sonShadow = this.add.ellipse(SON_FROM.x + 1, SON_FROM.y - 1, 16, 5, 0x0c1424, 0.5)
       .setDepth(5200).setVisible(false);
     this.telemachus = this.add.sprite(SON_FROM.x, SON_FROM.y, 'telemachus', 0)
       .setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(SORT + SON_AT.y).setVisible(false);
@@ -487,7 +487,7 @@ export class Level2Scene extends Phaser.Scene {
 
   addPenelope() {
     const { x, y } = PENELOPE;
-    const shadow = this.add.ellipse(x + 3, y + 1, 18, 6, 0x0c1424, 0.5);
+    const shadow = this.add.ellipse(x + 1, y, 18, 6, 0x0c1424, 0.5);
     shadow.setDepth(5200);
     const sprite = this.add.sprite(x, y + 1, 'penelope', 0).setOrigin(0.5, 1).setScale(HERO_SCALE);
     sprite.setDepth(SORT + y);
@@ -525,7 +525,7 @@ export class Level2Scene extends Phaser.Scene {
     this.hero.setPosition(hx, hy);
     this.heroRim.setTexture(this.hero.texture.key, this.hero.frame.name);
     this.heroRim.setPosition(hx, hy);
-    this.heroShadow.setPosition(hx + 4, hy + 1);
+    this.heroShadow.setPosition(hx + 1, hy - 1);
     const sort = SORT + groundY;
     this.heroShadow.setDepth(5200);
     this.heroRim.setDepth(sort - 0.5);
@@ -640,7 +640,7 @@ const SHADOWS = {
 function addProp(scene, prop) {
   const [sw, sh] = SHADOWS[prop.id] || [prop.bodyW * 0.9, 8];
   if (sw > 0) {
-    scene.add.ellipse(prop.x + 5, prop.baseY + 1, sw, sh, 0x1a2438, 0.5).setDepth(5200);
+    scene.add.ellipse(prop.x + 3, prop.baseY - 1, sw, sh, 0x1a2438, 0.5).setDepth(5200);
   }
   const image = scene.add.image(prop.x, prop.baseY, propTexture(prop.id)).setOrigin(0.5, 1);
   image.setDepth(SORT + prop.baseY);
@@ -661,7 +661,7 @@ function addProp(scene, prop) {
 }
 
 function addDecor(scene, decor) {
-  scene.add.ellipse(decor.x + 2, decor.baseY, decor.id === 'pig' ? 20 : 13, 4, 0x1a2438, 0.45).setDepth(5200);
+  scene.add.ellipse(decor.x + 1, decor.baseY - 1, decor.id === 'pig' ? 20 : 13, 4, 0x1a2438, 0.45).setDepth(5200);
   const sprite = scene.add.image(decor.x, decor.baseY, propTexture(decor.id)).setOrigin(0.5, 1);
   sprite.setDepth(SORT + decor.baseY);
   sprite.setTint(MOON_TINT);

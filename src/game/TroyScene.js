@@ -247,7 +247,7 @@ export class TroyScene extends Phaser.Scene {
     this.hero = this.add.sprite(start.x, start.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.hero.setOrigin(0.5, 1);
     this.hero.setScale(HERO_SCALE);
-    this.heroShadow = this.add.ellipse(start.x, start.y, 24, 7, 0x0c1424, 0.55);
+    this.heroShadow = this.add.ellipse(start.x, start.y, 20, 6, 0x0c1424, 0.55);
 
     this.physics.add.collider(this.feet, this.blockers);
     // Soldiers are solid: the city groups and the duelists inside the gate
@@ -470,7 +470,8 @@ export class TroyScene extends Phaser.Scene {
     this.heroRim.setOrigin(0.5, 1);
     this.heroRim.setScale(this.hero.scaleX * 1.07, this.hero.scaleY * 1.07);
     this.heroRim.setPosition(hx, hy);
-    this.heroShadow.setPosition(hx + 4, Math.round(groundY) + 1);
+    // Right under his feet, a hair toward the lower right (moon upper left).
+    this.heroShadow.setPosition(hx + 1, Math.round(groundY) - 1);
     // Above the moonlight so he stays readable. y still decides who is in front.
     const sort = 7000 + groundY;
     this.heroShadow.setDepth(sort - 2);
@@ -953,7 +954,8 @@ export class TroyScene extends Phaser.Scene {
         const place = formation[i % formation.length];
         const x = spot.x + place.dx;
         const y = spot.y + place.dy;
-        const shadow = this.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.55);
+        // Under his feet (LPC feet are 1 px above the frame bottom).
+        const shadow = this.add.ellipse(x + 1, y - 1, 16, 5, 0x0c1424, 0.55);
         const sprite = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1);
         // Each man faces his own way and breathes in place, out of step
         // with the others (playSoldierIdle adds a small random delay).
@@ -1327,7 +1329,9 @@ function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.
   const wide = prop.id === 'column' ? 10 : prop.id === 'horse' ? 72 : prop.bodyW * 0.85;
   const tall = prop.id === 'column' ? 4 : prop.id === 'horse' ? 14 : 6;
-  const shadow = scene.add.ellipse(prop.x + 5, prop.baseY + 2, wide, tall, 0x1a2438, 0.5);
+  // Centered on the ground contact (pictures are trimmed to their lowest
+  // pixel in textures.js), nudged a little right, away from the moon.
+  const shadow = scene.add.ellipse(prop.x + 3, prop.baseY - 1, wide, tall, 0x1a2438, 0.5);
   // Above the moonlight grade, under the people, so the shadow stays visible.
   shadow.setDepth(5200);
   let sprite = null;

@@ -172,7 +172,7 @@ export class HorseScene extends Phaser.Scene {
       sprite.setDepth(7000 + man.y);
       // The three Greeks wait in the dark, breathing (soldierAnimations.js).
       playSoldierIdle(sprite, 'greek', man.facing);
-      const shadow = this.add.ellipse(man.x + 3, man.y + 1, 16, 5, 0x1a0c08, 0.45);
+      const shadow = this.add.ellipse(man.x + 1, man.y - 1, 16, 5, 0x1a0c08, 0.45);
       shadow.setDepth(7000 + man.y - 2);
       const block = this.posts.create(man.x, man.y - 12, 'blank');
       block.setDisplaySize(18, 24);
@@ -322,7 +322,7 @@ export class HorseScene extends Phaser.Scene {
     this.heroRim.setFrame(this.hero.frame.name);
     this.heroRim.setOrigin(0.5, 1);
     this.heroRim.setPosition(hx, hy);
-    this.heroShadow.setPosition(hx + 3, Math.round(groundY) + 1);
+    this.heroShadow.setPosition(hx + 1, Math.round(groundY) - 1);
     const sort = 7000 + groundY;
     this.heroShadow.setDepth(sort - 2);
     this.heroRim.setDepth(sort - 1);

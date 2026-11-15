@@ -64,7 +64,8 @@ export const GATE_VIEW_Y = 600;
 const HURT_RED = 0xe03a2a;
 
 function addSoldier(scene, team, x, y, texture) {
-  const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5).setAlpha(0);
+  // Under his feet (LPC feet are 1 px above the frame bottom).
+  const shadow = scene.add.ellipse(x + 1, y - 1, 16, 5, 0x0c1424, 0.5).setAlpha(0);
   const sprite = scene.add.sprite(x, y, texture, 0).setOrigin(0.5, 1).setAlpha(0);
   const man = { team, sprite, shadow, facing: 's' };
   sortDepth(man);
@@ -82,7 +83,7 @@ function sortDepth(man) {
 // Keep the shadow (and torch, if he has one) with him while a tween moves him.
 function follow(man) {
   if (!man.sprite.active) return;
-  man.shadow.setPosition(man.sprite.x + 3, man.sprite.y + 1);
+  man.shadow.setPosition(man.sprite.x + 1, man.sprite.y - 1);
   sortDepth(man);
   if (man.torch) man.torch.follow();
 }

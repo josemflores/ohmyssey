@@ -9,6 +9,7 @@
 
 import Phaser from 'phaser';
 import { L2 } from './map.js';
+import { trimBottom } from '../textures.js';
 
 function makeCanvas(w, h) {
   const canvas = document.createElement('canvas');
@@ -647,7 +648,8 @@ export function shipTexture(scene) {
 // Texture keys are prefixed "l2-" so they never clash with Troy's.
 export function buildLevel2Textures(scene) {
   addCanvas(scene, 'l2-tiles', paintTileset());
-  for (const [key, paint] of Object.entries(PROP_ART)) addCanvas(scene, key, paint());
+  // Trimmed so each picture's lowest pixel sits on its baseY (no floating).
+  for (const [key, paint] of Object.entries(PROP_ART)) addCanvas(scene, key, trimBottom(paint()));
 }
 
 // Prop ids in map.js → texture keys. The lighthouse is Jona's PNG.
