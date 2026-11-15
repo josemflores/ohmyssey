@@ -231,7 +231,7 @@ export default function TroyLearn() {
             </div>
             <AthenaDialogue key={topic.id} level={topic} result={null} misses={0} />
             <button type="button" className="btn btn-quiet troy-learn-close" onClick={closeAll}>
-              Back to Troy
+              Close
             </button>
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function TroyLearn() {
               })}
             </div>
             <button type="button" className="btn btn-quiet troy-learn-close" onClick={closeAll}>
-              Back to Troy
+              Close
             </button>
           </div>
         </div>
