@@ -447,6 +447,11 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
             <li className={fight.side === 'hero' && fight.phase !== 'enemy' ? 'is-now' : ''}>Odysseus</li>
             <li className={fight.side === 'enemy' || fight.phase === 'enemy' ? 'is-now' : ''}>{fight.name}</li>
           </ol>
+          {/* Octopath-style opening: a flash and slanted shards that sweep
+              away to reveal the fight (soldierBattle.css). Plays once. */}
+          <div className="battle-intro" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5].map((i) => <i key={i} style={{ '--i': i }} />)}
+          </div>
           <BattleLog key={`log-${fight.blow || 0}`} log={fight.log} note={fight.note} fresh={Boolean(fight.blow)} />
           <div className="battle-stage">
             <div className="battle-side">

@@ -588,7 +588,32 @@ export class TroyScene extends Phaser.Scene {
     this.emitFightStart('Trojans');
   }
 
+  // Octopath-style lead-in: a white flash, the camera lunges in on Odysseus
+  // with a slight twist and a jolt, then the battle screen opens (its own
+  // shard wipe is in soldierBattle.css). The camera eases back in endFight.
   emitFightStart(name) {
+    const cam = this.cameras.main;
+    if (this.preFightZoom == null) this.preFightZoom = cam.zoom;
+    cam.flash(140, 255, 244, 224);
+    cam.shake(220, 0.004);
+    cam.zoomTo(this.preFightZoom * 1.6, 520, 'Sine.easeIn');
+    if (cam.rotateTo) cam.rotateTo(0.08, false, 520, 'Sine.easeIn');
+    this.time.delayedCall(540, () => {
+      if (!this.fighting || !this.fight) return;
+      this.openFightScreen(name);
+    });
+  }
+
+  // Undo the lead-in zoom and twist once the fight is over.
+  settleCamera() {
+    const cam = this.cameras.main;
+    if (this.preFightZoom == null) return;
+    cam.zoomTo(this.preFightZoom, 380, 'Sine.easeOut');
+    if (cam.rotateTo) cam.rotateTo(0, false, 380, 'Sine.easeOut');
+    this.preFightZoom = null;
+  }
+
+  openFightScreen(name) {
     this.game.events.emit('fightStart', {
       id: this.fight.group ? this.fight.group.id : 'trojan',
       name,
@@ -727,6 +752,7 @@ export class TroyScene extends Phaser.Scene {
   }
 
   endFight(won, note) {
+    this.settleCamera();
     const group = this.fight && this.fight.group;
     const foe = this.engagedFoe;
     this.engagedFoe = null;

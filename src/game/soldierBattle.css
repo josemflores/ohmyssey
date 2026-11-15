@@ -319,3 +319,63 @@
   .troy .battle-screen .battle-question .q-keys { margin-top: 0.3rem; font-size: 0.75rem; }
   .troy .battle-screen .battle-continue { align-self: flex-end; }
 }
+
+/* ---------------------------------------------------------------------------
+   Opening a fight, Octopath-style. The map has already flashed and lunged in
+   (TroyScene emitFightStart). The battle screen then opens behind six dark,
+   gold-edged slanted shards that sweep off up and down in turn, while the
+   fighters grow from a little too close to their places.
+   --------------------------------------------------------------------------- */
+.battle-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  overflow: hidden;
+  pointer-events: none;
+}
+.battle-intro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #fff4e0;
+  animation: battle-intro-flash 0.32s ease-out forwards;
+}
+.battle-intro i {
+  flex: 1 0 auto;
+  width: calc(100% / 6 + 8%);
+  margin: 0 -4%;
+  background: linear-gradient(90deg, #120a06 0%, #1e120a 70%, #c8963c 96%, #f0d48a 100%);
+  transform: skewX(-18deg);
+  animation: battle-intro-shard 0.62s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+  animation-delay: calc(0.12s + var(--i) * 0.05s);
+}
+.battle-intro i:nth-child(even) { animation-name: battle-intro-shard-down; }
+@keyframes battle-intro-flash {
+  from { opacity: 0.95; }
+  to { opacity: 0; }
+}
+@keyframes battle-intro-shard {
+  from { transform: skewX(-18deg) translateY(0); }
+  to { transform: skewX(-18deg) translateY(-115%); }
+}
+@keyframes battle-intro-shard-down {
+  from { transform: skewX(-18deg) translateY(0); }
+  to { transform: skewX(-18deg) translateY(115%); }
+}
+/* Desktop only: on phones the stage is already scaled down by TroyWorld.css. */
+@media (min-width: 721px) {
+  .troy .battle-screen .battle-stage {
+    animation: battle-intro-stage 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+@keyframes battle-intro-stage {
+  from { transform: scale(1.18); opacity: 0; }
+  35% { opacity: 1; }
+  to { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .battle-intro { display: none; }
+  .troy .battle-screen .battle-stage { animation: none; }
+}
