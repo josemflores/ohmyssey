@@ -1,0 +1,95 @@
+.login-card {
+  width: min(460px, 100%);
+  padding: 1.35rem 1.5rem 1.15rem;
+  text-align: center;
+}
+
+.login-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: clamp(1.7rem, 4.8vw, 2.7rem);
+  letter-spacing: 0.16em;
+  margin: 0.2rem 0 0.15rem;
+  animation: title-glow 2.4s ease-in-out infinite;
+}
+.login-title span { margin-right: -0.16em; }
+
+.torch { width: 26px; height: 44px; flex: none; }
+.flame {
+  fill: #ffb15a;
+  transform-origin: 14px 30px;
+  animation: flame-flicker 1.15s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+  0%, 100% { text-shadow: 0 0 10px rgba(255, 176, 70, 0.35); }
+  46% { text-shadow: 0 0 4px rgba(255, 120, 40, 0.15); }
+  68% { text-shadow: 0 0 18px rgba(255, 210, 120, 0.7); }
+}
+@keyframes flame-flicker {
+  0%, 100% { opacity: 1; transform: scale(1, 1); }
+  40% { opacity: 0.72; transform: scale(0.86, 0.9); }
+  62% { opacity: 1; transform: scale(1.05, 1.08); }
+}
+
+.login-lede {
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+}
+
+.login-card label {
+  display: block;
+  text-align: left;
+  margin-bottom: 0.75rem;
+}
+.login-card label span {
+  display: block;
+  margin-bottom: 0.28rem;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.login-card input {
+  width: 100%;
+  padding: 0.62rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fffaf0;
+  font: inherit;
+  color: var(--ink);
+}
+.login-card input:focus-visible {
+  outline: 3px solid var(--gold-bright);
+  outline-offset: 1px;
+}
+
+.login-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.45fr;
+  gap: 0.7rem;
+  margin-top: 0.35rem;
+}
+.login-skip {
+  background: linear-gradient(#f3dd9a, #c4963c);
+  color: #2a1c0c;
+  border: 1px solid #8a6424;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  font-size: 1.15rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 0 0 4px rgba(240, 212, 138, 0.28), 0 10px 18px rgba(40, 24, 8, 0.18);
+}
+.login-skip:hover { filter: brightness(1.06); }
+.login-note {
+  margin-top: 0.75rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 460px) {
+  .login-actions { grid-template-columns: 1fr; }
+}

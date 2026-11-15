@@ -1,0 +1,35 @@
+import Phaser from 'phaser';
+import { TroyScene } from './TroyScene.js';
+
+// Builds the Phaser game into the div React gives us.
+// pixelArt keeps the tiles and Odysseus crisp when the camera zooms to 3×.
+export function createTroyGame(parent) {
+  const width = parent.clientWidth || window.innerWidth;
+  const height = parent.clientHeight || window.innerHeight;
+  const debug = new URLSearchParams(window.location.search).has('hitboxes');
+
+  return new Phaser.Game({
+    type: Phaser.AUTO,
+    parent,
+    width,
+    height,
+    backgroundColor: '#07111c',
+    pixelArt: true,
+    banner: false,
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: { y: 0 },
+        debug,
+      },
+    },
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.NO_CENTER,
+      width,
+      height,
+    },
+    scene: TroyScene,
+    audio: { noAudio: true },
+  });
+}
