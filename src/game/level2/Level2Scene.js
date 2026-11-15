@@ -628,7 +628,7 @@ export class Level2Scene extends Phaser.Scene {
     });
   }
 
-  // Where the objective arrow points: Eumaeus, then the palace gate, then
+  // Where the objective arrow points: Eumaeus, then the hall doors, then
   // (inside the hall) the great bow. Hidden once he is standing there, or
   // when the goal is in the other area (the hall is a separate room).
   arrowTarget(x, y) {
@@ -636,8 +636,8 @@ export class Level2Scene extends Phaser.Scene {
     if (this.arrowFor === 'eumaeus' && !this.hutDone && !this.inHut && !this.inHall) {
       target = { x: EUMAEUS_AT.x, y: EUMAEUS_AT.y, reach: 52 };
     } else if (this.arrowFor === 'palace' && !this.inHall) {
-      const spot = SPOTS.find((s) => s.id === 'palace');
-      if (spot) target = { x: spot.x, y: spot.y, reach: spot.radius };
+      // The hall doors at the top of the porch steps (hall.js).
+      target = { x: HALL_DOOR_SPOT.x, y: HALL_DOOR_SPOT.y, reach: HALL_DOOR_SPOT.radius };
     } else if (this.arrowFor === 'bow' && this.inHall && !this.hallWon) {
       const spot = HALL_SPOTS.find((s) => s.id === 'bow');
       if (spot) target = { x: spot.x, y: spot.y, reach: spot.radius };

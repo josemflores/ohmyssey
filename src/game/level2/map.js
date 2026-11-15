@@ -224,14 +224,6 @@ export const SPOTS = [
     line: 'The fire is still warm. The palace road is north, and the suitors are feasting.',
   },
   {
-    id: 'palace',
-    x: 512,
-    y: 300,
-    radius: 40,
-    who: 'The palace gate',
-    line: 'The hall is ahead. The suitors feast inside. The door waits.',
-  },
-  {
     id: 'well',
     x: 448,
     y: 408,
