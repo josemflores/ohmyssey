@@ -2,300 +2,644 @@
   {
     "id": "troy-voltage",
     "level": 1,
-    "prompt": "On the beach at Troy, the battery's voltage is best described as…",
+    "difficulty": "easy",
+    "prompt": "What does the 9 V printed on the beach battery tell you?",
     "choices": [
-      "The push that drives charge around the loop",
-      "How fast the wooden horse rolled",
-      "The number of open switches",
-      "The color of the LED"
+      "How much current it always delivers",
+      "How hard it pushes charge around the loop",
+      "How many hours it will last",
+      "How much charge is packed inside it"
     ],
-    "answerIndex": 0,
-    "explanation": "Voltage is the electric push, measured in volts. A 9 V battery pushes harder than a 1.5 V cell.",
-    "flavor": "Athena calls the battery the wind in the sail."
+    "answerIndex": 1,
+    "explanation": "Voltage is the push. How much current flows depends on what you connect, and how long a battery lasts is a different rating (mAh)."
   },
   {
     "id": "troy-current",
     "level": 1,
-    "prompt": "Current in the beach lamp is…",
+    "difficulty": "easy",
+    "prompt": "Current in the lamp's wire is…",
     "choices": [
-      "Charge flowing around a closed loop",
-      "Heat stored in the sand",
-      "The length of the wire",
-      "How bright the moon is"
+      "The push that the battery gives",
+      "How strongly the wire fights the flow",
+      "The light that the LED gives off",
+      "How much charge flows past a point each second"
     ],
-    "answerIndex": 0,
-    "explanation": "Current is moving charge, measured in amperes. It flows only when the path back to the battery is closed.",
-    "flavor": "Like men at the gate: one gap, and nobody gets through."
+    "answerIndex": 3,
+    "explanation": "Current is the flow of charge, measured in amperes. The push is voltage, and the fighting back is resistance."
   },
   {
     "id": "troy-resistance",
     "level": 1,
-    "prompt": "Resistance is…",
+    "difficulty": "easy",
+    "prompt": "A resistor's job in a circuit is to…",
     "choices": [
-      "How strongly a part opposes current",
-      "Another name for voltage",
-      "A second battery hidden in the horse",
-      "What an open switch is called"
+      "Add extra voltage to the loop",
+      "Let current flow in one direction only",
+      "Oppose current, so less flows for the same voltage",
+      "Store charge and release it later"
     ],
-    "answerIndex": 0,
-    "explanation": "Resistance, in ohms, opposes current. More ohms means less current when the voltage stays the same."
-  },
-  {
-    "id": "troy-unit-volt",
-    "level": 1,
-    "prompt": "Which unit measures voltage?",
-    "choices": ["Volt (V)", "Ampere (A)", "Ohm (Ω)", "Farad (F)"],
-    "answerIndex": 0,
-    "explanation": "Voltage is measured in volts. The beach battery is 9 V."
+    "answerIndex": 2,
+    "explanation": "A resistor opposes current. Storing charge is a capacitor's job, and one-way flow is a diode's (an LED is a diode)."
   },
   {
     "id": "troy-unit-amp",
     "level": 1,
-    "prompt": "Which unit measures current?",
-    "choices": ["Ampere (A)", "Volt (V)", "Ohm (Ω)", "Meter"],
-    "answerIndex": 0,
-    "explanation": "Current is measured in amperes. A small LED wants only a few thousandths of an ampere."
-  },
-  {
-    "id": "troy-unit-ohm",
-    "level": 1,
-    "prompt": "The symbol Ω printed on a resistor means…",
+    "difficulty": "easy",
+    "prompt": "Current is measured in…",
     "choices": [
-      "Ohms, the unit of resistance",
-      "Volts, the unit of voltage",
-      "That the switch is open",
-      "Odysseus's crest"
+      "Ohms (Ω)",
+      "Volts (V)",
+      "Watts (W)",
+      "Amperes (A)"
     ],
-    "answerIndex": 0,
-    "explanation": "Ω is the Greek letter omega, used for ohms. 330 Ω opposes current more than 100 Ω.",
-    "flavor": "Omega was a Greek letter long before it was a resistor mark."
+    "answerIndex": 3,
+    "explanation": "Amperes measure current. Volts measure the push, ohms measure resistance, and watts measure power."
   },
   {
-    "id": "troy-ohms-law",
+    "id": "troy-kilo",
     "level": 1,
-    "prompt": "Ohm's law links voltage V, current I, and resistance R as…",
-    "choices": ["V = I × R", "V = I + R", "V = I − R", "R = V × I"],
-    "answerIndex": 0,
-    "explanation": "Voltage equals current times resistance. The other useful forms are I = V / R and R = V / I."
-  },
-  {
-    "id": "troy-calc-6-2",
-    "level": 1,
-    "prompt": "A 6 V battery is connected across a 2 Ω resistor. How much current flows?",
-    "choices": ["3 A", "12 A", "4 A", "8 A"],
-    "answerIndex": 0,
-    "explanation": "I = V / R = 6 / 2 = 3 A. Multiplying 6 × 2 is not the current."
-  },
-  {
-    "id": "troy-calc-12-4",
-    "level": 1,
-    "prompt": "12 V across a 4 Ω resistor. What is the current?",
-    "choices": ["3 A", "48 A", "16 A", "8 A"],
-    "answerIndex": 0,
-    "explanation": "I = 12 / 4 = 3 A."
-  },
-  {
-    "id": "troy-calc-9-3",
-    "level": 1,
-    "prompt": "The 9 V beach battery feeds a 3 Ω coil. What current flows?",
-    "choices": ["3 A", "27 A", "6 A", "12 A"],
-    "answerIndex": 0,
-    "explanation": "I = 9 / 3 = 3 A.",
-    "flavor": "Three amperes, counted like spears in a rank."
-  },
-  {
-    "id": "troy-more-ohms",
-    "level": 1,
-    "prompt": "You swap in a larger resistor and leave the battery alone. The current…",
-    "choices": ["Decreases", "Increases", "Stays exactly the same", "Reverses direction"],
-    "answerIndex": 0,
-    "explanation": "I = V / R. A bigger resistance in the denominator makes a smaller current."
-  },
-  {
-    "id": "troy-more-volts",
-    "level": 1,
-    "prompt": "Same resistor, but the battery voltage is higher. The current…",
-    "choices": ["Increases", "Decreases", "Drops to zero", "Turns into resistance"],
-    "answerIndex": 0,
-    "explanation": "I = V / R. Raising the voltage while resistance stays put raises the current."
-  },
-  {
-    "id": "troy-series-path",
-    "level": 1,
-    "prompt": "Parts wired in series share…",
+    "difficulty": "easy",
+    "prompt": "A resistor is labeled 1 kΩ. That is…",
     "choices": [
-      "One single path for the current",
-      "A separate path for each part",
-      "No path at all",
-      "Only the positive terminal"
+      "1,000 volts",
+      "1 ohm",
+      "0.001 ohms",
+      "1,000 ohms"
     ],
-    "answerIndex": 0,
-    "explanation": "Series means one loop. The same current goes through each part in turn.",
-    "flavor": "One file of soldiers through the gate, not three gates at once."
-  },
-  {
-    "id": "troy-parallel-path",
-    "level": 1,
-    "prompt": "Parts wired in parallel have…",
-    "choices": [
-      "More than one path for the current",
-      "Exactly one path",
-      "No connection to the battery",
-      "To be open, or current cannot flow"
-    ],
-    "answerIndex": 0,
-    "explanation": "Parallel branches split the current. Each branch is its own path between the same two points."
-  },
-  {
-    "id": "troy-series-add",
-    "level": 1,
-    "prompt": "A 2 Ω resistor and a 3 Ω resistor are in series. The total resistance is…",
-    "choices": ["5 Ω", "1 Ω", "6 Ω", "2 Ω"],
-    "answerIndex": 0,
-    "explanation": "Resistances in series add: 2 + 3 = 5 Ω."
-  },
-  {
-    "id": "troy-open-switch",
-    "level": 1,
-    "prompt": "The switch on the beach lamp is open. What is the current?",
-    "choices": [
-      "0. The loop is broken.",
-      "The full short-circuit current",
-      "It depends only on the LED color",
-      "Infinite"
-    ],
-    "answerIndex": 0,
-    "explanation": "An open switch is a gap. With no closed path, the current is zero and the lamp stays dark."
-  },
-  {
-    "id": "troy-closed-switch",
-    "level": 1,
-    "prompt": "You close the switch and the loop is complete. Current…",
-    "choices": [
-      "Can flow",
-      "Must stay zero",
-      "Jumps out of the wire into the sand",
-      "Flows only if the LED is backwards"
-    ],
-    "answerIndex": 0,
-    "explanation": "A closed switch is just another piece of the wire. Charge can make the round trip."
-  },
-  {
-    "id": "troy-led-backwards",
-    "level": 1,
-    "prompt": "The red LED is installed backwards. What happens?",
-    "choices": [
-      "It stays dark. An LED conducts one way.",
-      "It shines twice as bright",
-      "It becomes a battery",
-      "The resistor turns into a switch"
-    ],
-    "answerIndex": 0,
-    "explanation": "An LED is a diode. Current passes from anode to cathode. Reverse it and the lamp stays dark.",
-    "flavor": "The gate opens inward. The wrong way, it holds."
-  },
-  {
-    "id": "troy-led-resistor",
-    "level": 1,
-    "prompt": "Why put a resistor in series with the LED?",
-    "choices": [
-      "To limit the current so the LED does not burn",
-      "To make the current as large as possible",
-      "To open the circuit on purpose",
-      "To store charge like a second battery"
-    ],
-    "answerIndex": 0,
-    "explanation": "A small red LED wants a few milliamps up to a few tens of milliamps. The resistor sets that current."
-  },
-  {
-    "id": "troy-battery-loop",
-    "level": 1,
-    "prompt": "A battery lights the lamp only if…",
-    "choices": [
-      "The wire leaves one terminal and returns to the other",
-      "Both wires touch only the positive terminal",
-      "The positive terminal is buried in sand",
-      "The switch is left open"
-    ],
-    "answerIndex": 0,
-    "explanation": "Current is a round trip: out of one terminal, through the parts, and back into the other."
-  },
-  {
-    "id": "troy-empty-slot",
-    "level": 1,
-    "prompt": "One slot in the loop is empty. The current is…",
-    "choices": [
-      "Zero, because the loop is open",
-      "9 A, the same number as the battery voltage",
-      "Set by the LED color alone",
-      "Whatever the last resistor was"
-    ],
-    "answerIndex": 0,
-    "explanation": "An empty slot is a gap, the same as an open switch. No closed path means no current."
-  },
-  {
-    "id": "troy-short",
-    "level": 1,
-    "prompt": "A plain wire ties one battery terminal straight to the other, with no lamp. That is…",
-    "choices": [
-      "A short circuit, and the current is huge",
-      "An open circuit",
-      "A safe way to store the cell",
-      "A parallel LED"
-    ],
-    "answerIndex": 0,
-    "explanation": "Almost no resistance makes I = V / R very large. The wire and the battery heat up. Don't do this.",
-    "flavor": "Even the Trojans did not set fire to their own gate on purpose."
-  },
-  {
-    "id": "troy-series-current",
-    "level": 1,
-    "prompt": "In the series beach lamp (battery, switch, resistor, LED), the current through the resistor and the LED is…",
-    "choices": ["The same", "Double in the LED", "Zero in the resistor", "Split in half"],
-    "answerIndex": 0,
-    "explanation": "There is only one path, so the same current passes through every part in the loop."
-  },
-  {
-    "id": "troy-find-r",
-    "level": 1,
-    "prompt": "You want 2 A from a 10 V battery. What resistance does that take?",
-    "choices": ["5 Ω", "20 Ω", "12 Ω", "8 Ω"],
-    "answerIndex": 0,
-    "explanation": "R = V / I = 10 / 2 = 5 Ω."
-  },
-  {
-    "id": "troy-led-anode",
-    "level": 1,
-    "prompt": "The long leg of a typical LED is the…",
-    "choices": [
-      "Anode, and it should face the positive side",
-      "Cathode, and it should face the positive side",
-      "Resistor lead",
-      "Switch"
-    ],
-    "answerIndex": 0,
-    "explanation": "The longer lead is the anode. Aim it toward the positive side of the battery so current can pass."
+    "answerIndex": 3,
+    "explanation": "Kilo means a thousand, so 1 kΩ = 1,000 Ω. The Ω tells you it is resistance, not volts."
   },
   {
     "id": "troy-milliamp",
     "level": 1,
-    "prompt": "A current of 0.003 A is the same as…",
-    "choices": ["3 mA", "3 A", "300 mA", "0.3 mA"],
+    "difficulty": "easy",
+    "prompt": "The LED draws 20 mA. In amperes, that is…",
+    "choices": [
+      "0.2 A",
+      "20 A",
+      "0.02 A",
+      "2 A"
+    ],
+    "answerIndex": 2,
+    "explanation": "Milli means one thousandth. 20 mA = 20 ÷ 1,000 = 0.02 A."
+  },
+  {
+    "id": "troy-milliamp-back",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "0.005 A is the same as…",
+    "choices": [
+      "500 mA",
+      "0.5 mA",
+      "5 mA",
+      "50 mA"
+    ],
+    "answerIndex": 2,
+    "explanation": "Multiply amperes by 1,000 to get milliamps: 0.005 × 1,000 = 5 mA."
+  },
+  {
+    "id": "troy-ohms-law",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Which form of Ohm's law gives you the current?",
+    "choices": [
+      "I = R / V",
+      "I = V × R",
+      "I = V / R",
+      "I = V − R"
+    ],
+    "answerIndex": 2,
+    "explanation": "V = I × R, so dividing both sides by R gives I = V / R. More push, more current. More resistance, less current."
+  },
+  {
+    "id": "troy-kohm-trick",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Why is dividing volts by kilohms handy?",
+    "choices": [
+      "The answer comes out straight in milliamps",
+      "The answer comes out in watts",
+      "The answer comes out in amps",
+      "It is not allowed; you must use ohms"
+    ],
     "answerIndex": 0,
-    "explanation": "Milli means one thousandth. 0.003 A = 3 mA. The beach LED wants milliamps, not whole amperes.",
-    "flavor": "Three thousandths of an ampere is enough to mark a path in the dark."
+    "explanation": "V ÷ kΩ = mA. For example, 9 V ÷ 1 kΩ = 9 mA. The thousands cancel."
+  },
+  {
+    "id": "troy-closed-loop",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Which arrangement can light the lamp?",
+    "choices": [
+      "The LED pressed against the side of the battery",
+      "A wire from + to the LED, with the other leg left free",
+      "A path from the + terminal, through the parts, back to the − terminal",
+      "Both LED legs wired to the + terminal"
+    ],
+    "answerIndex": 2,
+    "explanation": "Current needs a complete round trip: out of one terminal, through every part, and back into the other."
+  },
+  {
+    "id": "troy-open-switch",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "The lamp's switch is open. A meter in the loop reads…",
+    "choices": [
+      "0 mA, because the loop is broken",
+      "Half of the closed-switch current",
+      "A huge current, because nothing slows it",
+      "The same as when the switch is closed"
+    ],
+    "answerIndex": 0,
+    "explanation": "An open switch is a gap. No complete path means no current, so the meter reads zero and the lamp is dark."
+  },
+  {
+    "id": "troy-empty-slot",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "One slot in the lamp's loop is empty. The LED…",
+    "choices": [
+      "Stays dark, because the gap breaks the loop",
+      "Glows as long as the switch is closed",
+      "Glows brighter, because there is less resistance",
+      "Glows dimly"
+    ],
+    "answerIndex": 0,
+    "explanation": "An empty slot is a gap, just like an open switch. Closing the switch cannot help if the loop is broken somewhere else."
+  },
+  {
+    "id": "troy-short",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "A bare wire connects + straight to −, with nothing else in the loop. This is…",
+    "choices": [
+      "A short circuit, so a huge current flows",
+      "An open circuit, so no current flows",
+      "A parallel circuit, so the current splits",
+      "A safe test, since no lamp is in the way"
+    ],
+    "answerIndex": 0,
+    "explanation": "With almost no resistance, I = V / R is enormous. The wire and battery get hot. Never do this."
+  },
+  {
+    "id": "troy-same-current",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "In the beach lamp (battery, switch, resistor, LED in one loop), how does the current in the resistor compare with the current in the LED?",
+    "choices": [
+      "They are the same",
+      "Zero in the resistor once the LED lights",
+      "More in the LED, because it is closer to +",
+      "More in the resistor, because the LED uses some up"
+    ],
+    "answerIndex": 0,
+    "explanation": "There is only one path, so every part carries the same current. Charge is not used up; it carries energy around and drops it off."
+  },
+  {
+    "id": "troy-energy",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "The LED gives off light. Where does that energy come from?",
+    "choices": [
+      "The battery, carried there by moving charge",
+      "The current, which is used up inside the LED",
+      "The switch, which makes it when it closes",
+      "The resistor, which stores it and passes it on"
+    ],
+    "answerIndex": 0,
+    "explanation": "The battery supplies energy. The charge flows all the way around and returns; the energy, not the charge, is what the LED and resistor take."
+  },
+  {
+    "id": "troy-led-backwards",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "The LED is put in backwards. What happens?",
+    "choices": [
+      "It lights dimly, since some current leaks back",
+      "It stays dark, since an LED conducts only one way",
+      "It lights just as well, since current flows both ways",
+      "It shorts the battery, since it now has no resistance"
+    ],
+    "answerIndex": 1,
+    "explanation": "An LED is a diode. Current passes from the anode (+) to the cathode (−). Reversed, it blocks the current and the loop goes dark."
+  },
+  {
+    "id": "troy-led-anode",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Which LED leg should face the + side of the battery?",
+    "choices": [
+      "The longer leg (the anode)",
+      "The shorter leg (the cathode)",
+      "Either one; LEDs don't care",
+      "The leg next to the flat edge"
+    ],
+    "answerIndex": 0,
+    "explanation": "The long leg is the anode and goes toward +. The flat edge on the rim marks the cathode, which goes toward −."
+  },
+  {
+    "id": "troy-led-resistor",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Why does the beach lamp have a resistor in series with the LED?",
+    "choices": [
+      "To let current flow both ways",
+      "To store charge so the lamp stays on",
+      "To limit the current so the LED does not burn out",
+      "To make the LED brighter"
+    ],
+    "answerIndex": 2,
+    "explanation": "An LED barely limits its own current. The resistor sets a safe current, usually 5 to 25 mA for a small LED."
+  },
+  {
+    "id": "troy-more-ohms",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "You swap the 330 Ω resistor for 1 kΩ and keep the same battery. The LED becomes…",
+    "choices": [
+      "Exactly as bright, because the battery did not change",
+      "Brighter, because more resistance pushes harder",
+      "Dark, because 1 kΩ blocks all current",
+      "Dimmer, because less current flows"
+    ],
+    "answerIndex": 3,
+    "explanation": "I = V / R. A larger R gives a smaller current, so the LED dims. With 9 V and 1 kΩ it still gets about 7 mA, so it is not dark."
+  },
+  {
+    "id": "troy-more-volts",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Same resistor, but you trade the 9 V battery for a 12 V one. The current…",
+    "choices": [
+      "Stays the same, because the resistor sets it",
+      "Drops to zero",
+      "Goes up",
+      "Goes down"
+    ],
+    "answerIndex": 2,
+    "explanation": "I = V / R. More push through the same resistance means more current."
+  },
+  {
+    "id": "troy-double-r",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "You double the resistance and keep the voltage the same. The current…",
+    "choices": [
+      "Halves",
+      "Stays the same",
+      "Drops to zero",
+      "Doubles"
+    ],
+    "answerIndex": 0,
+    "explanation": "Current is V divided by R. Divide by twice as much and you get half."
+  },
+  {
+    "id": "troy-calc-9-1k",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "9 V across a 1 kΩ resistor. What current flows?",
+    "choices": [
+      "9 mA",
+      "90 mA",
+      "0.9 mA",
+      "9 A"
+    ],
+    "answerIndex": 0,
+    "explanation": "I = 9 V ÷ 1,000 Ω = 0.009 A = 9 mA. Volts ÷ kΩ gives mA directly."
+  },
+  {
+    "id": "troy-calc-6-2k",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "6 V across a 2 kΩ resistor. What current flows?",
+    "choices": [
+      "3 mA",
+      "12 mA",
+      "3 A",
+      "0.3 mA"
+    ],
+    "answerIndex": 0,
+    "explanation": "I = 6 V ÷ 2 kΩ = 3 mA. Multiplying 6 × 2 is the most common slip."
+  },
+  {
+    "id": "troy-find-r",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "You want 2 A from a 10 V battery. What resistance does that take?",
+    "choices": [
+      "5 Ω",
+      "8 Ω",
+      "12 Ω",
+      "20 Ω"
+    ],
+    "answerIndex": 0,
+    "explanation": "R = V / I = 10 ÷ 2 = 5 Ω. The wrong answers multiply, add, or subtract instead of dividing."
+  },
+  {
+    "id": "troy-find-v",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "10 mA flows through a 1 kΩ resistor. What is the voltage across it?",
+    "choices": [
+      "100 V",
+      "1 V",
+      "0.01 V",
+      "10 V"
+    ],
+    "answerIndex": 3,
+    "explanation": "V = I × R = 0.010 A × 1,000 Ω = 10 V. Or: mA × kΩ = volts."
+  },
+  {
+    "id": "troy-series-add",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "A 100 Ω and a 220 Ω resistor are in series. The total resistance is…",
+    "choices": [
+      "69 Ω",
+      "22,000 Ω",
+      "320 Ω",
+      "120 Ω"
+    ],
+    "answerIndex": 2,
+    "explanation": "In series, resistances add: 100 + 220 = 320 Ω. About 69 Ω would be the two in parallel."
+  },
+  {
+    "id": "troy-ammeter",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "To measure the lamp's current, the meter goes…",
+    "choices": [
+      "In the loop, so the current passes through it",
+      "Beside the wire, so it senses the flow",
+      "On the + terminal, where the current starts",
+      "Across the LED's legs, so it sees the LED"
+    ],
+    "answerIndex": 0,
+    "explanation": "An ammeter measures the flow through it, so you break the loop and put it in series."
+  },
+  {
+    "id": "troy-voltmeter",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "To measure the voltage across the resistor, the meter's probes go…",
+    "choices": [
+      "On one end of the resistor only",
+      "In the loop in place of a wire",
+      "On the battery case",
+      "On both ends of the resistor"
+    ],
+    "answerIndex": 3,
+    "explanation": "Voltage is a difference between two points, so the voltmeter sits across the part, in parallel with it."
+  },
+  {
+    "id": "troy-series-out",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Two lamps are in series. One burns out. The other…",
+    "choices": [
+      "Starts to blink, because the current is unsteady",
+      "Gets brighter, because it gets all the current",
+      "Stays lit, because it has its own battery side",
+      "Goes dark, because the only path is broken"
+    ],
+    "answerIndex": 3,
+    "explanation": "Series has one path. Break it anywhere and the current stops everywhere."
+  },
+  {
+    "id": "troy-parallel-out",
+    "level": 1,
+    "difficulty": "easy",
+    "prompt": "Two lamps are in parallel across the battery. One burns out. The other…",
+    "choices": [
+      "Gets twice as bright, because it gets all the current",
+      "Gets dimmer, because the battery is now weaker",
+      "Stays lit, because it still has its own path",
+      "Goes dark, because the circuit is now broken"
+    ],
+    "answerIndex": 2,
+    "explanation": "Each parallel branch is its own loop through the battery. Losing one branch leaves the other's path whole."
+  },
+  {
+    "id": "troy-led-current",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "9 V battery, a red LED that keeps 2 V, and a 1 kΩ resistor in series. What current flows?",
+    "choices": [
+      "2 mA",
+      "7 mA",
+      "9 mA",
+      "11 mA"
+    ],
+    "answerIndex": 1,
+    "explanation": "The LED keeps 2 V, so the resistor gets 9 − 2 = 7 V. I = 7 V ÷ 1 kΩ = 7 mA. Forgetting the LED gives 9 mA."
+  },
+  {
+    "id": "troy-resistor-volts",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "In the beach lamp (9 V battery, red LED that keeps 2 V, one resistor), how many volts are across the resistor?",
+    "choices": [
+      "9 V",
+      "11 V",
+      "7 V",
+      "2 V"
+    ],
+    "answerIndex": 2,
+    "explanation": "Around a loop the drops add up to the battery: 2 V for the LED leaves 7 V for the resistor."
+  },
+  {
+    "id": "troy-led-pick-r",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "You want 20 mA through a red LED (2 V) from a 6 V battery. Which resistor?",
+    "choices": [
+      "300 Ω",
+      "200 Ω",
+      "100 Ω",
+      "400 Ω"
+    ],
+    "answerIndex": 1,
+    "explanation": "The resistor gets 6 − 2 = 4 V. R = 4 V ÷ 0.020 A = 200 Ω. 300 Ω forgets the LED; 100 Ω uses only the LED's 2 V."
+  },
+  {
+    "id": "troy-led-pick-r-9",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "9 V battery, red LED (2 V). Which resistor gives about 18 mA?",
+    "choices": [
+      "390 Ω",
+      "39 Ω",
+      "500 Ω",
+      "110 Ω"
+    ],
+    "answerIndex": 0,
+    "explanation": "R = (9 − 2) V ÷ 0.018 A ≈ 389 Ω, and 390 Ω is the standard value. 39 Ω would let about 180 mA through and burn the LED."
+  },
+  {
+    "id": "troy-led-burn",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "A red LED (2 V) is wired to a 9 V battery through a 47 Ω resistor. What happens?",
+    "choices": [
+      "About 150 mA flows, far past what the LED can take, so it burns out",
+      "No current flows; 47 Ω is too small to conduct",
+      "About 7 mA flows, which is safe",
+      "The LED limits itself, so nothing bad happens"
+    ],
+    "answerIndex": 0,
+    "explanation": "I = (9 − 2) V ÷ 47 Ω ≈ 149 mA. A small LED wants under about 25 mA, so it overheats and dies."
+  },
+  {
+    "id": "troy-brightest-safe",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "9 V battery, red LED (2 V), safe limit 25 mA. Which resistor makes the LED brightest without burning it?",
+    "choices": [
+      "330 Ω",
+      "100 Ω",
+      "220 Ω",
+      "1 kΩ"
+    ],
+    "answerIndex": 0,
+    "explanation": "The resistor gets 7 V. 330 Ω → 21 mA (safe, bright). 220 Ω → 32 mA (too much). 1 kΩ → 7 mA (safe but dim). 100 Ω → 70 mA (burns)."
+  },
+  {
+    "id": "troy-series-current-calc",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "A 12 V battery drives a 1 kΩ and a 2 kΩ resistor in series. What current flows?",
+    "choices": [
+      "12 mA",
+      "18 mA",
+      "6 mA",
+      "4 mA"
+    ],
+    "answerIndex": 3,
+    "explanation": "In series the resistances add: 3 kΩ. I = 12 V ÷ 3 kΩ = 4 mA. 18 mA would be the parallel answer."
+  },
+  {
+    "id": "troy-series-voltage",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "A 12 V battery drives a 1 kΩ and a 2 kΩ resistor in series. How many volts are across the 2 kΩ?",
+    "choices": [
+      "8 V",
+      "4 V",
+      "12 V",
+      "6 V"
+    ],
+    "answerIndex": 0,
+    "explanation": "The current is 12 ÷ 3 kΩ = 4 mA. V = 4 mA × 2 kΩ = 8 V. The bigger resistor takes the bigger share, not half."
+  },
+  {
+    "id": "troy-parallel-total",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "Two 1 kΩ resistors are in parallel. The total resistance is…",
+    "choices": [
+      "2 kΩ",
+      "1 kΩ",
+      "0 Ω",
+      "500 Ω"
+    ],
+    "answerIndex": 3,
+    "explanation": "Two equal resistors in parallel give half of one: 1 kΩ ÷ 2 = 500 Ω. Two paths let more current through, so the total is smaller."
+  },
+  {
+    "id": "troy-parallel-current",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "A 6 V battery feeds two 3 kΩ resistors in parallel. What current leaves the battery?",
+    "choices": [
+      "4 mA",
+      "2 mA",
+      "1 mA",
+      "12 mA"
+    ],
+    "answerIndex": 0,
+    "explanation": "Each branch gets the full 6 V: 6 ÷ 3 kΩ = 2 mA each, so 4 mA in total. 1 mA would be the two in series."
+  },
+  {
+    "id": "troy-power",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "The lamp's resistor has 7 V across it and 7 mA through it. How much power turns to heat?",
+    "choices": [
+      "49 mW",
+      "1 mW",
+      "14 mW",
+      "49 W"
+    ],
+    "answerIndex": 0,
+    "explanation": "P = V × I = 7 V × 0.007 A = 0.049 W = 49 mW."
+  },
+  {
+    "id": "troy-power-rating",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "That resistor is rated ¼ W. Is 49 mW safe?",
+    "choices": [
+      "No: 49 is bigger than ¼",
+      "No: resistors cannot take any heat",
+      "Yes: ¼ W is 250 mW, well above 49 mW",
+      "Only if the LED is backwards"
+    ],
+    "answerIndex": 2,
+    "explanation": "Compare in the same unit. ¼ W = 250 mW, so 49 mW is about a fifth of the rating."
+  },
+  {
+    "id": "troy-find-v-470",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "A 470 Ω resistor carries 10 mA. What is the voltage across it?",
+    "choices": [
+      "4.7 V",
+      "47 V",
+      "470 V",
+      "0.47 V"
+    ],
+    "answerIndex": 0,
+    "explanation": "V = I × R = 0.010 A × 470 Ω = 4.7 V. Convert mA to A first."
+  },
+  {
+    "id": "troy-troubleshoot-dark",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "The lamp is wired, the switch is closed, the battery is fresh, but the LED is dark and the meter reads 0 mA. Most likely cause?",
+    "choices": [
+      "The resistor is using up all the current",
+      "The resistor is too small",
+      "The battery voltage is too high",
+      "The LED is in backwards, or a wire is loose"
+    ],
+    "answerIndex": 3,
+    "explanation": "Zero current means the loop is open somewhere. A reversed LED blocks current, and a loose wire is a gap. A small resistor would give more current, not none."
+  },
+  {
+    "id": "troy-troubleshoot-flash",
+    "level": 1,
+    "difficulty": "hard",
+    "prompt": "The LED flashed very brightly for a moment, then went dark for good. Most likely cause?",
+    "choices": [
+      "The resistor was too large, so the current was too low",
+      "The switch was open, so the loop was broken",
+      "The LED was backwards, so it blocked the current",
+      "The resistor was too small, so the current was too high"
+    ],
+    "answerIndex": 3,
+    "explanation": "A bright flash then darkness is the sign of too much current. A large resistor or a backwards LED would never have flashed."
   },
   {
     "id": "ithaca-three-parts",
     "level": 2,
     "prompt": "A simple circuit, like the lamp in the hall at Ithaca, needs…",
     "choices": [
-      "A source, a closed path, and a load",
       "Only a battery, with no loop",
+      "A capacitor in place of every wire",
       "Three open switches and nothing else",
-      "A capacitor in place of every wire"
+      "A source, a closed path, and a load"
     ],
-    "answerIndex": 0,
+    "answerIndex": 3,
     "explanation": "The source pushes, the load uses the energy, and a closed path lets the charge return.",
     "flavor": "Home is a hearth, a door, and a way back in."
   },
@@ -303,7 +647,12 @@
     "id": "ithaca-band-black",
     "level": 2,
     "prompt": "On a resistor color band, black means the digit…",
-    "choices": ["0", "1", "5", "9"],
+    "choices": [
+      "0",
+      "1",
+      "5",
+      "9"
+    ],
     "answerIndex": 0,
     "explanation": "The digit colors start at black = 0, then brown = 1, red = 2."
   },
@@ -311,15 +660,25 @@
     "id": "ithaca-band-brown",
     "level": 2,
     "prompt": "The first color band is brown. Its digit is…",
-    "choices": ["1", "0", "2", "10"],
-    "answerIndex": 0,
+    "choices": [
+      "10",
+      "0",
+      "1",
+      "2"
+    ],
+    "answerIndex": 2,
     "explanation": "Brown is 1. A band that starts brown-black begins with the digits 1 and 0."
   },
   {
     "id": "ithaca-band-red",
     "level": 2,
     "prompt": "Red, read as a digit band, means…",
-    "choices": ["2", "0", "3", "20"],
+    "choices": [
+      "2",
+      "0",
+      "3",
+      "20"
+    ],
     "answerIndex": 0,
     "explanation": "Red is 2. The easy start of the code is black 0, brown 1, red 2."
   },
@@ -328,12 +687,12 @@
     "level": 2,
     "prompt": "On a four-band resistor, the first two bands are…",
     "choices": [
-      "The two digits of the resistance",
-      "The tolerance and the year it was made",
+      "The voltage rating",
       "Always gold",
-      "The voltage rating"
+      "The tolerance and the year it was made",
+      "The two digits of the resistance"
     ],
-    "answerIndex": 0,
+    "answerIndex": 3,
     "explanation": "Read the first two bands as digits. The third band says how many zeros to add. The last band is the tolerance.",
     "flavor": "Read them the way you read a name cut in a lintel: left to right, from the end where the bands begin."
   },
@@ -354,7 +713,12 @@
     "id": "ithaca-band-1k",
     "level": 2,
     "prompt": "A resistor reads brown, black, red, and gold. Its value is about…",
-    "choices": ["1 kΩ", "10 Ω", "100 Ω", "1 Ω"],
+    "choices": [
+      "1 kΩ",
+      "10 Ω",
+      "100 Ω",
+      "1 Ω"
+    ],
     "answerIndex": 0,
     "explanation": "Brown and black are the digits 1 and 0. Red means two more zeros: 1000 Ω, which is 1 kΩ. Gold is ±5%."
   },
@@ -362,7 +726,12 @@
     "id": "ithaca-kilo",
     "level": 2,
     "prompt": "1 kΩ is the same as…",
-    "choices": ["1000 Ω", "100 Ω", "10 Ω", "1 Ω"],
+    "choices": [
+      "1000 Ω",
+      "100 Ω",
+      "10 Ω",
+      "1 Ω"
+    ],
     "answerIndex": 0,
     "explanation": "Kilo means one thousand. 1 kΩ = 1000 Ω, and 2 kΩ = 2000 Ω."
   },
@@ -370,7 +739,12 @@
     "id": "ithaca-series-k",
     "level": 2,
     "prompt": "The hall lamp has a 1 kΩ resistor in series with a 2 kΩ resistor. The total is…",
-    "choices": ["3 kΩ", "2 kΩ", "1 kΩ", "3 Ω"],
+    "choices": [
+      "3 kΩ",
+      "2 kΩ",
+      "1 kΩ",
+      "3 Ω"
+    ],
     "answerIndex": 0,
     "explanation": "Series resistors add, prefixes and all. 1 kΩ + 2 kΩ = 3 kΩ, which is 3000 Ω."
   },
@@ -379,12 +753,12 @@
     "level": 2,
     "prompt": "Two equal resistors are wired in parallel. The total resistance is…",
     "choices": [
-      "Half of one of them",
-      "The sum of both",
+      "Double one of them",
       "Zero",
-      "Double one of them"
+      "The sum of both",
+      "Half of one of them"
     ],
-    "answerIndex": 0,
+    "answerIndex": 3,
     "explanation": "Two equal paths share the current. Two 2 kΩ resistors in parallel act like 1 kΩ."
   },
   {
@@ -392,12 +766,12 @@
     "level": 2,
     "prompt": "In a series circuit, the current through each part is…",
     "choices": [
-      "The same",
-      "Biggest in the last part only",
       "Zero whenever the switch is closed",
-      "Split by the color of the bands"
+      "Split by the color of the bands",
+      "The same",
+      "Biggest in the last part only"
     ],
-    "answerIndex": 0,
+    "answerIndex": 2,
     "explanation": "One path means one current. The voltage may differ from part to part. The current does not."
   },
   {
@@ -405,28 +779,38 @@
     "level": 2,
     "prompt": "In a parallel circuit, the voltage across each branch is…",
     "choices": [
-      "The same",
-      "Always zero",
       "A different battery for each branch",
-      "Equal to the current in amperes"
+      "Equal to the current in amperes",
+      "The same",
+      "Always zero"
     ],
-    "answerIndex": 0,
+    "answerIndex": 2,
     "explanation": "Parallel branches tie to the same two points, so each branch sees the same voltage."
   },
   {
     "id": "ithaca-series-lamp-open",
     "level": 2,
     "prompt": "Three hall lamps are in series. One burns out and becomes an open. The other two…",
-    "choices": ["Go out", "Shine brighter", "Turn into batteries", "Stay just as they were"],
-    "answerIndex": 0,
+    "choices": [
+      "Shine brighter",
+      "Go out",
+      "Stay just as they were",
+      "Turn into batteries"
+    ],
+    "answerIndex": 1,
     "explanation": "The open lamp breaks the only path. Current in that series loop falls to zero, so the others go dark."
   },
   {
     "id": "ithaca-parallel-lamp-open",
     "level": 2,
     "prompt": "Three hall lamps are in parallel. One burns out and becomes an open. The other two…",
-    "choices": ["Stay lit", "Must go out", "Reverse polarity", "Empty like capacitors"],
-    "answerIndex": 0,
+    "choices": [
+      "Reverse polarity",
+      "Empty like capacitors",
+      "Stay lit",
+      "Must go out"
+    ],
+    "answerIndex": 2,
     "explanation": "Each lamp has its own path back to the source. Opening one branch leaves the other paths closed.",
     "flavor": "One chair knocked over at the feast does not darken the whole hall."
   },
@@ -435,19 +819,24 @@
     "level": 2,
     "prompt": "A capacitor is a part that…",
     "choices": [
-      "Stores electric charge",
+      "Makes voltage out of nothing",
       "Measures resistance in ohms",
-      "Is only another kind of switch",
-      "Makes voltage out of nothing"
+      "Stores electric charge",
+      "Is only another kind of switch"
     ],
-    "answerIndex": 0,
+    "answerIndex": 2,
     "explanation": "A capacitor holds charge on two plates. How much it can store is its capacitance."
   },
   {
     "id": "ithaca-capacitor-unit",
     "level": 2,
     "prompt": "Capacitance is measured in…",
-    "choices": ["Farads (F)", "Ohms (Ω)", "Amperes (A)", "Volts (V)"],
+    "choices": [
+      "Farads (F)",
+      "Volts (V)",
+      "Ohms (Ω)",
+      "Amperes (A)"
+    ],
     "answerIndex": 0,
     "explanation": "The farad is the unit of capacitance. Real circuit parts are usually microfarads (µF) or smaller, because one farad is huge."
   },
@@ -456,12 +845,12 @@
     "level": 2,
     "prompt": "A capacitor sits in a DC loop and has finished charging. It then behaves like…",
     "choices": [
-      "An open circuit",
-      "A wire with no resistance",
       "A battery that never runs down",
-      "A closed switch"
+      "A closed switch",
+      "An open circuit",
+      "A wire with no resistance"
     ],
-    "answerIndex": 0,
+    "answerIndex": 2,
     "explanation": "Once the plates are charged, steady DC current through the capacitor stops. It blocks DC after the charge settles."
   },
   {
@@ -469,12 +858,12 @@
     "level": 2,
     "prompt": "The safe way to treat a battery on the bench is to…",
     "choices": [
-      "Never tie its two terminals together with a plain wire",
       "Short it, to see the biggest spark",
-      "Soak it so the label comes off",
-      "Wire the terminals together when you are done"
+      "Never tie its two terminals together with a plain wire",
+      "Wire the terminals together when you are done",
+      "Soak it so the label comes off"
     ],
-    "answerIndex": 0,
+    "answerIndex": 1,
     "explanation": "A short makes a huge current. The cell gets hot and can burst. Leave a load, such as a resistor, in the loop."
   },
   {
@@ -483,9 +872,9 @@
     "prompt": "You need to change a resistor. What do you do first?",
     "choices": [
       "Open the switch or disconnect the battery",
-      "Grab both bare wires at once",
       "Add a second battery for light",
-      "Turn the resistor around and hope"
+      "Turn the resistor around and hope",
+      "Grab both bare wires at once"
     ],
     "answerIndex": 0,
     "explanation": "Open the source before you move parts, so your fingers do not become the path.",
@@ -534,7 +923,12 @@
     "id": "ithaca-milliamp",
     "level": 2,
     "prompt": "A 12 V supply feeds a 4 kΩ resistor. The current is…",
-    "choices": ["3 mA", "3 A", "48 A", "16 mA"],
+    "choices": [
+      "3 mA",
+      "3 A",
+      "48 A",
+      "16 mA"
+    ],
     "answerIndex": 0,
     "explanation": "I = V / R = 12 V / 4000 Ω = 0.003 A = 3 mA. With kilo-ohms, 12 / 4 = 3, and the unit is milliamps."
   },
@@ -542,7 +936,12 @@
     "id": "ithaca-cells-series",
     "level": 2,
     "prompt": "Two 1.5 V cells in series, each positive tied to the next negative, make…",
-    "choices": ["3 V", "1.5 V", "0 V", "1.5 Ω"],
+    "choices": [
+      "3 V",
+      "1.5 V",
+      "0 V",
+      "1.5 Ω"
+    ],
     "answerIndex": 0,
     "explanation": "Voltages in series add when the cells point the same way. 1.5 V + 1.5 V = 3 V.",
     "flavor": "Two oars, pulling the same direction, move the boat."

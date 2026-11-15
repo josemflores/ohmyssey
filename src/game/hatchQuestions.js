@@ -1,23 +1,26 @@
-// Placeholder questions for the hatch in the horse.
-// A real lesson can replace this list later. Each one is multiple choice.
-// `answer` is the index of the right choice.
+// Questions for the hatch in the horse. Each one is multiple choice.
+// `answer` is the index of the right choice as written here; the choices
+// are shuffled every time a question is shown, so the right one moves.
+// Wrong answers are real beginner slips, not jokes.
+
+import { shuffleChoices } from '../learn/encounters/questions.js';
 
 export const HATCH_QUESTIONS = [
   {
     id: 'lamp-current',
     prompt: 'The beach lamp uses a 9 V battery and a red LED that keeps 2 V. A 1 kΩ resistor gets the other 7 V. What is the current?',
-    choices: ['7 mA', '70 mA', '0.7 A', '9 A'],
+    choices: ['7 mA', '9 mA', '2 mA', '7 A'],
     answer: 0,
-    hint: '7 volts left across 1 kΩ is 7 mA. Current is voltage divided by resistance.',
+    hint: 'Only the resistor\'s 7 V counts: 7 V ÷ 1 kΩ = 7 mA. Using all 9 V forgets the LED.',
   },
   {
     id: 'open-switch',
     prompt: 'The switch in that lamp is open. Why does the meter read 0 mA?',
     choices: [
       'The loop is broken, so current cannot get back to the battery',
-      'The LED is the wrong color for 9 volts',
-      'An open switch stores the current in the resistor',
-      '9 volts is too small to move any charge',
+      'The resistor uses up all the current before the LED',
+      'An open switch lets too much current through, so the meter maxes out',
+      'The battery only pushes current while the LED is lit',
     ],
     answer: 0,
     hint: 'An open switch breaks the loop, so charge cannot travel out of the battery and back in.',
@@ -29,7 +32,7 @@ export const HATCH_QUESTIONS = [
       'It goes down, because I = V / R',
       'It goes up, because more ohms push harder',
       'It stays the same, because the battery did not change',
-      'It becomes zero, because 1 kΩ is an open circuit',
+      'It becomes zero, because 1 kΩ blocks all current',
     ],
     answer: 0,
     hint: 'A larger resistor leaves less current for the same voltage. I = V / R.',
@@ -48,11 +51,11 @@ export function hatchQuestionAfter(id) {
 }
 
 function copyQuestion(question) {
-  return {
+  return shuffleChoices({
     id: question.id,
     prompt: question.prompt,
     choices: question.choices.slice(),
     answer: question.answer,
     hint: question.hint,
-  };
+  });
 }
