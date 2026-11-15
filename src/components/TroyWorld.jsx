@@ -27,7 +27,9 @@ export default function TroyWorld() {
   const [banner, setBanner] = useState('');
   const [place, setPlace] = useState('horse');
   const fightRef = useRef(null);
+  const quizRef = useRef(null);
   fightRef.current = fight;
+  quizRef.current = quiz;
 
   useEffect(() => {
     const parent = host.current;
@@ -42,7 +44,9 @@ export default function TroyWorld() {
     // He pressed E again while the box was open.
     function onCloseRequest() {
       setTalk(null);
-      if (fightRef.current) return;
+      // E asks to close the talk box. A hatch question or a fight still
+      // owns the lock, or he walks off while the card is on screen.
+      if (fightRef.current || quizRef.current) return;
       game.events.emit('unlockInput');
     }
     function onFightStart(payload) {

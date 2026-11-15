@@ -201,7 +201,6 @@ export class TroyScene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, MAP_W, MAP_H);
-    cam.setZoom(3);
     cam.roundPixels = true;
     cam.startFollow(this.feet, true, 0.16, 0.16);
     cam.fadeIn(400, 6, 10, 18);
@@ -227,6 +226,12 @@ export class TroyScene extends Phaser.Scene {
     this.inputLocked = false;
     this.nearest = null;
     this.prompt = makePrompt(this);
+    const fitCamera = () => fitTroyCamera(this);
+    fitCamera();
+    this.scale.on('resize', fitCamera);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', fitCamera);
+    });
 
     const lockInput = () => { this.inputLocked = true; };
     const unlockInput = () => {
@@ -617,9 +622,8 @@ export class TroyScene extends Phaser.Scene {
   }
 }
 
-// "Press E" floats over his head. The camera is zoomed 3×, so the letters
-// are drawn at 15px and then shrunk to 1/3. 15 × (1/3) × 3 = 15 screen
-// pixels, which keeps the letters sharp instead of blurry.
+// "Press E" floats over his head. fitTroyCamera shrinks the 15px letters
+// by 1/zoom, so they stay about 15 screen pixels instead of going blurry.
 function aimArrow(scene) {
   const canvas = scene.game.canvas;
   const host = canvas?.parentElement?.parentElement;
@@ -674,6 +678,18 @@ function aimArrow(scene) {
     : Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
   arrow.style.display = 'block';
   arrow.style.transform = `translate(${Math.round(x + ox)}px, ${Math.round(y + oy)}px) rotate(${angle}rad)`;
+}
+
+// Zoom 3 is the laptop view. A phone is narrower than a street, so pull
+// back until the view is at least ~280 CSS pixels of the city. A desktop
+// stays at 3 because its width / 280 is above that cap.
+// The "Press E" letters are drawn at 15px and scaled by 1/zoom, so they
+// stay about 15 screen pixels when the zoom changes. 15 * (1/3) * 3 = 15.
+function fitTroyCamera(scene) {
+  const cam = scene.cameras.main;
+  const zoom = Math.min(3, Math.max(1.5, scene.scale.width / 280));
+  cam.setZoom(zoom);
+  if (scene.prompt) scene.prompt.setScale(1 / zoom);
 }
 
 function makePrompt(scene) {
