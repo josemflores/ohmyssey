@@ -53,6 +53,8 @@ const HUT = [
   { who: 'Odysseus', line: 'We take the palace together. Tell no one until I say.', conceal: true },
 ];
 const EUMAEUS_AT = { x: 248, y: 496 };
+// Athena appears only in Odysseus' vision, so she is drawn see-through.
+const ATHENA_ALPHA = 0.62;
 // Telemachus walks in from off screen to the east, through SON_FROM on the
 // path, and stops right at Eumaeus' side (SON_BESIDE px left or right of
 // him, whichever side Odysseus is not standing on), facing him.
@@ -335,13 +337,33 @@ export class Level2Scene extends Phaser.Scene {
       .setDepth(this.hero.depth + 1)
       .setAlpha(0);
     this.athena.play('athena-idle');
-    this.tweens.add({ targets: this.athena, alpha: 1, duration: 500, ease: 'Sine.easeOut' });
+    const athena = this.athena;
+    // Only Odysseus can see her, so she stays a little see-through, and
+    // her outline wavers gently like a vision.
+    this.tweens.add({
+      targets: this.athena,
+      alpha: ATHENA_ALPHA,
+      duration: 500,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        if (this.athena !== athena) return;
+        this.tweens.add({
+          targets: athena,
+          alpha: ATHENA_ALPHA - 0.12,
+          duration: 1100,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      },
+    });
   }
 
   hideAthena() {
     if (!this.athena) return;
     const athena = this.athena;
     this.athena = null;
+    this.tweens.killTweensOf(athena);
     this.tweens.add({
       targets: athena,
       alpha: 0,
