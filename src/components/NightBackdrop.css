@@ -66,12 +66,20 @@
 .night .ship {
   position: absolute;
   left: 5%;
-  bottom: -8px;
-  width: min(420px, 58vw);
+  bottom: -6px;
+  /* 3x the 128px pixel-art ship, so its pixels stay square. */
+  width: min(384px, 64vw);
   z-index: 2;
   animation: ship-bob 6.5s ease-in-out infinite;
   filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
   pointer-events: none;
+}
+.night .ship img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  transform: scaleX(-1);
 }
 .lantern, .lantern-flame { animation: flicker 1.3s ease-in-out infinite; }
 .lantern { transform-origin: center; }
@@ -168,7 +176,7 @@
 @media (max-width: 640px) {
   .night .ship {
     left: 2%;
-    width: min(300px, 78vw);
+    width: min(256px, 70vw);
     bottom: -4px;
   }
   .night-content { padding-bottom: 7.5rem; }

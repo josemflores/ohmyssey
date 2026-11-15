@@ -81,40 +81,11 @@ function WaveSvg({ fill, foam }) {
 }
 
 function Ship() {
-  const oars = Array.from({ length: 8 }, (_, i) => {
-    const x = 118 + i * 18;
-    return <line key={x} x1={x} y1={92} x2={x - 16} y2={126} />;
-  });
+  // The same ship as in Troy and Ithaca (level2/art.js paintShip), exported
+  // as public/assets/props/ithaca_ship.png. Flipped so the bow leads east.
   return (
-    <svg className="ship" viewBox="0 0 360 150" aria-hidden="true">
-      <g className="oars" fill="none" stroke="#1a140e" strokeWidth="2.2" strokeLinecap="round">
-        {oars}
-      </g>
-      <line x1="86" y1="78" x2="58" y2="132" stroke="#1a140e" strokeWidth="3" strokeLinecap="round" />
-      <path d="M50 124 L66 138 L72 122 Z" fill="#140e0a" />
-      <path
-        d="M78 74
-           C62 74 48 56 56 38
-           C62 28 76 32 80 46
-           L92 70
-           L268 74
-           C286 72 302 64 312 70
-           L340 76
-           L318 84
-           C304 94 290 100 270 102
-           L104 106
-           C88 106 78 96 78 74 Z"
-        fill="#0b1018"
-      />
-      <path d="M96 76 L262 80" stroke="#3d3124" strokeWidth="2" />
-      <circle cx="300" cy="78" r="4.2" fill="#f4e6c8" />
-      <circle cx="301.2" cy="78" r="1.7" fill="#140e0a" />
-      <path d="M170 22 L104 74" stroke="#24180e" strokeWidth="1.2" />
-      <path d="M174 22 L248 76" stroke="#24180e" strokeWidth="1.2" />
-      <rect x="168" y="18" width="4" height="58" fill="#1c140c" />
-      <rect x="118" y="16" width="116" height="4" rx="1" fill="#1c140c" />
-      <path d="M124 22 Q176 32 228 22 L222 70 Q176 80 130 70 Z" fill="#f3e6c4" />
-      <path d="M127 46 Q176 54 223 46" fill="none" stroke="#d7c096" strokeWidth="3.5" />
-    </svg>
+    <div className="ship" aria-hidden="true">
+      <img src="/assets/props/ithaca_ship.png" alt="" />
+    </div>
   );
 }
