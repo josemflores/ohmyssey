@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ATTACKS } from '../game/battleQuestions.js';
+import { ATTACKS, GATE_FALLBACK } from '../game/battleQuestions.js';
 import { createTroyGame } from '../game/createTroyGame.js';
 import { hatchQuestionAfter } from '../game/hatchQuestions.js';
 import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
@@ -441,9 +441,11 @@ export default function TroyWorld() {
         <div className="gate-ask" role="dialog" aria-label="The gate">
           <div className="battle-question">
             <p className="battle-ask">The gate</p>
-            <p>{gateAsk.prompt}</p>
+            <p>{gateAsk.prompt || GATE_FALLBACK.prompt}</p>
             <div className="battle-choices">
-              {gateAsk.choices.map((choice, index) => (
+              {(Array.isArray(gateAsk.choices) && gateAsk.choices.length >= 4
+                ? gateAsk.choices
+                : GATE_FALLBACK.choices).map((choice, index) => (
                 <button
                   key={choice}
                   type="button"
