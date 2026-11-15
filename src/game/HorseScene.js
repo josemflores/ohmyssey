@@ -311,6 +311,7 @@ export class HorseScene extends Phaser.Scene {
     }
 
     const moving = this.feet.body.speed > 8;
+    this.game.events.emit('audioStep', time, moving, false);
     const groundY = this.feet.y + this.feet.body.halfHeight;
     poseHero(this.hero, this.facing, moving);
     const hx = Math.round(this.feet.x);

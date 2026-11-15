@@ -82,6 +82,7 @@ export default function Level2World({ onHome }) {
 
   function pickAnswer(index) {
     if (!quiz || quiz.status !== 'open') return;
+    gameRef.current?.events.emit('audioSelect');
     if (index === quiz.question.answer) {
       // Right: the doors open and he walks into the hall.
       setQuiz(null);
@@ -128,6 +129,7 @@ export default function Level2World({ onHome }) {
 
   // The last suitor falls: a proclamation, then the hall is his again.
   function hallWon() {
+    gameRef.current?.events.emit('audioCombatEnd');
     setStory('won');
   }
 
@@ -212,8 +214,16 @@ export default function Level2World({ onHome }) {
           </div>
         </div>
       )}
-      {story === 'contest' && <BowContest onDone={() => setStory('battle')} />}
-      {story === 'battle' && <HallBattle onWon={hallWon} />}
+      {story === 'contest' && <BowContest onDone={() => {
+        gameRef.current?.events.emit('audioCombatStart');
+        setStory('battle');
+      }} />}
+      {story === 'battle' && <HallBattle
+        onWon={hallWon}
+        onBlow={(blow) => gameRef.current?.events.emit('audioBlow', blow)}
+        onLost={() => gameRef.current?.events.emit('audioCombatEnd')}
+        onRetry={() => gameRef.current?.events.emit('audioCombatStart')}
+      />}
       {story === 'reunion' && <Reunion onDone={() => setStory('credits')} />}
       {story === 'credits' && <Credits onHome={onHome} />}
       {story === 'won' && (
