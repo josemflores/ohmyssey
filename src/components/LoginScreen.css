@@ -1,8 +1,11 @@
 .login-card {
   position: relative;
   width: min(460px, 100%);
+  max-height: calc(100dvh - 8.5rem);
+  overflow: auto;
   padding: 1.35rem 1.5rem 1.15rem;
   text-align: center;
+  scroll-padding: 0.6rem;
 }
 
 .login-title {
@@ -72,9 +75,11 @@
   font-size: 1rem;
   color: var(--ink);
 }
-.login-card input:focus-visible {
+.login-card input:focus-visible,
+.login-card button:focus-visible,
+.login-card a:focus-visible {
   outline: 3px solid var(--gold-bright);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 .login-card input[aria-invalid='true'] {
   border-color: var(--terracotta);
@@ -94,9 +99,9 @@
 
 .login-actions {
   display: grid;
-  grid-template-columns: 1.45fr 1fr;
-  gap: 0.7rem;
-  margin-top: 0.35rem;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  margin-top: 0.45rem;
 }
 .login-submit,
 .login-skip {
@@ -150,9 +155,11 @@
   border: 0;
 }
 .login-note {
-  margin-top: 0.75rem;
+  margin: 0.85rem auto 0;
+  max-width: 38ch;
   color: var(--ink-soft);
   font-size: 0.88rem;
+  line-height: 1.45;
 }
 .login-mode {
   margin: -0.35rem 0 0.75rem;
@@ -170,14 +177,19 @@
 }
 .login-text-btn {
   border: 0;
-  padding: 0;
+  padding: 0.2rem 0.15rem;
+  min-height: 36px;
   background: none;
   color: var(--sea);
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   cursor: pointer;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+}
+.login-label-row .login-text-btn {
+  white-space: nowrap;
+  flex: none;
 }
 .login-text-btn:disabled { cursor: wait; opacity: 0.6; }
 .login-notice {
@@ -226,11 +238,26 @@
 }
 .login-google-card .login-submit { width: 100%; }
 .login-switch { margin: 0.7rem 0 0; }
-.login-actions:not(:has(.login-skip)) { grid-template-columns: 1fr; }
-
 @media (max-width: 460px) {
-  .login-actions { grid-template-columns: 1fr; }
   .login-card { padding: 1.1rem 1rem 1rem; }
+}
+
+@media (max-height: 820px) {
+  .night-content:has(.login-card) {
+    align-items: start;
+    padding-top: 0.85rem;
+    padding-bottom: 5.6rem;
+  }
+  .login-card {
+    max-height: calc(100dvh - 6.4rem);
+    padding-top: 0.85rem;
+    padding-bottom: 0.75rem;
+  }
+  .login-title { font-size: 1.85rem; margin-top: 0; }
+  .login-lede { margin-bottom: 0.45rem; }
+  .login-mode { margin-bottom: 0.45rem; }
+  .login-field { margin-bottom: 0.5rem; }
+  .login-note { margin-top: 0.55rem; }
 }
 
 @media (max-width: 380px) {

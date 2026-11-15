@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import CircuitBuilder from './CircuitBuilder.jsx';
 import AthenaPanel from './AthenaPanel.jsx';
 
-export default function LevelScreen({ level, onComplete, onBack, onStudy }) {
+export default function LevelScreen({ level, onComplete, onBack, onStudy, backLabel, doneLabel }) {
   const [slots, setSlots] = useState(() => level.slots.map((slot) => ({ id: slot.id, part: null })));
 
   const result = level.check({
@@ -26,7 +26,7 @@ export default function LevelScreen({ level, onComplete, onBack, onStudy }) {
       <header className="level-bar">
         <div className="level-actions">
           <button className="btn btn-quiet" type="button" onClick={onBack}>
-            ← The map
+            {backLabel || '← The map'}
           </button>
           {onStudy && (
             <button className="btn btn-quiet" type="button" onClick={onStudy}>
@@ -36,7 +36,7 @@ export default function LevelScreen({ level, onComplete, onBack, onStudy }) {
         </div>
         <div>
           <p className="eyebrow">
-            Island {level.id}
+            {level.voyageLabel || `Island ${level.id}`}
             {level.stub ? ' · sketch' : ''} · {level.place}
           </p>
           <h1>{level.title}</h1>
@@ -74,7 +74,7 @@ export default function LevelScreen({ level, onComplete, onBack, onStudy }) {
           <CircuitBuilder level={level} slots={slots} onSlotsChange={setSlots} result={result} />
           {result.complete && (
             <button className="btn btn-primary btn-large sail-on" type="button" onClick={onBack}>
-              Return to the map
+              {doneLabel || 'Return to the map'}
             </button>
           )}
         </div>

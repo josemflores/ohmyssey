@@ -1,0 +1,101 @@
+.ithaca {
+  position: fixed;
+  inset: 0;
+  background: #07111c;
+  overflow: hidden;
+}
+.ithaca-host { position: absolute; inset: 0; }
+.ithaca-host canvas { display: block; }
+.ithaca-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ithaca-plaque {
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  z-index: 2;
+  margin: 0;
+  color: #f0d48a;
+  font-size: 1.45rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+.ithaca-plaque span {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: #f6ead2;
+}
+
+.ithaca-hint,
+.ithaca-banner {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #f6ead2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+.ithaca-hint {
+  bottom: 28px;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  transition: opacity 0.4s ease;
+}
+.ithaca-hint.is-hidden { opacity: 0; }
+.ithaca-banner {
+  top: 22px;
+  right: 26px;
+  left: auto;
+  transform: none;
+  max-width: 280px;
+  text-align: right;
+  color: #f0d48a;
+}
+
+.ithaca-talk {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  z-index: 3;
+  width: min(440px, calc(100% - 32px));
+  transform: translateX(-50%);
+  padding: 1rem 1.1rem 0.9rem;
+  border-radius: 14px;
+  background: #f3e4c6;
+  color: var(--ink);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+.ithaca-talk-who {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--terracotta);
+}
+.ithaca-talk p { margin: 0 0 0.8rem; }
+.ithaca-talk-go { width: 100%; }
+
+.ithaca-puzzle {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: auto;
+  background: #e7d3aa;
+}

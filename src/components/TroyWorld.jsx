@@ -11,7 +11,7 @@ const MOVE_KEYS = new Set([
 // Mounts the Phaser city. The hint fades after a few seconds, or on the first step.
 // A spot in the city can also open a small box. That box is a placeholder until
 // the real puzzle and encounter screens plug in.
-export default function TroyWorld() {
+export default function TroyWorld({ onSail }) {
   const host = useRef(null);
   const gameRef = useRef(null);
   const [hint, setHint] = useState(true);
@@ -93,6 +93,12 @@ export default function TroyWorld() {
       gameRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!faded || !onSail) return undefined;
+    const timer = window.setTimeout(onSail, 1100);
+    return () => window.clearTimeout(timer);
+  }, [faded, onSail]);
 
   function closeTalk() {
     setTalk(null);
@@ -194,6 +200,7 @@ export default function TroyWorld() {
     <div className="troy" data-screen="world">
       <p className="troy-sr" role="status">{arrived}</p>
       <div ref={host} className="troy-host" />
+      {faded && <p className="troy-sail">The ships turn for Ithaca.</p>}
       {!faded && <h1 className="troy-plaque">
         {place === 'horse' ? 'The horse' : 'Troy'}
         <span>{place === 'horse' ? 'inside' : 'at night'}</span>
