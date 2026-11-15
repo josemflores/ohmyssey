@@ -1256,7 +1256,7 @@ function addShip(scene) {
   });
 }
 
-// The Greeks burst the doors open on their hinges and come in.
+// The Greeks smash the gate to pieces and come in.
 // The player stays in the city afterwards.
 function playGateFall(scene, onDone) {
   const cam = scene.cameras.main;
@@ -1292,7 +1292,7 @@ function openGateDoors(scene) {
   const y = src ? src.y : 652;
   if (src) src.setVisible(false);
   if (door.blocker) door.blocker.destroy();
-  // The closed doors cast a shadow on the road. Once they burst open there
+  // The closed doors cast a shadow on the road. Once they are smashed there
   // is nothing left to cast it, so it fades out with them.
   if (door.shadow) {
     scene.tweens.add({
@@ -1303,67 +1303,81 @@ function openGateDoors(scene) {
       onComplete: () => door.shadow.destroy(),
     });
   }
-  // The army bursts the gate open. One picture holds the two stone jambs
-  // and the two wooden leaves (128 px wide: jamb 0-8, leaves 8-64 and
-  // 64-120, jamb 120-128). Each leaf stays on its hinge at the jamb and
-  // swings in: seen from the front it narrows toward the hinge until it is
-  // nearly edge-on against the wall. It slams open fast, bounces off the
-  // wall, and settles. The jambs are drawn on top to cover the hinges.
-  const LEAF = 56;
+  // The army smashes the gate to pieces. One picture holds the two stone
+  // jambs and the two wooden leaves (128 px wide: jamb 0-8, leaves 8-64 and
+  // 64-120, jamb 120-128). The leaves are cut into planks; after a shudder
+  // from the ram, every plank flies off spinning and lands as wreckage on
+  // the road, and only a few broken stubs stay hanging on the hinges.
+  const PLANK = 8;
   const tex = scene.textures.get('gate-door');
-  if (!tex.has('leaf-left')) {
-    tex.add('leaf-left', 0, 8, 0, LEAF, 72);
-    tex.add('leaf-right', 0, 64, 0, LEAF, 72);
+  const planks = [];
+  for (let px = 8; px < 120; px += PLANK) {
+    const name = `plank-${px}`;
+    if (!tex.has(name)) tex.add(name, 0, px, 0, PLANK, 72);
+    const plank = scene.add.image(x - 64 + px + PLANK / 2, y, 'gate-door', name)
+      .setOrigin(0.5, 1).setDepth(7420).setTint(NIGHT_TINT);
+    planks.push(plank);
   }
-  // Origins on the hinge side, so scaling X swings each leaf on its hinge.
-  const left = scene.add.image(x - LEAF, y, 'gate-door', 'leaf-left')
-    .setOrigin(0, 1).setDepth(7420).setTint(NIGHT_TINT);
-  const right = scene.add.image(x + LEAF, y, 'gate-door', 'leaf-right')
-    .setOrigin(1, 1).setDepth(7420).setTint(NIGHT_TINT);
   for (const [cropX, cropW] of [[0, 8], [120, 8]]) {
     scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7421).setCrop(cropX, 0, cropW, 72)
       .setTint(NIGHT_TINT);
   }
-  // Darker as a leaf turns away from the moonlight.
-  const shade = (k) => {
-    const c = Phaser.Display.Color.Interpolate.ColorWithColor(
-      Phaser.Display.Color.ValueToColor(NIGHT_TINT),
-      Phaser.Display.Color.ValueToColor(0x3a3a48),
-      100,
-      Math.round((1 - k) * 100),
-    );
-    return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
-  };
-  const OPEN = 0.12; // how much of a leaf still shows once it is wide open
-  const swing = (k) => {
-    for (const leaf of [left, right]) leaf.setScale(k, 1).setTint(shade(k));
-  };
-  swing(1);
-  // A shudder as the ram hits, then the doors fly open.
-  scene.tweens.addCounter({
-    from: 0,
-    to: 1,
-    duration: 160,
+  // The ram hits: the doors shudder once.
+  scene.tweens.add({
+    targets: planks,
+    y: y - 2,
+    duration: 90,
     yoyo: true,
-    onUpdate: (tween) => swing(1 - 0.04 * tween.getValue()),
+    repeat: 1,
     onComplete: () => {
-      scene.cameras.main.shake(260, 0.006);
+      scene.cameras.main.shake(320, 0.009);
       gateDust(scene, x, y);
-      scene.tweens.chain({
-        tweens: [
-          // Slam open against the wall...
-          { targets: { k: 1 }, k: OPEN - 0.04, duration: 230, ease: 'Cubic.easeIn', onUpdate: (t, o) => swing(o.k) },
-          // ...bounce off it...
-          { targets: { k: OPEN - 0.04 }, k: OPEN + 0.14, duration: 180, ease: 'Quad.easeOut', onUpdate: (t, o) => swing(o.k) },
-          // ...and come to rest, open.
-          { targets: { k: OPEN + 0.14 }, k: OPEN, duration: 320, ease: 'Bounce.easeOut', onUpdate: (t, o) => swing(o.k) },
-        ],
+      planks.forEach((plank, i) => {
+        const fromCenter = plank.x - x;
+        const side = Math.sign(fromCenter) || 1;
+        // The plank next to each jamb snaps and leaves a stub on the hinge.
+        if (i === 0 || i === planks.length - 1) {
+          plank.setCrop(0, 40 + Phaser.Math.Between(0, 14), PLANK, 72).setAngle(side * 4);
+          return;
+        }
+        // Thrown into the city and to the sides, spinning, and down onto
+        // the road as wreckage.
+        const landX = plank.x + side * Phaser.Math.Between(10, 46);
+        const landY = y - Phaser.Math.Between(40, 100);
+        const peak = Math.min(y, landY) - Phaser.Math.Between(20, 44);
+        const spin = side * Phaser.Math.Between(120, 420);
+        const startX = plank.x;
+        const startY = plank.y;
+        plank.setOrigin(0.5, 0.5).setY(startY - 36);
+        scene.tweens.addCounter({
+          from: 0,
+          to: 1,
+          duration: Phaser.Math.Between(520, 760),
+          delay: Math.abs(fromCenter) < 20 ? 0 : 40,
+          onUpdate: (tween) => {
+            const t = tween.getValue();
+            plank.setPosition(
+              startX + (landX - startX) * t,
+              // A throw: up to the peak, then down onto the road.
+              (1 - t) * (1 - t) * (startY - 36) + 2 * (1 - t) * t * peak + t * t * landY,
+            );
+            plank.setAngle(spin * t);
+            // Shorter as it tips flat, so it lies on the road at the end.
+            plank.setScale(1, 1 - 0.75 * t);
+            plank.setDepth(7000 + plank.y + 20);
+          },
+          onComplete: () => {
+            plank.setAngle(90 + Phaser.Math.Between(-20, 20));
+            plank.setScale(1, 0.25);
+            plank.setDepth(5300); // wreckage on the road, under the people
+          },
+        });
       });
     },
   });
 }
 
-// Dust and splinters thrown up where the doors burst open.
+// Dust and splinters thrown up where the doors are smashed.
 function gateDust(scene, x, y) {
   for (let i = 0; i < 14; i += 1) {
     const side = i % 2 ? 1 : -1;
