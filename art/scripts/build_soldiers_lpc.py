@@ -122,8 +122,9 @@ TEAMS = {"greek": greek_layers, "trojan": trojan_layers}
 
 # Trojans in one tone of murex purple, the dye made in Troy's lower town.
 # Purple stands out from the gray-blue night paving, the bronze Greeks, and
-# Odysseus' near-black iron with its red crest.
-MUREX = ["#1a0a1e", "#3a1240", "#5e1e62", "#84307e", "#aa4c9a", "#d684c0"]
+# Odysseus' near-black iron with its red crest. The ramp is kept bright so
+# even the shadows sit well above the dark paving at night.
+MUREX = ["#2a0e30", "#5a1c62", "#8a2e8e", "#b84cb4", "#dc7ad6", "#f6b8ee"]
 
 # Teams drawn in a single color. The ramp runs darkest to lightest.
 MONOCHROME = {"trojan": MUREX}
