@@ -97,22 +97,14 @@ export default function LoginScreen({ onEnter }) {
           fail(started.error);
           return;
         }
-        if (started.sent) {
-          const link = resetLink(started.token);
-          const mailed = await deliverResetLink(email, link);
-          lock.current = false;
-          setPending('');
-          if (mailed.ok) {
-            setNotice('If that email has a password account, a reset link is on its way.');
-          } else {
-            setResetHref(link);
-            setNotice('The mail service did not accept the note from this network. The reset link for that email is here.');
-          }
-          return;
-        }
+        const link = started.sent ? resetLink(started.token) : '';
+        const mailed = link ? await deliverResetLink(email, link) : { ok: true };
         lock.current = false;
         setPending('');
-        setNotice('If that email has a password account, a reset link is on its way.');
+        // One sentence either way, so the card does not say whether the address is signed up.
+        setNotice('If that email exists, a link is on its way.');
+        const devLink = import.meta.env.DEV && link && (mailed.devLink || (mailed.ok !== true ? link : ''));
+        setResetHref(devLink || '');
         return;
       }
 
@@ -322,7 +314,7 @@ export default function LoginScreen({ onEnter }) {
           {notice && (
             <p className="login-notice" role="status">
               {notice}
-              {resetHref && (
+              {import.meta.env.DEV && resetHref && (
                 <>
                   {' '}
                   <a href={resetHref}>Open the reset link</a>
