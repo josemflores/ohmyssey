@@ -10,7 +10,7 @@
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
 import { loadSoldierActions, createSoldierActions, createSoldierWalks, playSoldierIdle } from './soldierAnimations.js';
-import { startGateBattle } from './gateBattle.js';
+import { GATE_VIEW_Y, startGateBattle } from './gateBattle.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -217,6 +217,10 @@ export class TroyScene extends Phaser.Scene {
     this.heroShadow = this.add.ellipse(start.x, start.y, 24, 7, 0x0c1424, 0.55);
 
     this.physics.add.collider(this.feet, this.blockers);
+    // Soldiers are solid: the city groups and the duelists inside the gate
+    // each get a footprint (see spawnCityGroups and gateBattle.js).
+    this.soldierBlockers = this.physics.add.staticGroup();
+    this.physics.add.collider(this.feet, this.soldierBlockers);
 
     // The road and the gate stay empty. Kevin removed the four Trojan
     // sentries that used to stand in front of the shut doors, so nobody
@@ -388,6 +392,24 @@ export class TroyScene extends Phaser.Scene {
     if (up) vy -= 1;
     if (down) vy += 1;
 
+    // During the gate cinematic he walks a short scripted step back.
+    if (this.scriptedMove) {
+      const goal = this.scriptedMove;
+      const dx = goal.x - this.feet.x;
+      const dy = goal.y - this.feet.y;
+      const dist = Math.hypot(dx, dy);
+      // Give up only if something truly blocks him for a few frames.
+      const b = this.feet.body.blocked;
+      goal.stuck = (b.up || b.down || b.left || b.right) ? (goal.stuck || 0) + 1 : 0;
+      if (dist < 2 || goal.stuck > 12) {
+        this.scriptedMove = null;
+        this.facing = goal.face || this.facing;
+      } else {
+        vx = dx / dist;
+        vy = dy / dist;
+      }
+    }
+
     const running = !locked && this.keys.shift.isDown;
     if (vx === 0 && vy === 0) {
       this.feet.setVelocity(0, 0);
@@ -439,7 +461,7 @@ export class TroyScene extends Phaser.Scene {
       } else if (this.nearBoat(70)) {
         this.touchBoat();
       } else {
-        const group = this.nearestGroup(72);
+        const group = this.nearestGroup(44);
         if (group) this.beginGroupFight(group);
         else if (this.nearest) this.interact(this.nearest);
       }
@@ -717,13 +739,23 @@ export class TroyScene extends Phaser.Scene {
     });
   }
 
+  // Distance to a group is to its nearest soldier. The soldiers are solid,
+  // so he touches the edge of a wide group long before its middle.
+  groupDistance(group) {
+    let best = Infinity;
+    for (const member of group.members) {
+      best = Math.min(best, Math.hypot(member.x - this.feet.x, member.y - this.feet.y));
+    }
+    return best;
+  }
+
   nearestGroup(radius) {
     if (!this.questDone || !this.cityGroups) return null;
     let best = null;
     let bestDist = radius;
     for (const group of this.cityGroups) {
       if (group.gone) continue;
-      const dist = Math.hypot(group.x - this.feet.x, group.y - this.feet.y);
+      const dist = this.groupDistance(group);
       if (dist <= bestDist) {
         best = group;
         bestDist = dist;
@@ -734,7 +766,8 @@ export class TroyScene extends Phaser.Scene {
 
   maybeMeetGroup(moving) {
     if (!moving || this.fightCooldown > 0 || this.gateFalling) return;
-    const group = this.nearestGroup(48);
+    // Bumping into any soldier of the group starts the fight.
+    const group = this.nearestGroup(32);
     if (group) this.beginGroupFight(group);
   }
 
@@ -811,6 +844,7 @@ export class TroyScene extends Phaser.Scene {
     for (const member of group.members) {
       member.sprite.destroy();
       member.shadow.destroy();
+      if (member.blocker) member.blocker.destroy();
     }
     this.publishObjective();
   }
@@ -831,10 +865,13 @@ export class TroyScene extends Phaser.Scene {
         const sprite = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1);
         // The Trojans wait facing south, breathing in place.
         playSoldierIdle(sprite, 'trojan', 's');
-        const depth = 7600 + y;
+        const depth = 7000 + y;
         shadow.setDepth(depth - 2);
         sprite.setDepth(depth);
-        members.push({ sprite, shadow, x, y });
+        // A solid footprint at his feet. His head and shield can overlap
+        // whoever stands behind him; y decides who is drawn in front.
+        const blocker = addRect(this, this.soldierBlockers, x - 9, y - 12, 18, 12);
+        members.push({ sprite, shadow, blocker, x, y });
       }
       this.cityGroups.push({ id: spot.id, x: spot.x, y: spot.y, members, gone: false });
     }
@@ -1123,9 +1160,15 @@ function addShip(scene) {
 function playGateFall(scene, onDone) {
   const cam = scene.cameras.main;
   cam.stopFollow();
-  cam.pan(480, 636, 320, 'Sine.easeOut');
+  cam.pan(480, GATE_VIEW_Y, 420, 'Sine.easeOut');
   cam.shake(260, 0.008);
   openGateDoors(scene);
+  // He steps back from the doors so the column has the road.
+  scene.scriptedMove = {
+    x: Phaser.Math.Clamp(scene.feet.x, 470, 490),
+    y: HERO_STEP_BACK_Y,
+    face: 's',
+  };
   // The Greeks run in through the gate and pair off with Trojans (gateBattle.js).
   startGateBattle(scene);
 
@@ -1144,11 +1187,17 @@ function playGateFall(scene, onDone) {
     onComplete: () => flash.destroy(),
   });
 
-  scene.time.delayedCall(2400, () => {
+  // Control comes back once every duelist is at his spot.
+  scene.time.delayedCall(Math.max(2400, (scene.gateBattleMs || 0) + 250), () => {
+    scene.scriptedMove = null;
     cam.startFollow(scene.feet, true, 0.16, 0.16);
     if (onDone) onDone();
   });
 }
+
+// Where Odysseus steps back to while the army runs through the gate: open
+// paving up the middle, between the two duel flanks.
+const HERO_STEP_BACK_Y = 516;
 
 function openGateDoors(scene) {
   const door = scene.gateDoor;
