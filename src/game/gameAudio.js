@@ -11,8 +11,8 @@ function audioClip(name, volume, loop = false) {
 export function attachGameAudio(game, { world, level }) {
   const effects = new Map();
   const playing = new Set();
-  let worldTrack = audioClip(world, 0.32, true);
-  const combatTrack = audioClip(COMBAT, 0.36, true);
+  let worldTrack = audioClip(world, 0.26, true);
+  const combatTrack = audioClip(COMBAT, 0.29, true);
   let activeTrack = worldTrack;
 
   function startMusic() {
@@ -62,7 +62,7 @@ export function attachGameAudio(game, { world, level }) {
 
   function leaveHorse(place) {
     if (place !== 'troy') return;
-    const nextTrack = audioClip('world-harbor', 0.32, true);
+    const nextTrack = audioClip('world-harbor', 0.26, true);
     worldTrack = nextTrack;
     useTrack(nextTrack);
     play('world-transition', 0.33);
