@@ -23,15 +23,15 @@ import {
   buildMap,
 } from './map.js';
 import {
-  createPatrol,
+  createQuestions,
   FOE_HIT,
   FOE_MAX,
   FULL_HIT,
   HERO_MAX,
   RUN_SPEED,
+  WALK_FIGHT_SECONDS,
   WALK_SPEED,
   WEAK_HIT,
-  hintDistance,
 } from './patrol.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 import { routeReport } from './routeCheck.js';
@@ -167,12 +167,8 @@ export class TroyScene extends Phaser.Scene {
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
 
-    addBeachArmy(this);
-    this.patrol = createPatrol(this, {
-      ground,
-      blockers: this.blockers,
-      fromHorse: this.arrive,
-    });
+    this.questions = createQuestions();
+    this.walkFight = 0;
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
     this.fighting = false;
     this.fight = null;
@@ -217,7 +213,7 @@ export class TroyScene extends Phaser.Scene {
     const onEnemyAct = () => this.enemyAct();
     const onAttack = () => {
       if (!this.fight) return;
-      const question = this.patrol.question();
+      const question = this.questions.next();
       this.fight.question = question;
       this.game.events.emit('fightQuestion', {
         id: question.id,
@@ -371,47 +367,37 @@ export class TroyScene extends Phaser.Scene {
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
 
-    this.patrol.update(dt, this.feet.x, this.feet.y, locked || this.fighting);
-    this.maybeHintRun();
-    if (!this.fighting && !locked) this.maybeStartFight();
+    this.maybeHintRun(moving);
+    if (!this.fighting && !locked && moving) this.maybeRandomFight(dt);
     aimArrow(this);
   }
 
-  maybeHintRun() {
-    if (this.runHintShown) return;
-    const first = this.patrol.firstSentry();
-    if (!first) return;
-    const dist = Math.hypot(first.body.x - this.feet.x, first.body.y - this.feet.y);
-    if (dist > hintDistance()) return;
+  maybeHintRun(moving) {
+    if (this.runHintShown || !moving) return;
     this.runHintShown = true;
     this.game.registry.set('runHintShown', true);
     this.game.events.emit('runHint');
   }
 
-  maybeStartFight() {
-    const near = this.patrol.nearestSentry(this.feet.x, this.feet.y);
-    if (!near || !near.man.touch) return;
-    this.beginFight(near.man);
+  maybeRandomFight(dt) {
+    this.walkFight += dt;
+    if (this.walkFight < WALK_FIGHT_SECONDS) return;
+    this.walkFight = 0;
+    this.beginFight();
   }
 
-  beginFight(enemy) {
+  beginFight() {
     this.fighting = true;
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);
-    this.fight = {
-      enemy,
-      foeHp: enemy.hp,
-      // A step back from where he was grabbed, used if he falls.
-      backX: this.feet.x,
-      backY: this.feet.y,
-    };
+    this.fight = { foeHp: FOE_MAX };
     this.game.events.emit('fightStart', {
-      id: enemy.id,
+      id: 'trojan',
       name: 'Trojan sentry',
       side: 'hero',
       heroHp: this.heroHp,
       heroMax: HERO_MAX,
-      foeHp: enemy.hp,
+      foeHp: FOE_MAX,
       foeMax: FOE_MAX,
     });
   }
@@ -426,10 +412,8 @@ export class TroyScene extends Phaser.Scene {
     const correct = payload.index === question.answer;
     const dealt = correct ? FULL_HIT : WEAK_HIT;
     fight.foeHp = Math.max(0, fight.foeHp - dealt);
-    fight.enemy.hp = fight.foeHp;
     fight.question = null;
     if (fight.foeHp <= 0) {
-      this.patrol.remove(fight.enemy);
       this.heroHpStay();
       this.endFight(true, correct ? 'The sentry falls.' : 'A weak blow, but it was enough.');
       return;
@@ -451,16 +435,7 @@ export class TroyScene extends Phaser.Scene {
     this.heroHpStay();
     if (this.heroHp <= 0) {
       this.heroHp = HERO_MAX;
-      fight.enemy.hp = FOE_MAX;
-      fight.foeHp = FOE_MAX;
       this.heroHpStay();
-      const dx = fight.backX - fight.enemy.body.x;
-      const dy = fight.backY - fight.enemy.body.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const nx = fight.enemy.body.x + (dx / len) * 140;
-      const ny = fight.enemy.body.y + (dy / len) * 140;
-      this.feet.setPosition(nx, ny);
-      this.feet.body.reset(nx, ny);
       this.endFight(false, 'You fall back. The sentry recovers.');
       return;
     }
@@ -593,10 +568,10 @@ function publishDebug(scene) {
       feet.body.reset(x, y);
     },
     sentries() {
-      return scene.patrol.sentries.filter((man) => !man.dead).length;
+      return 0;
     },
     greeks() {
-      return scene.patrol.greeks.length;
+      return 0;
     },
     lookAt(x, y, zoom) {
       const cam = scene.cameras.main;
@@ -633,25 +608,6 @@ function poseHero(hero, facing, moving, time) {
   const hop = Math.abs(Math.sin(time / 110));
   hero.setScale(1 + hop * 0.04, 1 - hop * 0.07);
   return -hop * 1.7;
-}
-
-function addBeachArmy(scene) {
-  const key = WARRIOR_CONFIG.teams.greek.key;
-  const tex = scene.textures.get(key);
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  const frame = WARRIOR_CONFIG.facingFrames.n;
-  // Two ranks pressed against the doors, centered on the gate.
-  for (let row = 0; row < 2; row += 1) {
-    for (let col = 0; col < 7; col += 1) {
-      const x = 480 + (col - 3) * 42;
-      const y = 678 + row * 34;
-      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
-      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
-      const sort = 7000 + y;
-      shadow.setDepth(sort - 2);
-      sprite.setDepth(sort);
-    }
-  }
 }
 
 function addSolidProp(scene, group, prop) {
