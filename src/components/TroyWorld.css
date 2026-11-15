@@ -334,6 +334,15 @@
   padding: 1rem 1.1rem 1.1rem;
   background: rgba(8, 14, 24, 0.94);
   border: 1px solid rgba(240, 212, 138, 0.85);
+  color: #f6ead2;
+}
+.gate-ask .battle-question p,
+.battle-screen .battle-question p {
+  color: #f6ead2;
+}
+.gate-ask .battle-choice {
+  color: #f6ead2;
+  background: rgba(8, 14, 24, 0.72);
 }
 .battle-sprite {
   position: relative;

@@ -42,15 +42,41 @@ export function attackById(id) {
   return ATTACKS[id] || ATTACKS.light;
 }
 
-// One medium step of Ohm's law for the shut gate. A new roll each time.
-export function nextGateQuestion(rng = Math.random) {
-  const question = generateOhmsQuestion(rng, 1);
+// Used when the generator throws or comes back without a prompt and four choices.
+export const GATE_FALLBACK = {
+  id: 'gate-fallback',
+  prompt: 'A 12 V battery feeds a 4 Ω resistor. What current flows?',
+  choices: ['3 A', '6 A', '2 A', '8 A'],
+  answer: 0,
+  hint: 'I = V / R = 12 / 4 = 3 A.',
+};
+
+function asGateQuestion(question) {
+  if (!question || typeof question.prompt !== 'string' || !question.prompt.trim()) return null;
+  if (!Array.isArray(question.choices) || question.choices.length < 4) return null;
+  if (!question.choices.every((choice) => typeof choice === 'string' && choice.trim())) return null;
+  const answer = Number.isInteger(question.answer) ? question.answer : question.answerIndex;
+  if (!Number.isInteger(answer) || answer < 0 || answer >= question.choices.length) return null;
   return {
-    id: question.id,
+    id: question.id || 'gate-ohm',
     prompt: question.prompt,
     choices: question.choices.slice(),
-    answer: question.answerIndex,
-    hint: question.explanation,
+    answer,
+    hint: question.explanation || question.hint || 'Try I = V / R.',
+  };
+}
+
+// One medium step of Ohm's law for the shut gate. A new roll each time.
+export function nextGateQuestion(rng = Math.random) {
+  try {
+    const made = asGateQuestion(generateOhmsQuestion(rng, 1));
+    if (made) return made;
+  } catch {
+    // The bank can fail to load. The gate still has to ask something.
+  }
+  return {
+    ...GATE_FALLBACK,
+    choices: GATE_FALLBACK.choices.slice(),
   };
 }
 
