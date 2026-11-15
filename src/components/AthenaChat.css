@@ -1,0 +1,102 @@
+.athena-chat {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem 0.9rem;
+  color: var(--ink);
+}
+.athena-chat-head { display: flex; gap: 0.7rem; align-items: center; }
+.athena-chat-head h2 { margin: 0; font-size: 1.6rem; }
+.athena-chat-head p { margin: 0; color: var(--ink-soft); font-size: 0.88rem; }
+
+.athena-chat-log {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  max-height: min(46vh, 380px);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.athena-chat-line {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  line-height: 1.45;
+  max-width: 92%;
+}
+.athena-chat-line.is-athena {
+  justify-self: start;
+  background: rgba(255, 250, 240, 0.9);
+  border-left: 3px solid var(--gold);
+}
+.athena-chat-line.is-you {
+  justify-self: end;
+  background: var(--sea);
+  color: #f6ead2;
+}
+.athena-chat-line.is-thinking { color: var(--ink-soft); font-style: italic; }
+
+.athena-chat-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+.athena-chat-starters p { margin: 0 0.2rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+.athena-chat-starters button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffaf0;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.athena-chat-starters button:hover:not(:disabled) { border-color: var(--terracotta); color: var(--terracotta); }
+
+.athena-chat-form { display: flex; gap: 0.5rem; }
+.athena-chat-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffaf0;
+  font: inherit;
+  color: var(--ink);
+}
+.athena-chat-form input:focus-visible,
+.athena-chat button:focus-visible {
+  outline: 3px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+
+.athena-chat-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.athena-chat-clear {
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--sea);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
