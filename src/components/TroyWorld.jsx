@@ -65,7 +65,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
     gameRef.current = game;
     setActiveGame(game);
 
-    // A new objective. "Defeat the Trojan groups (1/3)" and "(2/3)" are the
+    // A new objective. "Defeat the Trojan warriors! (1/3)" and "(2/3)" are the
     // same stage, so a count change just updates the text. A new stage
     // (for example after the gate opens) gets the cross-out animation.
     function onObjective(next) {
@@ -594,7 +594,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
   );
 }
 
-// "Defeat the Trojan groups (2/3)" -> "Defeat the Trojan groups".
+// "Defeat the Trojan warriors! (2/3)" -> "Defeat the Trojan warriors!".
 function stageOf(title) {
   return String(title || '').replace(/\s*\(.*\)\s*$/, '');
 }
