@@ -60,27 +60,31 @@ FACINGS = [
 ]
 WALK_FRAME_COUNT = 8  # skip LPC frame 0 (the stand)
 
-# Official ULPC palette rows. The PNGs are saved in the first color of each
-# pair; we swap to the second so the warrior reads as Greek rather than the
-# generator's default orange hair and steel helmet.
+# Official ULPC palette rows. Sheets are saved in the source row; we swap
+# to the target so he matches the dark-armor, red-crest reference.
 ORANGE = ["#260D14", "#6A1108", "#A42600", "#BF4000", "#E55600", "#FF8A00"]
-LIGHT_BROWN = ["#1A0E04", "#301B07", "#60350F", "#7D4513", "#AE682A", "#C88D58"]
+GRAY = ["#0E0E0E", "#292929", "#4B4B4B", "#777777", "#AAAAAA", "#D9D9D9"]
+BROWN_CLOTH = ["#1D131E", "#411E05", "#4B2B13", "#62351C", "#744B30", "#996B4A"]
+# Brighter than the stock cloth-red row so the crest still reads scarlet at 32px.
+SCARLET = ["#1D131E", "#5A080C", "#A01012", "#C81816", "#E6201C", "#FF4630"]
 STEEL = ["#1D131E", "#4D4A5D", "#726B7E", "#867E7F", "#C4B59F", "#FFFFFF"]
-BRONZE = ["#4F2313", "#6D4A00", "#966600", "#BF8200", "#E7A820", "#FBE3B0"]
+IRON = ["#000000", "#1B192B", "#29253A", "#343043", "#484152", "#726B7E"]
 WHITE_CLOTH = ["#281820", "#4D4A5D", "#958080", "#C4B59F", "#E5E6C7", "#FFFFFF"]
 LEATHER = ["#2B1C1D", "#311210", "#4B2B13", "#704325", "#75502D", "#9A6F37"]
+CHARCOAL = ["#000000", "#130D14", "#1C2222", "#2A3034", "#4A5057", "#6E7675"]
 
 # Back to front, using the generator's zPos.
 LAYERS = [
     {
-        "id": "shield-bg",
-        "path": "spritesheets/shield/spartan/bg/walk/spartan.png",
-        "note": "Spartan shield, behind the body",
+        "id": "cape-bg",
+        "path": "spritesheets/cape/solid/bg/walk.png",
+        "recolor": (WHITE_CLOTH, CHARCOAL),
+        "note": "Solid cape, behind the body, charcoal",
     },
     {
-        "id": "spear-bg",
-        "path": "spritesheets/weapon/polearm/spear/background/walk/bronze.png",
-        "note": "Spear, bronze, behind the body",
+        "id": "sword-bg",
+        "path": "spritesheets/weapon/sword/arming/universal/bg/walk/steel.png",
+        "note": "Arming sword, steel, behind the body",
     },
     {
         "id": "body",
@@ -94,14 +98,28 @@ LAYERS = [
         "note": "Sandals, recolored from the white cloth row to leather",
     },
     {
-        "id": "skirt",
-        "path": "spritesheets/legs/skirts/legion/male/walk.png",
-        "note": "Legion skirt (pteruges), white cloth palette",
+        "id": "pants",
+        "path": "spritesheets/legs/pants/male/walk.png",
+        "recolor": (WHITE_CLOTH, CHARCOAL),
+        "note": "Pants, recolored from white cloth to charcoal",
     },
     {
-        "id": "tunic",
-        "path": "spritesheets/torso/clothes/sleeveless/sleeveless/male/walk/white.png",
-        "note": "Sleeveless white tunic",
+        "id": "plate",
+        "path": "spritesheets/torso/armour/plate/male/walk.png",
+        "recolor": (STEEL, IRON),
+        "note": "Plate cuirass, recolored from steel to iron",
+    },
+    {
+        "id": "bracers",
+        "path": "spritesheets/arms/bracers/male/walk.png",
+        "recolor": (STEEL, IRON),
+        "note": "Bracers, recolored from steel to iron",
+    },
+    {
+        "id": "cape-fg",
+        "path": "spritesheets/cape/solid/fg/walk.png",
+        "recolor": (WHITE_CLOTH, CHARCOAL),
+        "note": "Solid cape, in front of the torso, charcoal",
     },
     {
         "id": "head",
@@ -111,30 +129,25 @@ LAYERS = [
     {
         "id": "beard",
         "path": "spritesheets/beards/beard/basic/walk.png",
-        "recolor": (ORANGE, LIGHT_BROWN),
-        "note": "Basic beard, recolored from orange to light brown",
-    },
-    {
-        "id": "shield-fg",
-        "path": "spritesheets/shield/spartan/fg/walk/spartan.png",
-        "note": "Spartan shield, in front of the body",
-    },
-    {
-        "id": "hair",
-        "path": "spritesheets/hair/plain/adult/walk.png",
-        "recolor": (ORANGE, LIGHT_BROWN),
-        "note": "Short plain hair, recolored from orange to light brown",
+        "recolor": (ORANGE, GRAY),
+        "note": "Basic beard, recolored from orange to gray",
     },
     {
         "id": "helmet",
         "path": "spritesheets/hat/helmet/legion/adult/walk.png",
-        "recolor": (STEEL, BRONZE),
-        "note": "Legion helmet, recolored from steel to bronze",
+        "recolor": (STEEL, IRON),
+        "note": "Legion helmet, recolored from steel to iron",
     },
     {
-        "id": "spear-fg",
-        "path": "spritesheets/weapon/polearm/spear/foreground/walk/bronze.png",
-        "note": "Spear, bronze, in front of the body",
+        "id": "plumage",
+        "path": "spritesheets/hat/accessory/plumage_legion/adult/walk.png",
+        "recolor": (BROWN_CLOTH, SCARLET),
+        "note": "Legion plumage, recolored from brown cloth to scarlet",
+    },
+    {
+        "id": "sword-fg",
+        "path": "spritesheets/weapon/sword/arming/universal/fg/walk/steel.png",
+        "note": "Arming sword, steel, in front of the body",
     },
 ]
 

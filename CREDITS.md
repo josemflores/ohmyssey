@@ -6,7 +6,7 @@
 
 The idle sheet is 256×32: eight frames of 32×32, one facing each, south, south-east, east, north-east, north, north-west, west, south-west. The walk sheet is 2048×32: eight stepping frames of each facing, in that same order. LPC draws four directions, so south-east and north-east reuse east, and south-west and north-west reuse west. Frames are half of the 64×64 LPC cell, nearest-neighbor, feet on the bottom row, origin bottom-center.
 
-The stacked look is a light-skinned man, short light-brown hair, a light-brown beard, a white sleeveless tunic, a white legion skirt (pteruges), leather sandals, a bronze legion helmet, a bronze spear, and a Spartan shield. Hair, beard, sandals, and the helmet are palette swaps of the generator's official ULPC rows (orange hair to light brown, white cloth to leather, steel to bronze).
+The stacked look follows the dark-armor reference: light skin, a gray beard, a charcoal cape, charcoal pants, leather sandals, an iron plate cuirass, iron bracers, an iron legion helmet, a scarlet legion crest, and a steel arming sword carried at the hip. Beard, cape, pants, sandals, armor, helmet, and crest are palette swaps of the generator's ULPC rows. The crest uses a brighter scarlet than the stock cloth-red row so it still reads red at 32px.
 
 Each layer keeps its own authors and license. The composed sheets are a derivative, so share them under CC-BY-SA 3.0 and GPL 3.0 together, with this attribution.
 
@@ -37,44 +37,54 @@ Light skin. The eyes are drawn on this sheet.
 - https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
 - https://opengameart.org/content/lpc-character-bases
 
-### Hair — `hair/plain`
-
-Short hair. Recolored from the ULPC orange row to light brown.
-
-- Authors: JaidynReiman, Manuel Riecke (MrBeast), Joe White
-- Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
-- https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
-- https://opengameart.org/content/ponytail-and-plain-hairstyles
-- https://opengameart.org/content/lpc-expanded-hair
-
 ### Beard — `beards/beard/basic`
 
-Recolored from the ULPC orange row to light brown.
+Recolored from the ULPC orange row to gray.
 
 - Authors: JaidynReiman, Carlo Enrico Victoria (Nemisys)
 - Licenses: CC-BY-SA 3.0, GPL 3.0
 - Notes: original by Nemisys, repositioning by JaidynReiman.
 - https://opengameart.org/content/lpc-white-beard
 
-### Tunic — `torso/clothes/sleeveless/sleeveless/male`, white
+### Cape — `cape/solid`, foreground and background
 
-- Authors: bluecarrot16, Matthew Krohn (makrohn), JaidynReiman, Marcel van de Steeg (MadMarcel), Nila122, Johannes Sjölund (wulax), Stephen Challener (Redshrike)
+Recolored from the white cloth row to charcoal.
+
+- Authors: bluecarrot16, JaidynReiman
 - Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
-- https://opengameart.org/content/lpc-female-orcogregoblintroll-base-walkcycle
 - https://opengameart.org/content/lpc-curly-hair-elven-ears-white-cape-with-blue-trim-and-more
-- https://opengameart.org/content/more-lpc-clothes-and-hair
-- https://opengameart.org/content/lpc-pirates
-
-### Legion skirt — `legs/skirts/legion/male`
-
-White cloth palette (the generator's white row, with its gray fold shades and a small gold stripe).
-
-- Authors: bluecarrot16, Nila122, JaidynReiman
-- Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 2.0, GPL 3.0
-- Notes: original by Nila122, adapted to v3 bases by bluecarrot16, climb/jump/sit/run by JaidynReiman.
 - https://opengameart.org/content/lpc-roman-armor
 - http://opengameart.org/content/lpc-clothing-updates
-- https://opengameart.org/content/lpc-expanded-armour
+
+### Pants — `legs/pants/male`
+
+Recolored from the white cloth row to charcoal.
+
+- Authors: bluecarrot16, JaidynReiman, ElizaWy, Matthew Krohn (makrohn), Johannes Sjölund (wulax), Stephen Challener (Redshrike)
+- Licenses: OGA-BY 3.0, GPL 3.0, CC-BY-SA 3.0
+- Notes: original male pants by wulax, recolors and edits to v3 base by bluecarrot16, climb/jump/run/sit/emotes/revised combat by JaidynReiman based on ElizaWy's LPC Revised.
+- https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
+- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
+- https://opengameart.org/content/lpc-expanded-pants
+
+### Cuirass — `torso/armour/plate/male`
+
+Recolored from the steel row to iron.
+
+- Authors: Napsio (Vitruvian Studio), JaidynReiman, bluecarrot16, Michael Whitlock (bigbeargames), Johannes Sjölund (wulax)
+- Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
+- Notes: original by wulax, recolor by bigbeargames, color reduced and adapted to v3 bases by bluecarrot16, run/jump/sit/climb/revised combat by JaidynReiman.
+- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
+- https://opengameart.org/content/lpc-combat-armor-for-women
+
+### Bracers — `arms/bracers/male`
+
+Recolored from the steel row to iron.
+
+- Authors: Matthew Krohn (makrohn), Johannes Sjölund (wulax), JaidynReiman
+- Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
+- Notes: original by wulax, adjustments by Makrohn, climb/emote/jump/sit/run by JaidynReiman.
+- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
 
 ### Sandals — `feet/sandals/male`
 
@@ -89,26 +99,29 @@ Recolored from the ULPC white cloth row to leather.
 
 ### Helmet — `hat/helmet/legion/adult`
 
-Recolored from the ULPC steel row to bronze. This is a legion galea, the closest bronze ancient helmet in the pack (there is no Corinthian helmet).
+Recolored from the ULPC steel row to iron. This is a legion galea, the closest dark cheek-guard helmet in the pack.
 
 - Authors: bluecarrot16, Nila122, JaidynReiman, Matthew Krohn (makrohn), Johannes Sjölund (wulax)
 - Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 2.0, GPL 3.0
 - https://opengameart.org/content/lpc-roman-armor
 - https://opengameart.org/content/lpc-expanded-hats-facial-helmets
 
-### Spear — `weapon/polearm/spear`, bronze, foreground and background
+### Crest — `hat/accessory/plumage_legion`
 
-- Authors: Pierre Vigier (pvigier), Johannes Sjölund (wulax), Inboxninja
-- Licenses: CC-BY-SA 3.0
-- Notes: original by wulax, walk animations redone by pvigier, split into layers and tweaked for v3 bases by bluecarrot16.
-- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
-- https://opengameart.org/content/lpc-spear-and-shovel-reworked
+Recolored from the brown cloth row to scarlet.
 
-### Shield — `shield/spartan`, foreground and background
+- Authors: bluecarrot16, Nila122, JaidynReiman, Matthew Krohn (makrohn), Johannes Sjölund (wulax)
+- Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 2.0, GPL 3.0
+- https://opengameart.org/content/lpc-roman-armor
+- https://opengameart.org/content/lpc-helmets-mega-pack
+- https://opengameart.org/content/lpc-expanded-hats-facial-helmets
 
-- Authors: bluecarrot16, Sander Frenken (castelonia)
+### Sword — `weapon/sword/arming`, steel, foreground and background
+
+- Authors: ElizaWy, with walk and down by JaidynReiman
 - Licenses: OGA-BY 3.0
-- https://opengameart.org/content/lpc-shields
+- https://github.com/ElizaWy/LPC/tree/main/Characters/Props/Sword%2001%20-%20Arming%20Sword
+- https://opengameart.org/content/lpc-expanded-sit-run-jump-more
 
 License texts: [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.en.html), [GPL 2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html), [OGA-BY 3.0](https://static.opengameart.org/OGA-BY-3.0.txt).
 
