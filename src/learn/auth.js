@@ -231,9 +231,13 @@ export async function deliverResetLink(email, link) {
       body: JSON.stringify({ email, link }),
     });
     const data = await response.json().catch(() => ({}));
-    return { ok: response.ok && data.ok === true };
+    const ok = response.ok && data.ok === true;
+    // A production build drops this branch. The token stays off the page.
+    if (!import.meta.env.DEV) return { ok: true };
+    const devLink = typeof data.devLink === 'string' ? data.devLink : '';
+    return { ok, devLink };
   } catch {
-    return { ok: false };
+    return import.meta.env.DEV ? { ok: false, devLink: '' } : { ok: true };
   }
 }
 

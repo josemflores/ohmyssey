@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { createAthenaReply } from './api/athenaLogic.js';
-import { sendResetMail } from './api/passwordResetLogic.js';
+import { publicResetBody, sendResetMail } from './api/passwordResetLogic.js';
 
 /**
  * Vite only bundles the React app. This plugin adds POST /api/athena while
@@ -100,7 +100,13 @@ function passwordResetDevPlugin() {
             body = {};
           }
           const result = await sendResetMail({ email: body.email, link: body.link });
-          sendJson(res, 200, result);
+          // This plugin only runs inside `npm run dev`. dev: true is that opt-in.
+          // Production (api/passwordReset.js) never passes it, and NODE_ENV=production blocks it anyway.
+          sendJson(res, 200, publicResetBody({
+            link: body.link,
+            mailed: result.ok === true,
+            dev: true,
+          }));
         });
       });
     },
