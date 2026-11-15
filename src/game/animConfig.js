@@ -1,14 +1,13 @@
-// How Odysseus is drawn, and where a walk cycle will plug in later.
+// How Odysseus is drawn.
 //
-// The sheet we have is idle only: eight 32×32 frames, one per facing.
-// There is no walk cycle yet. TroyScene bobs the idle frame while he moves.
+// Both sheets are 32×32 frames, origin bottom-center, built by
+// art/scripts/build_odysseus_lpc.py from Universal LPC layers.
 //
-// To drop in a real walk later:
-//   1. Add the file under public/assets/sprites/.
-//   2. Fill in `walk` below (it is null on purpose today).
-//   3. Lay the frames out in a strip, grouped by facing, in the SAME order
-//      as facingFrames: s, se, e, ne, n, nw, w, sw.
-//      Example: 4 frames of south, then 4 of south-east, and so on.
+// Idle: eight frames, one per facing, in facingFrames order.
+// Walk: a strip grouped by that same order (s, se, e, ne, n, nw, w, sw).
+// LPC only has four directions, so the diagonals reuse the side rows:
+// se/ne use east, sw/nw use west. Eight stepping frames per facing
+// (LPC walk frames 1–8; frame 0 is the idle stand).
 
 export const ANIM_CONFIG = {
   textureKey: 'odysseus',
@@ -25,9 +24,13 @@ export const ANIM_CONFIG = {
     w: 6,
     sw: 7,
   },
-  // null = no walk frames yet. Shape when you have them:
-  // { path, frameWidth, frameHeight, framesPerFacing, frameRate }
-  walk: null,
+  walk: {
+    path: '/assets/sprites/odysseus_walk.png',
+    frameWidth: 32,
+    frameHeight: 32,
+    framesPerFacing: 8,
+    frameRate: 10,
+  },
 };
 
 // Eight directions, used to pick a frame from a velocity.
