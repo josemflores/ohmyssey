@@ -379,3 +379,50 @@ body:has(.q-card) .troy-learn-hud { display: none; }
 @media (max-height: 640px) {
   .troy .battle-screen .battle-question .q-circuit { width: min(180px, 100%); }
 }
+
+/* ---- "Troy is won": a large proclamation, up for 8 s, never in the way ---- */
+.troy-victory {
+  position: absolute;
+  left: 50%;
+  /* Low on the screen: the camera keeps Odysseus in the middle and the
+     objective tracker sits at the top, so both stay in view. */
+  bottom: 7%;
+  z-index: 5;
+  width: min(560px, calc(100% - 32px));
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: troy-victory 8s ease forwards;
+}
+.troy-victory-card {
+  padding: 1.2rem 1.6rem 1.25rem;
+  box-shadow:
+    0 0 0 6px rgba(240, 212, 138, 0.22),
+    0 24px 60px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 4px rgba(246, 234, 210, 0.75),
+    inset 0 0 0 5px rgba(196, 163, 106, 0.75);
+}
+.troy-victory-card .q-eyebrow { font-size: 0.85rem; letter-spacing: 0.24em; }
+.troy-victory-card .q-title { font-size: clamp(1.9rem, 4.6vw, 2.8rem); letter-spacing: 0.16em; }
+.troy-victory-line {
+  margin: 0;
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+  line-height: 1.35;
+  color: var(--ink);
+}
+/* Rises in, holds, then fades in its last half second. */
+@keyframes troy-victory {
+  0% { opacity: 0; transform: translate(-50%, 14px) scale(0.97); }
+  6% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  93% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 6px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .troy-victory { animation: troy-victory-still 8s linear forwards; }
+  @keyframes troy-victory-still { 0%, 93% { opacity: 1; } 100% { opacity: 0; } }
+}
+@media (max-width: 560px) {
+  .troy-victory { bottom: 5%; }
+  .troy-victory-card { padding: 0.9rem 1rem 1rem; }
+}
