@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { HorseScene } from './HorseScene.js';
 import { TroyScene } from './TroyScene.js';
+import './odysseusBattle.css';
 
 // Builds the Phaser game into the div React gives us.
 // pixelArt keeps the tiles and Odysseus crisp when the camera zooms to 3×.

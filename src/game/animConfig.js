@@ -8,6 +8,8 @@
 // LPC only has four directions, so the diagonals reuse the side rows:
 // se/ne use east, sw/nw use west. Eight stepping frames per facing
 // (LPC walk frames 1–8; frame 0 is the idle stand).
+// Animated breathing, overhead attack, and hit sheets are in heroAnimations.js.
+// This static idle sheet remains the initial pose while a scene is created.
 
 export const ANIM_CONFIG = {
   textureKey: 'odysseus',

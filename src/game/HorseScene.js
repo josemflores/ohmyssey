@@ -8,6 +8,7 @@
 // A correct answer unlocks it. Then that press climbs back out.
 
 import Phaser from 'phaser';
+import { loadHeroActions, createHeroActions } from './heroAnimations.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import { firstHatchQuestion } from './hatchQuestions.js';
 import { buildWorldTextures } from './textures.js';
@@ -82,6 +83,7 @@ export class HorseScene extends Phaser.Scene {
   }
 
   preload() {
+    loadHeroActions(this);
     // Skip a sheet that is already loaded so a later visit does not wipe it.
     if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
       this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
@@ -106,6 +108,7 @@ export class HorseScene extends Phaser.Scene {
   }
 
   create() {
+    createHeroActions(this);
     if (!this.textures.exists('feet')) buildWorldTextures(this);
     if (!this.textures.exists('belly-floor')) {
       const floor = this.textures.addCanvas('belly-floor', paintBelly());
@@ -358,8 +361,7 @@ function poseHero(hero, facing, moving) {
   if (ANIM_CONFIG.walk) {
     if (moving) hero.anims.play(`walk-${facing}`, true);
     else {
-      hero.anims.stop();
-      hero.setTexture(ANIM_CONFIG.textureKey, idle);
+      hero.anims.play(`hero-idle-${facing}`, true);
     }
     hero.setOrigin(0.5, 1);
     hero.setScale(HERO_SCALE, HERO_SCALE);

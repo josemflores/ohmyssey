@@ -1,10 +1,23 @@
 # Credits
 
-## Odysseus (LPC walk and idle)
+## Odysseus (LPC walk, idle, attack, and hit)
 
 `public/assets/sprites/odysseus_idle.png` and `public/assets/sprites/odysseus_walk.png` are composed from [Universal LPC Spritesheet Character Generator](https://github.com/LiberatedPixelCup/Universal-LPC-Spritesheet-Character-Generator) layers (commit `04140673ec02906f8233523639733c83690df750`). Rebuild them with `python3 art/scripts/build_odysseus_lpc.py` (needs Pillow).
 
 The idle sheet is 256Ã—32: eight frames of 32Ã—32, one facing each, south, south-east, east, north-east, north, north-west, west, south-west. The walk sheet is 2048Ã—32: eight stepping frames of each facing, in that same order. LPC draws four directions, so south-east and north-east reuse east, and south-west and north-west reuse west. Frames are half of the 64Ã—64 LPC cell, nearest-neighbor, feet on the bottom row, origin bottom-center.
+
+Animated actions use the same pinned layers and palette swaps. Rebuild them with
+`python art/scripts/build_odysseus_actions.py` (Pillow required):
+
+- `odysseus_idle_animation.png`: 512×32, two breathing frames per facing.
+- `odysseus_attack.png`: 3072×64, six overhead downward-swing frames per facing (LPC slash frames reversed, 5 through 0). The 64px cell leaves space for the weapon; the body remains 32px, centered in the cell.
+- `odysseus_hit.png`: 768×32, three frames per facing (LPC hurt frames 0, 1, 0). The original hurt art only faces south. All facings reuse this short standing flinch instead of the falling/death frames.
+
+The overhead-swing sword uses `weapon/sword/arming/attack_slash/bg/steel.png` and
+`weapon/sword/arming/attack_slash/fg/steel.png`; its authors and OGA-BY 3.0
+license are listed under Sword below. The other action layers use the same
+paths below with `idle`, `slash`, or `hurt` in place of `walk`. Source layers
+are checked in under `art/lpc/layers/` so the build can be reproduced offline.
 
 The stacked look follows the dark-armor reference: light skin, a gray beard, a charcoal cape, charcoal pants, leather sandals, an iron plate cuirass, iron bracers, an iron legion helmet, a scarlet legion crest, and a steel arming sword carried at the hip. Beard, cape, pants, sandals, armor, helmet, and crest are palette swaps of the generator's ULPC rows. The crest uses a brighter scarlet than the stock cloth-red row so it still reads red at 32px.
 

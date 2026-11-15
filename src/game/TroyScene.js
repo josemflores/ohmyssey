@@ -8,6 +8,7 @@
 // The picture is taller than the box, so he can stand "behind" columns and roofs.
 
 import Phaser from 'phaser';
+import { loadHeroActions, createHeroActions } from './heroAnimations.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -71,6 +72,7 @@ export class TroyScene extends Phaser.Scene {
   }
 
   preload() {
+    loadHeroActions(this);
     // Coming back from the horse, these pictures are already loaded.
     // Loading them again wipes the texture other scenes are still using.
     if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
@@ -121,6 +123,7 @@ export class TroyScene extends Phaser.Scene {
   }
 
   create() {
+    createHeroActions(this);
     const report = routeReport();
     if (!report.ok) {
       console.warn(`Troy layout problem:\n${report.problems.join('\n')}`);
@@ -995,8 +998,7 @@ function poseHero(hero, facing, moving, time) {
     if (moving) {
       hero.anims.play(`walk-${facing}`, true);
     } else {
-      hero.anims.stop();
-      hero.setTexture(ANIM_CONFIG.textureKey, idle);
+      hero.anims.play(`hero-idle-${facing}`, true);
     }
     hero.setOrigin(0.5, 1);
     hero.setScale(HERO_SCALE, HERO_SCALE);
