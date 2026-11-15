@@ -142,7 +142,15 @@ export default function Level2World() {
     gameRef.current?.events.emit('unlockInput');
   }
 
-  const prompt = near ? `Press E: ${near.who}` : 'WASD to move. Hold Shift to run. Press E near a landmark.';
+  // When he walks away from a landmark the pill fades out. Keep showing that
+  // landmark's "Press E" text while it fades; switching to the controls
+  // text here made "Hold Shift to run" flash up after every Press E prompt.
+  const lastNear = useRef(null);
+  if (near) lastNear.current = near;
+  const controls = 'WASD to move. Hold Shift to run. Press E near a landmark.';
+  let prompt = controls;
+  if (near) prompt = `Press E: ${near.who}`;
+  else if (!hint && lastNear.current) prompt = `Press E: ${lastNear.current.who}`;
 
   return (
     <div className="l2" data-screen="level2">
