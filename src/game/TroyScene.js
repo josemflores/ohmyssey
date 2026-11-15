@@ -12,6 +12,7 @@ import { ENCOUNTER_RESULT_EVENT, requestEncounter } from '../learn/encounters/bu
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
+  FEET,
   INTERACT_RADIUS,
   INTERACTABLES,
   LAMPS,
@@ -20,8 +21,8 @@ import {
   PROPS,
   SPAWN,
   TILE,
-  WALKABLE,
   buildMap,
+  solidRects,
 } from './map.js';
 import {
   createPatrol,
@@ -113,15 +114,12 @@ export class TroyScene extends Phaser.Scene {
     const tiles = map.addTilesetImage('tiles');
     const ground = map.createLayer(0, tiles, 0, 0);
     ground.setDepth(0);
-    // Everything not in WALKABLE is a wall, including the sea and the map edge.
-    const solidIndexes = [];
-    const maxIndex = Math.max(...grid.flat());
-    for (let i = 0; i <= maxIndex; i += 1) {
-      if (!WALKABLE.has(i)) solidIndexes.push(i);
-    }
-    ground.setCollision(solidIndexes);
-
+    // Walls, sea, and the map edge are rectangles, not a colliding tile each.
+    // Per-tile faces were catching his feet and sticking him in open lanes.
     this.blockers = this.physics.add.staticGroup();
+    for (const rect of solidRects(grid)) {
+      addRect(this, this.blockers, rect.x, rect.y, rect.w, rect.h);
+    }
     for (const prop of PROPS) addSolidProp(this, this.blockers, prop);
     for (const decor of DECOR) {
       this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(decor.baseY);
@@ -150,13 +148,20 @@ export class TroyScene extends Phaser.Scene {
     const start = this.arrive || SPAWN;
     this.feet = this.physics.add.image(start.x, start.y, 'feet');
     this.feet.setVisible(false);
+    this.feet.body.setSize(FEET.w, FEET.h, true);
     this.feet.setCollideWorldBounds(true);
     this.feet.body.setAllowGravity(false);
+    this.feet.setBounce(0);
+    this.feet.setFriction(0, 0);
+    this.feet.setDrag(0);
     // Warriors bounce off him. He does not get pushed, so a crowd cannot pin him.
     this.feet.body.pushable = false;
     this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
-    // A smaller bias so the short feet-box does not get shoved off thin gaps.
-    this.physics.world.TILE_BIAS = 4;
+    // Larger than the feet. A 4px bias ignored any deeper overlap, so he
+    // sank into a wall and stayed there. The overlap bias does the same
+    // job for the long wall rectangles: a slow frame must not tunnel.
+    this.physics.world.TILE_BIAS = 32;
+    this.physics.world.OVERLAP_BIAS = 24;
 
     this.heroRim = this.add.sprite(start.x, start.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.heroRim.setOrigin(0.5, 1);
@@ -167,12 +172,11 @@ export class TroyScene extends Phaser.Scene {
     this.hero.setScale(HERO_SCALE);
     this.heroShadow = this.add.ellipse(start.x, start.y, 24, 7, 0x0c1424, 0.55);
 
-    this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
 
     this.patrol = createPatrol(this, {
-      ground,
       blockers: this.blockers,
+      heroBody: this.feet,
       fromHorse: this.arrive,
     });
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
@@ -306,6 +310,7 @@ export class TroyScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    clampToMap(this.feet);
     // A monster question covers the city. Feet and the sentries wait.
     if (document.body.dataset.encounter === 'open' || this.encounterOpen) {
       this.feet.setVelocity(0, 0);
@@ -648,6 +653,24 @@ function poseHero(hero, facing, moving, time) {
   return -hop * 1.7;
 }
 
+function clampToMap(feet) {
+  const body = feet.body;
+  if (!body) return;
+  const x = Math.min(MAP_W - body.halfWidth, Math.max(body.halfWidth, feet.x));
+  const y = Math.min(MAP_H - body.halfHeight, Math.max(body.halfHeight, feet.y));
+  if (x === feet.x && y === feet.y) return;
+  feet.setPosition(x, y);
+  body.reset(x, y);
+}
+
+function addRect(scene, group, x, y, w, h) {
+  const blocker = group.create(x + w / 2, y + h / 2, 'blank');
+  blocker.setDisplaySize(w, h);
+  blocker.refreshBody();
+  blocker.setVisible(false);
+  return blocker;
+}
+
 function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.
   const wide = prop.id === 'column' ? 10 : prop.id === 'horse' ? 72 : prop.bodyW * 0.85;
@@ -690,8 +713,9 @@ function addLamp(scene, group, lamp) {
     repeat: -1,
     ease: 'Sine.easeInOut',
   });
-  const blocker = group.create(x, y - 4, 'blank');
-  blocker.setDisplaySize(10, 8);
+  // The post, not the glow. Sits on the picture's base.
+  const blocker = group.create(x, y - 3, 'blank');
+  blocker.setDisplaySize(8, 6);
   blocker.refreshBody();
   blocker.setVisible(false);
 }

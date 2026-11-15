@@ -19,9 +19,13 @@ export const WEAK_HIT = 4.5;
 export const FOE_HIT = 4;
 
 const DETECT = 112;
-const CONTACT = 28;
+// A real bump, not a wide invisible ring. Centers are about 9px apart
+// when the two feet-boxes touch, so 16 still catches that and lets him
+// walk past with a gap.
+const CONTACT = 16;
 const HINT_RADIUS = 160;
 const SCATTER_TIME = 3.2;
+const SOLDIER_FEET = { w: 8, h: 6 };
 
 // On the bends: west lane, east lane, then the last stretch to the gate.
 const SENTRIES = [
@@ -38,7 +42,7 @@ const SCATTER = [
   { x: -0.55, y: -1, ox: -36, oy: 2 },
 ];
 
-export function createPatrol(scene, { ground, blockers, fromHorse }) {
+export function createPatrol(scene, { blockers, heroBody, fromHorse }) {
   const greekKey = WARRIOR_CONFIG.teams.greek.key;
   const trojanKey = WARRIOR_CONFIG.teams.trojan.key;
   for (const key of [greekKey, trojanKey]) {
@@ -81,8 +85,8 @@ export function createPatrol(scene, { ground, blockers, fromHorse }) {
   }
 
   for (const man of [...sentries, ...greeks]) {
-    scene.physics.add.collider(man.body, ground);
     scene.physics.add.collider(man.body, blockers);
+    if (heroBody) scene.physics.add.collider(heroBody, man.body);
   }
 
   let questionIndex = 0;
@@ -193,7 +197,10 @@ function pose(man) {
 function makeSoldier(scene, key, x, y, facing, extra) {
   const body = scene.physics.add.image(x, y, 'feet-small');
   body.setVisible(false);
+  body.body.setSize(SOLDIER_FEET.w, SOLDIER_FEET.h, true);
   body.setCollideWorldBounds(true);
+  body.setBounce(0);
+  body.setFriction(0, 0);
   body.body.setAllowGravity(false);
   const sprite = scene.add.sprite(x, y, key, WARRIOR_CONFIG.facingFrames[facing] ?? 0);
   sprite.setOrigin(0.5, 1);

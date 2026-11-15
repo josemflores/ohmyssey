@@ -13,9 +13,10 @@ export const MAP_W = COLS * TILE;
 export const MAP_H = ROWS * TILE;
 
 // Invisible box under Odysseus. Only his feet, so his picture can overlap
-// the tops of columns and roofs. Kept in one place so the scene and the
-// route check agree.
-export const FEET = { w: 16, h: 10 };
+// the tops of columns and roofs. Narrower than a tile, so he slides in a
+// lane instead of catching every seam. Kept in one place so the scene and
+// the route check agree.
+export const FEET = { w: 10, h: 6 };
 
 // Tile indexes. They must match the painters in textures.js.
 // The ground colors are warm and light. A blue multiply in TroyScene
@@ -69,12 +70,13 @@ export const SPAWN = { x: 480, y: 694 };
 // The solid box sits on that ground and is `insetBottom` pixels shorter,
 // so a doorstep or a column shaft can stick out past the box.
 export const PROPS = [
-  { id: 'temple', x: 480, baseY: 148, bodyW: 88, bodyH: 52, insetBottom: 8 },
+  // Steps and the column bases. The roof above this can draw over him.
+  { id: 'temple', x: 480, baseY: 148, bodyW: 96, bodyH: 36, insetBottom: 0 },
 
-  { id: 'house', x: 120, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
-  { id: 'houseAlt', x: 214, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
-  { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
-  { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
+  { id: 'house', x: 120, baseY: 156, bodyW: 52, bodyH: 16, insetBottom: 0 },
+  { id: 'houseAlt', x: 214, baseY: 250, bodyW: 52, bodyH: 16, insetBottom: 0 },
+  { id: 'house', x: 840, baseY: 156, bodyW: 52, bodyH: 16, insetBottom: 0 },
+  { id: 'houseAlt', x: 746, baseY: 250, bodyW: 52, bodyH: 16, insetBottom: 0 },
 
   // Three fences across the plaza. Each one leaves a gap on the zigzag.
   ...fence(392, 11, 19),
@@ -93,29 +95,29 @@ export const PROPS = [
   // is only the platform and wheels, so feet can pass behind the head.
   { id: 'horse', x: 480, baseY: 228, bodyW: 66, bodyH: 30, insetBottom: 0 },
 
-  { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
-  { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
-  { id: 'rubble', x: 120, baseY: 754, bodyW: 28, bodyH: 12, insetBottom: 2 },
-  { id: 'rubble', x: 860, baseY: 754, bodyW: 28, bodyH: 12, insetBottom: 2 },
+  { id: 'rubble', x: 220, baseY: 200, bodyW: 24, bodyH: 10, insetBottom: 0 },
+  { id: 'rubble', x: 740, baseY: 190, bodyW: 24, bodyH: 10, insetBottom: 0 },
+  { id: 'rubble', x: 120, baseY: 754, bodyW: 24, bodyH: 10, insetBottom: 0 },
+  { id: 'rubble', x: 860, baseY: 754, bodyW: 24, bodyH: 10, insetBottom: 0 },
 
   // Unlit bowls on the beach. A few lamps live in LAMPS.
-  { id: 'brazier', x: 200, baseY: 724, bodyW: 14, bodyH: 10, insetBottom: 0 },
-  { id: 'brazier', x: 760, baseY: 714, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 200, baseY: 724, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'brazier', x: 760, baseY: 714, bodyW: 10, bodyH: 8, insetBottom: 0 },
 
-  { id: 'cypress', x: 250, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 710, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 140, baseY: 724, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 840, baseY: 729, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 250, baseY: 132, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 710, baseY: 132, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 140, baseY: 724, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 840, baseY: 729, bodyW: 6, bodyH: 6, insetBottom: 0 },
 
   // Trees along the bends, set just off the stones so the lane stays open.
-  { id: 'cypress', x: 160, baseY: 330, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 320, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 176, baseY: 400, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 640, baseY: 450, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 800, baseY: 470, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 390, baseY: 530, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 590, baseY: 540, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 860, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 160, baseY: 330, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 320, baseY: 360, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 176, baseY: 400, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 640, baseY: 450, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 800, baseY: 470, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 390, baseY: 530, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 590, baseY: 540, bodyW: 6, bodyH: 6, insetBottom: 0 },
+  { id: 'cypress', x: 860, baseY: 360, bodyW: 6, bodyH: 6, insetBottom: 0 },
 ];
 
 // Pictures with no collision of their own. They stand on tiles that are
@@ -181,7 +183,9 @@ export const LAMPS = [
 function fence(baseY, gapTileLeft, gapTileRight) {
   const row = [];
   let n = 0;
-  // 62px apart, each house blocks 56 of that. The 6px crack is too narrow to walk.
+  // 62px apart, each house blocks 56 of that. The 6px crack is narrower than
+  // his feet, so it is not a path. The box is the ground floor, flush with
+  // the picture, so the roof can draw over him and the lane beside it is open.
   for (let x = 40; x <= 920; x += 62) {
     const centerTile = x / TILE;
     if (centerTile > gapTileLeft && centerTile < gapTileRight) continue;
@@ -190,8 +194,8 @@ function fence(baseY, gapTileLeft, gapTileRight) {
       x,
       baseY,
       bodyW: 56,
-      bodyH: 36,
-      insetBottom: 8,
+      bodyH: 16,
+      insetBottom: 0,
     });
     // A tree behind every other roof, so the row is not one flat wall.
     if (n % 2 === 0) {
@@ -199,8 +203,8 @@ function fence(baseY, gapTileLeft, gapTileRight) {
         id: 'cypress',
         x: x - 10,
         baseY: baseY - 30,
-        bodyW: 10,
-        bodyH: 8,
+        bodyW: 6,
+        bodyH: 6,
         insetBottom: 0,
       });
     }
@@ -304,4 +308,37 @@ function fillRect(grid, x0, y0, w, h, pick) {
   for (let y = y0; y < y0 + h; y += 1) {
     for (let x = x0; x < x0 + w; x += 1) grid[y][x] = pick(x, y);
   }
+}
+
+// Solid tiles joined into rectangles. One long wall, not a tile per step,
+// so walking along it does not snag on the cracks between tiles.
+export function solidRects(grid = buildMap()) {
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const used = Array.from({ length: rows }, () => new Uint8Array(cols));
+  const rects = [];
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      if (used[y][x] || WALKABLE.has(grid[y][x])) continue;
+      let w = 1;
+      while (x + w < cols && !used[y][x + w] && !WALKABLE.has(grid[y][x + w])) w += 1;
+      let h = 1;
+      while (y + h < rows) {
+        let rowOk = true;
+        for (let i = 0; i < w; i += 1) {
+          if (used[y + h][x + i] || WALKABLE.has(grid[y + h][x + i])) {
+            rowOk = false;
+            break;
+          }
+        }
+        if (!rowOk) break;
+        h += 1;
+      }
+      for (let yy = y; yy < y + h; yy += 1) {
+        for (let xx = x; xx < x + w; xx += 1) used[yy][xx] = 1;
+      }
+      rects.push({ x: x * TILE, y: y * TILE, w: w * TILE, h: h * TILE });
+    }
+  }
+  return rects;
 }

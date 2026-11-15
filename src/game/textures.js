@@ -337,7 +337,7 @@ export function buildWorldTextures(scene) {
   // 2×2 placeholder. Static boxes stretch this to the size they need.
   addCanvas(scene, 'blank', makeCanvas(2, 2).canvas);
   addCanvas(scene, 'feet', makeCanvas(FEET.w, FEET.h).canvas);
-  addCanvas(scene, 'feet-small', makeCanvas(12, 8).canvas);
+  addCanvas(scene, 'feet-small', makeCanvas(8, 6).canvas);
   addCanvas(scene, 'vignette', paintVignette());
   addCanvas(scene, 'lamp-glow', paintLampGlow());
   addSheet(scene, 'oil-lamp', paintOilLamp(), 16, 28);

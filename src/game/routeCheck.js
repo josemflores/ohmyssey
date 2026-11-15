@@ -28,9 +28,9 @@ export function routeReport() {
   const blocked = [
     ['the open sea', 480, MAP_H - 24],
     ['the great wall', 192, wallY],
-    ['the temple', 480, 110],
+    ['the temple', 480, 136],
     ['the horse', 480, 210],
-    ['a house', 120, 120],
+    ['a house', 120, 150],
   ];
 
   for (const [name, x, y] of want) {
