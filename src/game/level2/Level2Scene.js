@@ -279,11 +279,15 @@ export class Level2Scene extends Phaser.Scene {
       this.keys.keyE.reset();
     };
     this.game.events.on('hallWon', onHallWon);
+    // The last suitor falls: the bodies lie in the hall behind the victory card.
+    const onSuitorsFall = () => laySuitorsDead(this, this.hall);
+    this.game.events.on('suitorsFall', onSuitorsFall);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('lockInput', onLock);
       this.game.events.off('unlockInput', onUnlock);
       this.game.events.off('hallOpen', onHallOpen);
       this.game.events.off('hallWon', onHallWon);
+      this.game.events.off('suitorsFall', onSuitorsFall);
       this.scale.off('resize', fit);
       hideObjectiveArrow();
       if (globalThis.__level2?.owner === this) delete globalThis.__level2;

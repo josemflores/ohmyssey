@@ -129,6 +129,8 @@ export default function Level2World({ onHome }) {
   // The last suitor falls: a proclamation, then the hall is his again.
   function hallWon() {
     setStory('won');
+    // The bodies are on the floor behind the victory card right away.
+    gameRef.current?.events.emit('suitorsFall');
   }
 
   useEffect(() => {

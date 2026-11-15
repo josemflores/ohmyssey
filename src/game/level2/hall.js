@@ -193,30 +193,78 @@ export function buildHall(scene, blockers) {
   return { people };
 }
 
-// The fight is over (Odyssey 22): every suitor lies dead where he stood,
-// in the frame of him fallen (suitors_dead.png), with a dark stain under
-// him. The bodies are not solid, so Odysseus can walk out through the hall.
-// The hound stays as it was.
+// The fight is over (Odyssey 22): every suitor lies dead, thrown down
+// near where he was when the arrows came, each in a different position:
+// on his back, on his side either way, head toward the doors. The pose is
+// the fallen frame of his LPC hurt animation (suitors_dead.png), turned.
+// A dark stain under each. The bodies are not solid, so Odysseus can walk
+// out through the hall. Safe to call twice. The hound stays as it was.
+
+// Turn (degrees) and mirror for each body in turn, so no two neighbors
+// lie the same way.
+const POSES = [
+  { angle: 0, flip: false },
+  { angle: 90, flip: false },
+  { angle: -90, flip: true },
+  { angle: 180, flip: true },
+  { angle: 90, flip: true },
+  { angle: 0, flip: true },
+  { angle: -90, flip: false },
+];
+// Where he fell, from where he stood: he ran a few steps first. Tried in
+// order until the body lands clear of tables, columns and walls.
+const FALLS = [
+  [-22, 14], [26, 10], [-14, -16], [18, -14], [8, 24], [-30, -4], [32, 18], [-6, 30], [0, 0],
+];
+
 export function laySuitorsDead(scene, hall) {
+  if (hall.dead) return;
+  hall.dead = true;
   const outfits = ['a', 'b', 'c'];
+  const solids = hallSolids(buildHallGrid(), { people: false });
+  const clear = (x, y) => {
+    const box = { x: x - 15, y: y - 12, w: 30, h: 14 };
+    return !solids.some((r) => box.x < r.x + r.w && box.x + box.w > r.x && box.y < r.y + r.h && box.y + box.h > r.y);
+  };
+  let n = 0;
   for (const person of hall.people) {
     if (person.id === 'hound') continue;
     const { sprite } = person;
     scene.tweens.killTweensOf(sprite);
     person.block.destroy();
-    const [, outfit, n] = sprite.texture.key.split('-');
-    const frame = outfits.indexOf(outfit) * 4 + (Number(n) - 1);
+    const [, outfit, num] = sprite.texture.key.split('-');
+    const frame = outfits.indexOf(outfit) * 4 + (Number(num) - 1);
     if (!scene.textures.exists('suitors-dead') || frame < 0) {
       sprite.destroy();
       person.shadow.destroy();
       continue;
     }
+    const pose = POSES[n % POSES.length];
+    // Start the list of falls at a different place for each body.
+    let spot = { x: sprite.x, y: sprite.y };
+    for (let i = 0; i < FALLS.length; i += 1) {
+      const [dx, dy] = FALLS[(i + n * 2) % FALLS.length];
+      if (clear(sprite.x + dx, sprite.y + dy)) {
+        spot = { x: sprite.x + dx, y: sprite.y + dy };
+        break;
+      }
+    }
+    n += 1;
+    // Turned bodies pivot on their middle, so they lie flat on the floor.
     sprite.setTexture('suitors-dead', frame)
+      .setOrigin(0.5, 0.75)
+      .setPosition(spot.x, spot.y - 8)
       .setScale(PERSON_SCALE)
-      .setFlipX(sprite.x % 2 === 0)
+      .setAngle(pose.angle)
+      .setFlipX(pose.flip)
       // On the floor: under anyone standing.
       .setDepth(5300);
-    person.shadow.setFillStyle(0x3a0c0a, 0.55).setSize(22, 7).setDepth(5250);
+    const wide = pose.angle % 180 === 0 ? 22 : 30;
+    person.shadow
+      .setPosition(spot.x + 1, spot.y - 6)
+      .setFillStyle(0x3a0c0a, 0.55)
+      .setSize(wide, 9)
+      .setDepth(5250);
   }
 }
 
