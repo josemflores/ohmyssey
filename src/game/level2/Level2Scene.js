@@ -53,11 +53,11 @@ const HUT = [
 ];
 const EUMAEUS_AT = { x: 248, y: 508 };
 // Telemachus walks in from off screen to the east, through SON_FROM on the
-// path, turns at SON_TURN, and stops beside the fire facing Eumaeus.
+// path, and stops right at Eumaeus' side (SON_BESIDE px left or right of
+// him, whichever side Odysseus is not standing on), facing him.
 const SON_FROM = { x: 470, y: 520 };
-const SON_TURN = { x: 300, y: 548 };
-const SON_AT = { x: 190, y: 556 };
-const SON_WALK_SPEED = 72; // a little slower than Odysseus walks
+const SON_BESIDE = 24;
+const SON_WALK_SPEED = 105; // a brisk walk, a little faster than Odysseus
 // Rows of the Ithaca people sheets: S SW W NW N NE E SE.
 const PEOPLE_ROWS = ['s', 'sw', 'w', 'nw', 'n', 'ne', 'e', 'se'];
 // Props are drawn above the moonlight grade (so they y-sort with him), so
@@ -410,9 +410,14 @@ export class Level2Scene extends Phaser.Scene {
     const start = { x: Math.max(SON_FROM.x, view.right + 24), y: SON_FROM.y };
     son.setPosition(start.x, start.y).setAlpha(1).setVisible(true);
     shadow.setPosition(start.x + 1, start.y - 1).setAlpha(0.5).setVisible(true);
+    // Take the side of Eumaeus away from Odysseus, come up in front of the
+    // hut, then step in beside him.
+    const side = this.hero.x >= EUMAEUS_AT.x ? -1 : 1;
+    const beside = { x: EUMAEUS_AT.x + side * SON_BESIDE, y: EUMAEUS_AT.y + 3 };
+    const approach = { x: beside.x, y: beside.y + 22 };
     const legs = [];
     let from = start;
-    for (const to of [SON_FROM, SON_TURN, SON_AT]) {
+    for (const to of [SON_FROM, approach, beside]) {
       const facing = facingToward(to.x - from.x, to.y - from.y);
       legs.push({
         targets: son,
@@ -431,8 +436,8 @@ export class Level2Scene extends Phaser.Scene {
       tweens: legs,
       onComplete: () => {
         // Face each other across the fire.
-        const toEumaeus = facingToward(EUMAEUS_AT.x - SON_AT.x, EUMAEUS_AT.y - SON_AT.y);
-        const toSon = facingToward(SON_AT.x - EUMAEUS_AT.x, SON_AT.y - EUMAEUS_AT.y);
+        const toEumaeus = side < 0 ? 'e' : 'w';
+        const toSon = side < 0 ? 'w' : 'e';
         son.play(`telemachus-idle-${toEumaeus}`);
         if (this.eumaeus) this.eumaeus.play(`eumaeus-idle-${toSon}`);
         this.time.delayedCall(250, () => done && done());
@@ -468,7 +473,7 @@ export class Level2Scene extends Phaser.Scene {
     this.sonShadow = this.add.ellipse(SON_FROM.x + 1, SON_FROM.y - 1, 16, 5, 0x0c1424, 0.5)
       .setDepth(5200).setVisible(false);
     this.telemachus = this.add.sprite(SON_FROM.x, SON_FROM.y, 'telemachus', 0)
-      .setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(SORT + SON_AT.y).setVisible(false);
+      .setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(SORT + SON_FROM.y).setVisible(false);
     this.telemachus.play('telemachus-idle');
   }
 
