@@ -12,7 +12,7 @@ import { RUN_SPEED, WALK_SPEED } from '../patrol.js';
 import { buildWorldTextures } from '../textures.js';
 import { buildLevel2Textures, propTexture } from './art.js';
 import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, preloadHall } from './hall.js';
-import { HALL, HALL_SPAWN, HALL_SPOTS } from './hallMap.js';
+import { HALL, HALL_SPAWN, HALL_SPOTS, SOUTH_WALL, TILE } from './hallMap.js';
 import {
   DECOR,
   FEET,
@@ -544,7 +544,7 @@ export class Level2Scene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    clampToMap(this.feet, this.area);
+    clampToMap(this.feet, this.area.floor || this.area);
     const locked = this.inputLocked;
     const k = this.keys;
     let vx = 0;
@@ -663,6 +663,15 @@ function poseHero(scene, facing, moving) {
 // inside whichever one he is in.
 const ISLAND = { x: 0, y: 0, w: MAP_W, h: MAP_H };
 const HALL_AREA = { x: HALL.x, y: HALL.y, w: HALL.w, h: HALL.h };
+// The hall floor inside its walls (3 tiles north, 1 each side, the south
+// wall from SOUTH_WALL). In the hall he is held inside this, so a hard
+// shove from a prop can never push him out through a wall.
+HALL_AREA.floor = {
+  x: HALL.x + TILE,
+  y: HALL.y + 3 * TILE,
+  w: HALL.w - 2 * TILE,
+  h: (SOUTH_WALL - 3) * TILE,
+};
 
 function fitCamera(scene) {
   const cam = scene.cameras.main;
