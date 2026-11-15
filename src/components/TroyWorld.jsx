@@ -17,7 +17,13 @@ export default function TroyWorld() {
   const [hint, setHint] = useState(true);
   const [talk, setTalk] = useState(null);
   const [quiz, setQuiz] = useState(null);
+  const [fight, setFight] = useState(null);
+  const [questDone, setQuestDone] = useState(false);
+  const [runHint, setRunHint] = useState(false);
+  const [banner, setBanner] = useState('');
   const [place, setPlace] = useState('horse');
+  const fightRef = useRef(null);
+  fightRef.current = fight;
 
   useEffect(() => {
     const parent = host.current;
@@ -32,7 +38,26 @@ export default function TroyWorld() {
     // He pressed E again while the box was open.
     function onCloseRequest() {
       setTalk(null);
+      if (fightRef.current) return;
       game.events.emit('unlockInput');
+    }
+    function onFightStart(payload) {
+      setFight({ ...payload, phase: 'menu', note: '' });
+    }
+    function onFightQuestion(question) {
+      setFight((current) => current && { ...current, phase: 'question', question });
+    }
+    function onFightTurn(payload) {
+      setFight((current) => current && {
+        ...current,
+        ...payload,
+        phase: payload.side === 'enemy' ? 'enemy' : 'menu',
+        question: null,
+      });
+    }
+    function onFightEnd(payload) {
+      setFight(null);
+      setBanner(payload.note || '');
     }
     // The hatch in the horse. status is open, wrong, or right.
     function onHatchQuestion(question) {
@@ -43,11 +68,23 @@ export default function TroyWorld() {
     game.events.on('closeInteract', onCloseRequest);
     game.events.on('place', setPlace);
     game.events.on('hatchQuestion', onHatchQuestion);
+    game.events.on('fightStart', onFightStart);
+    game.events.on('fightQuestion', onFightQuestion);
+    game.events.on('fightTurn', onFightTurn);
+    game.events.on('fightEnd', onFightEnd);
+    game.events.on('questDone', () => setQuestDone(true));
+    game.events.on('runHint', () => setRunHint(true));
     return () => {
       game.events.off('interact', onInteract);
       game.events.off('closeInteract', onCloseRequest);
       game.events.off('place', setPlace);
       game.events.off('hatchQuestion', onHatchQuestion);
+      game.events.off('fightStart', onFightStart);
+      game.events.off('fightQuestion', onFightQuestion);
+      game.events.off('fightTurn', onFightTurn);
+      game.events.off('fightEnd', onFightEnd);
+      game.events.off('questDone');
+      game.events.off('runHint');
       game.destroy(true);
       gameRef.current = null;
     };
@@ -81,6 +118,23 @@ export default function TroyWorld() {
     gameRef.current?.events.emit('unlockInput');
   }
 
+  function attack() {
+    setFight((current) => current && { ...current, phase: 'wait', note: '' });
+    gameRef.current?.events.emit('fightAttack');
+  }
+
+  function pickFight(index) {
+    gameRef.current?.events.emit('fightStrike', { index });
+  }
+
+  function placeholder(label) {
+    setFight((current) => current && { ...current, note: `${label} is not ready yet.` });
+  }
+
+  function enemyContinue() {
+    gameRef.current?.events.emit('fightEnemyAct');
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => setHint(false), 4200);
     function onKey(event) {
@@ -92,6 +146,25 @@ export default function TroyWorld() {
       window.removeEventListener('keydown', onKey);
     };
   }, []);
+
+  useEffect(() => {
+    if (!banner) return undefined;
+    const timer = setTimeout(() => setBanner(''), 2800);
+    return () => clearTimeout(timer);
+  }, [banner]);
+
+  useEffect(() => {
+    if (!runHint) return undefined;
+    const timer = setTimeout(() => setRunHint(false), 3500);
+    function onKey(event) {
+      if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') setRunHint(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [runHint]);
 
   useEffect(() => {
     if (!talk && !quiz) return undefined;
@@ -116,7 +189,15 @@ export default function TroyWorld() {
         {place === 'horse' ? 'The horse' : 'Troy'}
         <span>{place === 'horse' ? 'inside' : 'at night'}</span>
       </h1>
+      {place !== 'horse' && (
+        <p className={questDone ? 'troy-quest is-done' : 'troy-quest'}>
+          <span>Quest</span>
+          {questDone ? 'The gate is open' : 'Follow the arrow to the gate and open it'}
+        </p>
+      )}
       <p className={hint ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
+      {runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
+      {banner && <p className="troy-banner">{banner}</p>}
       {talk && (
         <div className="troy-talk" role="dialog" aria-label={talk.id}>
           <p className="troy-talk-id">{talk.id}</p>
@@ -169,6 +250,63 @@ export default function TroyWorld() {
           )}
         </div>
       )}
+      {fight && (
+        <div className="battle-screen" role="dialog" aria-label="Battle">
+          <ol className="battle-order">
+            <li className={fight.side === 'hero' ? 'is-now' : ''}>Odysseus</li>
+            <li className={fight.side === 'enemy' ? 'is-now' : ''}>{fight.name}</li>
+          </ol>
+          <div className="battle-stage">
+            <div className="battle-side">
+              <p className="battle-name">Odysseus</p>
+              <p className="battle-hp-num">{fmtHp(fight.heroHp)} / {fight.heroMax}</p>
+              <div className="battle-hp-track">
+                <span style={{ width: `${(fight.heroHp / fight.heroMax) * 100}%` }} />
+              </div>
+            </div>
+            <div className="battle-side is-foe">
+              <p className="battle-name">{fight.name}</p>
+              <p className="battle-hp-num">{fmtHp(fight.foeHp)} / {fight.foeMax}</p>
+              <div className="battle-hp-track">
+                <span style={{ width: `${(fight.foeHp / fight.foeMax) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+          <div className="battle-dock">
+            {fight.note && <p className="battle-note">{fight.note}</p>}
+            {fight.phase === 'question' && fight.question && (
+              <div className="battle-question">
+                <p>{fight.question.prompt}</p>
+                <div className="battle-choices">
+                  {fight.question.choices.map((choice, index) => (
+                    <button key={choice} type="button" className="battle-choice" onClick={() => pickFight(index)}>
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {fight.phase === 'enemy' && (
+              <button type="button" className="battle-continue" onClick={enemyContinue}>
+                Continue
+              </button>
+            )}
+            {fight.phase === 'menu' && (
+              <div className="battle-commands">
+                <button type="button" className="battle-command" onClick={attack}>Attack</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Skills')}>Skills</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Item')}>Item</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Defend')}>Defend</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Flee')}>Flee</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function fmtHp(n) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }

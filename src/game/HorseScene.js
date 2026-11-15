@@ -110,9 +110,8 @@ export class HorseScene extends Phaser.Scene {
       const floor = this.textures.addCanvas('belly-floor', paintBelly());
       floor.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
-    if (!this.textures.exists('belly-dark')) {
-      this.textures.addCanvas('belly-dark', paintDark());
-    }
+    if (this.textures.exists('belly-dark')) this.textures.remove('belly-dark');
+    this.textures.addCanvas('belly-dark', paintDark());
     if (ANIM_CONFIG.walk && !this.anims.exists('walk-s')) this.createWalkAnims();
     if (!this.anims.exists('lamp-flicker')) {
       this.anims.create({
@@ -125,6 +124,9 @@ export class HorseScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#070504');
     this.add.image(ROOM_W / 2, ROOM_H / 2, 'belly-floor').setDepth(0);
+    // Dim the planks themselves. The black vignette then closes in around them.
+    const gloom = this.add.rectangle(ROOM_W / 2, ROOM_H / 2, ROOM_W, ROOM_H, 0x100804, 0.42);
+    gloom.setDepth(2);
 
     this.posts = this.physics.add.staticGroup();
     for (const post of POSTS) {
@@ -429,12 +431,12 @@ function paintDark() {
   canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext('2d');
-  // The picture is stretched over the whole screen, so the bright hole
-  // has to be a small part of this canvas or the room will not feel tight.
-  // Wide enough that Odysseus, the three Greeks, and the hatch stay in the light.
-  const g = ctx.createRadialGradient(128, 128, 20, 128, 128, 96);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(0.62, 'rgba(0,0,0,0.28)');
+  // Stretched over the whole screen. The lit hole stays small, and even
+  // the middle is a little dark, so the belly reads as a closed wooden room.
+  const g = ctx.createRadialGradient(128, 128, 6, 128, 128, 62);
+  g.addColorStop(0, 'rgba(0,0,0,0.22)');
+  g.addColorStop(0.42, 'rgba(0,0,0,0.62)');
+  g.addColorStop(0.72, 'rgba(0,0,0,0.94)');
   g.addColorStop(1, 'rgba(0,0,0,1)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 256, 256);
