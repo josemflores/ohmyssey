@@ -4,6 +4,8 @@ import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
 import { firstHallQuestion, hallQuestionAfter } from '../game/level2/hallQuestions.js';
 import BowContest from './BowContest.jsx';
 import CircuitDiagram from './CircuitDiagram.jsx';
+import Credits from './Credits.jsx';
+import Reunion from './Reunion.jsx';
 import HallBattle from './HallBattle.jsx';
 import {
   ChoiceLabel,
@@ -17,7 +19,8 @@ import './Level2World.css';
 // Level 2: Ithaca at night. Phaser draws the island and moves Odysseus;
 // this component shows the place name, the controls hint, and the short
 // lines when he presses E at a landmark.
-export default function Level2World() {
+// onHome (from App) goes back to the title once the credits have rolled.
+export default function Level2World({ onHome }) {
   const host = useRef(null);
   const gameRef = useRef(null);
   const [hint, setHint] = useState(true);
@@ -26,7 +29,8 @@ export default function Level2World() {
   const [objective, setObjective] = useState(null);
   // The question at the hall doors. status: open, wrong.
   const [quiz, setQuiz] = useState(null);
-  // The contest of the bow and the fight in the hall: contest, battle, won.
+  // The story scenes: contest, battle and won (the hall), then reunion and
+  // credits (the end of the game).
   const [story, setStory] = useState(null);
 
   useEffect(() => {
@@ -43,6 +47,8 @@ export default function Level2World() {
     game.events.on('hallDoor', onHallDoor);
     const onBowFound = () => setStory('contest');
     game.events.on('bowFound', onBowFound);
+    const onReunion = () => setStory('reunion');
+    game.events.on('reunion', onReunion);
     const timer = window.setTimeout(() => setHint(false), 5200);
     return () => {
       window.clearTimeout(timer);
@@ -51,6 +57,7 @@ export default function Level2World() {
       game.events.off('objective', onObjective);
       game.events.off('hallDoor', onHallDoor);
       game.events.off('bowFound', onBowFound);
+      game.events.off('reunion', onReunion);
       clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
@@ -207,6 +214,8 @@ export default function Level2World() {
       )}
       {story === 'contest' && <BowContest onDone={() => setStory('battle')} />}
       {story === 'battle' && <HallBattle onWon={hallWon} />}
+      {story === 'reunion' && <Reunion onDone={() => setStory('credits')} />}
+      {story === 'credits' && <Credits onHome={onHome} />}
       {story === 'won' && (
         <div className="l2-victory" role="status" aria-live="polite">
           <div className="q-card l2-victory-card">
