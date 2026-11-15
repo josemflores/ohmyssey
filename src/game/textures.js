@@ -153,61 +153,98 @@ function paintTileset() {
 }
 
 function paintHorse() {
-  // A horse, not a tall neck on a box. Head is large and at the north end.
-  // Body is a wide barrel. Four thick legs stand on a plank platform.
-  const { canvas, ctx } = makeCanvas(96, 104);
+  // High top-down, facing north. Ellipses, not boxes: a tapered muzzle,
+  // a round skull, a curving neck, and a barrel of shaded planks.
+  const { canvas, ctx } = makeCanvas(96, 108);
   const wood = '#c4894a';
-  const light = '#f3d7a0';
-  const shade = '#8d5c32';
-  const dark = '#3e2814';
-  const line = '#1c1008';
+  const light = '#f6ddb0';
+  const shade = '#6e4322';
+  const dark = '#3a2412';
+  const line = '#1a0e08';
 
-  // Platform and wheels, south end.
-  fill(ctx, 8, 86, 80, 14, line);
-  fill(ctx, 10, 88, 76, 10, '#b08050');
-  for (let i = 0; i < 4; i += 1) fill(ctx, 12, 89 + i * 2, 72, 1, i % 2 ? shade : light);
-  for (const wx of [8, 26, 62, 78]) {
-    fill(ctx, wx, 90, 12, 12, line);
-    fill(ctx, wx + 2, 92, 8, 8, '#5c4634');
-    fill(ctx, wx + 5, 95, 3, 3, light);
+  function oval(cx, cy, rx, ry, color) {
+    for (let y = Math.ceil(-ry); y <= ry; y += 1) {
+      const inside = 1 - (y * y) / (ry * ry);
+      if (inside <= 0) continue;
+      const half = Math.max(1, Math.round(rx * Math.sqrt(inside)));
+      fill(ctx, Math.round(cx - half), Math.round(cy + y), half * 2, 1, color);
+    }
   }
 
-  // Four thick legs.
-  for (const lx of [22, 34, 56, 68]) {
-    fill(ctx, lx, 68, 8, 22, line);
-    fill(ctx, lx + 1, 69, 6, 20, dark);
-    fill(ctx, lx + 1, 69, 2, 20, shade);
+  // Wheeled platform. Left planks are lit, right planks sit in shadow.
+  fill(ctx, 10, 94, 76, 10, line);
+  fill(ctx, 12, 96, 72, 6, '#c49258');
+  fill(ctx, 12, 96, 18, 6, light);
+  fill(ctx, 62, 96, 22, 6, shade);
+  for (let i = 0; i < 3; i += 1) fill(ctx, 14, 97 + i * 2, 68, 1, i % 2 ? dark : '#e7c48a');
+  for (const wx of [8, 26, 60, 78]) {
+    fill(ctx, wx, 96, 11, 11, line);
+    fill(ctx, wx + 2, 98, 7, 7, '#4a3424');
+    fill(ctx, wx + 4, 100, 3, 3, light);
   }
 
-  // Wide barrel. Planks run across it. Right side is in shadow.
-  fill(ctx, 14, 40, 68, 32, line);
-  fill(ctx, 16, 42, 64, 28, wood);
-  fill(ctx, 58, 42, 22, 28, shade);
-  fill(ctx, 16, 42, 64, 4, light);
-  for (let i = 0; i < 4; i += 1) fill(ctx, 18, 48 + i * 6, 58, 1, dark);
-  fill(ctx, 36, 50, 18, 14, line);
-  fill(ctx, 38, 52, 14, 10, '#2c1a0e');
-  fill(ctx, 43, 56, 4, 3, '#f0d48a');
+  for (const lx of [22, 36, 54, 68]) {
+    fill(ctx, lx, 78, 7, 20, line);
+    fill(ctx, lx + 1, 79, 5, 16, dark);
+    fill(ctx, lx + 1, 79, 2, 16, shade);
+    fill(ctx, lx, 94, 7, 3, line);
+  }
 
-  // Tail on the rump (south-west of the barrel).
-  fill(ctx, 10, 46, 8, 24, line);
-  fill(ctx, 12, 48, 4, 20, dark);
+  // Tail curves off the rump so the rear is not a flat cut.
+  oval(18, 78, 5, 10, line);
+  oval(16, 80, 3, 8, dark);
+  fill(ctx, 14, 70, 6, 8, line);
 
-  // Short thick neck. The mane is the dark mass on the left.
-  fill(ctx, 28, 30, 40, 14, line);
-  fill(ctx, 30, 32, 36, 10, wood);
-  fill(ctx, 30, 32, 10, 10, dark);
+  // Barrel. Each row is a chord, and every few rows is a darker plank seam.
+  const bx = 48;
+  const by = 68;
+  const brx = 32;
+  const bry = 16;
+  for (let y = Math.ceil(-bry); y <= bry; y += 1) {
+    const inside = 1 - (y * y) / (bry * bry);
+    if (inside <= 0) continue;
+    const half = Math.max(1, Math.round(brx * Math.sqrt(inside)));
+    const row = by + y;
+    fill(ctx, bx - half, row, half * 2, 1, line);
+    const inner = Math.max(1, half - 1);
+    const seam = row % 5 === 0;
+    fill(ctx, bx - inner, row, inner * 2, 1, seam ? dark : wood);
+    if (!seam) {
+      fill(ctx, bx - inner, row, 7, 1, light);
+      fill(ctx, bx + inner - 9, row, 9, 1, shade);
+    }
+  }
+  // Hatch, sitting on the lit face of the barrel.
+  fill(ctx, 40, 62, 12, 12, line);
+  fill(ctx, 42, 64, 8, 8, '#24140c');
+  fill(ctx, 45, 67, 3, 3, '#e8c878');
 
-  // Head wider than the neck. Ears up, muzzle to the north.
-  fill(ctx, 24, 6, 48, 28, line);
-  fill(ctx, 26, 8, 44, 24, wood);
-  fill(ctx, 52, 10, 16, 18, shade);
-  fill(ctx, 30, 0, 8, 12, dark);
-  fill(ctx, 48, 0, 8, 12, dark);
-  fill(ctx, 34, 16, 5, 4, line);
-  fill(ctx, 58, 4, 22, 12, light);
-  fill(ctx, 70, 6, 10, 8, '#f8e6c0');
-  fill(ctx, 62, 16, 14, 4, dark);
+  // Neck widens toward the chest. The mane is the dark ridge on the left.
+  for (let y = 30; y <= 52; y += 1) {
+    const t = (y - 30) / 22;
+    const half = 7 + Math.round(t * 8);
+    fill(ctx, 48 - half - 1, y, half * 2 + 2, 1, line);
+    fill(ctx, 48 - half, y, half * 2, 1, wood);
+    fill(ctx, 48 + half - 5, y, 5, 1, shade);
+    fill(ctx, 48 - half - 6, y, 7, 1, y % 3 === 0 ? line : dark);
+  }
+
+  // Ears first, so they are the top of the silhouette, then the skull and muzzle.
+  oval(34, 14, 3, 9, line);
+  oval(34, 15, 2, 7, dark);
+  oval(62, 14, 3, 9, line);
+  oval(62, 15, 2, 7, dark);
+  oval(48, 24, 15, 11, line);
+  oval(48, 24, 13, 9, wood);
+  oval(54, 25, 7, 7, shade);
+  oval(40, 22, 5, 5, light);
+  oval(48, 10, 7, 9, line);
+  oval(48, 11, 5, 7, light);
+  oval(51, 11, 3, 6, wood);
+  fill(ctx, 45, 6, 6, 2, '#f8e6c4');
+  fill(ctx, 45, 14, 8, 2, dark);
+  fill(ctx, 56, 22, 4, 3, line);
+  fill(ctx, 57, 23, 2, 1, '#f4e6c0');
   return canvas;
 }
 

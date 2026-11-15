@@ -145,6 +145,9 @@ export class Battle {
     if (dist < arrive) {
       unit.body.setVelocity(0, 0);
       unit.stuck = 0;
+      // Parked on a rank, they face the other line. On the beach they
+      // keep the facing they had while walking.
+      if (this.formedUp()) unit.facing = unit.team === 'greek' ? 'n' : 's';
       return;
     }
     dx /= dist;
@@ -161,12 +164,8 @@ export class Battle {
     }
     const len = Math.hypot(vx, vy) || 1;
     unit.body.setVelocity((vx / len) * speed, (vy / len) * speed);
-    if (!this.formedUp() || unit.team === 'greek' && !this.formedUp()) {
-      unit.facing = facingFromVector(vx, vy);
-    }
-    if (unit.team === 'greek' && !this.formedUp()) unit.facing = facingFromVector(vx, vy);
-    if (unit.team === 'trojan') unit.facing = 's';
-    if (unit.team === 'greek' && this.formedUp()) unit.facing = 'n';
+    // Face the way they are walking. The standoff locks N and S once paired.
+    unit.facing = facingFromVector(vx, vy);
   }
 
   separation(unit) {
@@ -299,10 +298,14 @@ export class Battle {
       const moving = speed > 8 && !unit.partner;
       const frame = warriorFrame(unit.facing, moving, stepIndex);
       const groundY = unit.body.y + unit.body.height / 2;
+      // Same idle bob as Odysseus. A real walk sheet replaces it.
+      const hop = !walk && moving ? Math.abs(Math.sin((time + unit.index * 90) / 110)) : 0;
       const px = Math.round(unit.body.x);
-      const py = Math.round(groundY);
+      const py = Math.round(groundY - hop * 1.7);
+      unit.sprite.setScale(1 + hop * 0.04, 1 - hop * 0.07);
       unit.sprite.setFrame(frame);
       unit.sprite.setPosition(px, py);
+      unit.rim.setScale(1.08 * (1 + hop * 0.04), 1.08 * (1 - hop * 0.07));
       unit.rim.setFrame(frame);
       unit.rim.setPosition(px, py);
       // Moon is up-left, so the shadow sits a little down and to the right.
@@ -319,6 +322,8 @@ export class Battle {
       team: unit.team,
       x: unit.body.x,
       y: unit.body.y,
+      facing: unit.facing,
+      frame: unit.sprite.frame.name,
       paired: Boolean(unit.partner),
     });
     return {

@@ -2,13 +2,12 @@
 //
 // Frame order matches Odysseus: south, south-east, east, north-east,
 // north, north-west, west, south-west. One frame each, left to right.
+// These sheets are idle only. The scene bobs a frame while a warrior moves.
 //
-// Jose is making real PixelLab sheets. When a png is ready:
-//   1. Put it in public/assets/sprites/.
-//   2. Set that team's `path` below. Leave path null to keep the stand-in.
-//   3. If the sheet also has walk frames, set `walk`. Walk frames come AFTER
-//      the idle eight, one row of eight per step, same facing order.
-//      Example: 2 steps → 24 frames, idle on row 0.
+// Leave a team's path null to fall back to the drawn stand-in in warriorArt.js.
+// A walk sheet, if one arrives later, adds rows AFTER the idle eight.
+// One row of eight per step, same facing order.
+// Example: 2 steps → 24 frames, idle on row 0.
 
 export const WARRIOR_CONFIG = {
   frameWidth: 32,
@@ -26,8 +25,8 @@ export const WARRIOR_CONFIG = {
   // null = idle frames only. { framesPerFacing, frameRate } turns on the walk.
   walk: null,
   teams: {
-    greek: { key: 'warrior-greek', path: null },
-    trojan: { key: 'warrior-trojan', path: null },
+    greek: { key: 'warrior-greek', path: '/assets/sprites/greek_idle.png' },
+    trojan: { key: 'warrior-trojan', path: '/assets/sprites/trojan_idle.png' },
   },
 };
 

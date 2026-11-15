@@ -1,16 +1,20 @@
 # Credits
 
-## Odysseus
+## Sprites
 
-`public/assets/sprites/odysseus_idle.png` is the idle sheet made for this project in PixelLab. It is 256×32: eight frames of 32×32, one facing each, in this order: south, south-east, east, north-east, north, north-west, west, south-west.
+The Odysseus, Greek, and Trojan idle sheets were made in PixelLab by the Ohmyssey team.
 
-The bottom of that file did not decode (the stream stops a few rows early). The picture in the repo keeps the recovered frames and adds a two-pixel sandal so Odysseus stands on the ground instead of floating. Drop in a fresh export of the same sheet and it will replace this one; the frame order does not need to change.
+- `public/assets/sprites/odysseus_idle.png`
+- `public/assets/sprites/greek_idle.png`
+- `public/assets/sprites/trojan_idle.png`
 
-There is no walk cycle yet. The game bobs that idle frame. See `ANIM_CONFIG` in `src/game/animConfig.js` for where a walk sheet plugs in.
+Each sheet is 256×32: eight frames of 32×32, one facing each, in this order: south, south-east, east, north-east, north, north-west, west, south-west.
+
+There is no walk cycle. The game bobs the idle frame while a character moves. `ANIM_CONFIG` in `src/game/animConfig.js` and `WARRIOR_CONFIG` in `src/game/warriorConfig.js` are where a walk sheet would plug in.
 
 ## Scenery
 
-The beach, wall, temple, houses, horse, and props are drawn in code (`src/game/textures.js`). No downloaded tileset. The two armies are stand-in sheets from `src/game/warriorArt.js` until the PixelLab warrior sheets are ready. Put those pngs in `public/assets/sprites/` and set each team's `path` in `src/game/warriorConfig.js`. Frame order matches Odysseus. Set `walk` there if the sheet has extra step rows after the idle eight. Greeks wear teal. Trojans wear crimson.
+The beach, wall, temple, houses, horse, and props are drawn in code (`src/game/textures.js`). No downloaded tileset. `src/game/warriorArt.js` is only a fallback for a team whose sprite path is empty.
 
 ## Fonts
 

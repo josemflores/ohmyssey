@@ -1,6 +1,6 @@
-// 32×32 warriors, eight facings, two walk frames.
-// Greeks and Trojans share this drawing. Only the palette changes,
-// and the palettes are far apart on purpose (teal vs crimson), not a tint.
+// Fallback only. The armies use the PixelLab sheets in warriorConfig.js.
+// This drawing is used when a team's path is null.
+// Greeks and Trojans share the shapes. Only the palette changes.
 
 import { facingFromVector } from './animConfig.js';
 
