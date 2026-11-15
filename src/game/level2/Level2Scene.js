@@ -52,8 +52,8 @@ const HUT = [
   { who: 'Odysseus', line: 'We take the palace together. Tell no one until I say.', conceal: true },
 ];
 const EUMAEUS_AT = { x: 248, y: 508 };
-// Telemachus walks in from off to the east along the path to the hut, and
-// stops beside the fire, facing Eumaeus.
+// Telemachus walks in from off screen to the east, through SON_FROM on the
+// path, turns at SON_TURN, and stops beside the fire facing Eumaeus.
 const SON_FROM = { x: 470, y: 520 };
 const SON_TURN = { x: 300, y: 548 };
 const SON_AT = { x: 190, y: 556 };
@@ -393,8 +393,8 @@ export class Level2Scene extends Phaser.Scene {
     show();
   }
 
-  // Telemachus comes home from Pylos (Odyssey 16): he walks in from the east
-  // along the path, turns toward the fire, stops beside Eumaeus and faces
+  // Telemachus comes home from Pylos (Odyssey 16): he walks in from off
+  // screen to the east along the path, turns toward the fire, stops beside Eumaeus and faces
   // him. Eumaeus turns to greet him. Then done() shows his first line.
   arriveSon(done) {
     if (!this.telemachus || this.sonHere) {
@@ -404,13 +404,15 @@ export class Level2Scene extends Phaser.Scene {
     this.sonHere = true;
     const son = this.telemachus;
     const shadow = this.sonShadow;
-    son.setVisible(true).setAlpha(0);
-    shadow.setVisible(true).setAlpha(0);
-    this.tweens.add({ targets: son, alpha: 1, duration: 300 });
-    this.tweens.add({ targets: shadow, alpha: 0.5, duration: 300 });
+    // Start just past the right edge of what the camera shows, on the path's
+    // line, so he walks into view instead of appearing.
+    const view = this.cameras.main.worldView;
+    const start = { x: Math.max(SON_FROM.x, view.right + 24), y: SON_FROM.y };
+    son.setPosition(start.x, start.y).setAlpha(1).setVisible(true);
+    shadow.setPosition(start.x + 1, start.y - 1).setAlpha(0.5).setVisible(true);
     const legs = [];
-    let from = SON_FROM;
-    for (const to of [SON_TURN, SON_AT]) {
+    let from = start;
+    for (const to of [SON_FROM, SON_TURN, SON_AT]) {
       const facing = facingToward(to.x - from.x, to.y - from.y);
       legs.push({
         targets: son,
