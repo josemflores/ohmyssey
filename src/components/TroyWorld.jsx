@@ -45,6 +45,13 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
     title: 'Reach the gate',
     note: 'Open the gate (E)',
   });
+  // A finished objective is crossed out and fades away (retiring), then the
+  // next one appears with a "New objective" glow (freshObjective).
+  const [retiring, setRetiring] = useState(null);
+  const [freshObjective, setFreshObjective] = useState(false);
+  const objectiveRef = useRef(objective);
+  const pendingObjective = useRef(null);
+  const objectiveTimers = useRef([]);
   const onSailRef = useRef(onSail);
   onSailRef.current = onSail;
   const fightRef = useRef(null);
@@ -57,6 +64,37 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
     const game = createTroyGame(parent);
     gameRef.current = game;
     setActiveGame(game);
+
+    // A new objective. "Defeat the Trojan groups (1/3)" and "(2/3)" are the
+    // same stage, so a count change just updates the text. A new stage
+    // (for example after the gate opens) gets the cross-out animation.
+    function onObjective(next) {
+      if (!next || !next.title) return;
+      if (pendingObjective.current) {
+        // Still animating the old one: show this when the animation ends.
+        pendingObjective.current = next;
+        return;
+      }
+      const current = objectiveRef.current;
+      if (stageOf(current.title) === stageOf(next.title)) {
+        objectiveRef.current = next;
+        setObjective(next);
+        return;
+      }
+      pendingObjective.current = next;
+      setFreshObjective(false);
+      setRetiring(current);
+      // 0.7 s to draw the line through it, 0.9 s to fade away (TroyWorld.css).
+      objectiveTimers.current.push(setTimeout(() => {
+        const shown = pendingObjective.current;
+        pendingObjective.current = null;
+        objectiveRef.current = shown;
+        setRetiring(null);
+        setObjective(shown);
+        setFreshObjective(true);
+        objectiveTimers.current.push(setTimeout(() => setFreshObjective(false), 3600));
+      }, 1600));
+    }
 
     // The scene found a spot and the player pressed E.
     function onInteract(spot) {
@@ -150,9 +188,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       setFight(null);
       setGameOver(true);
     });
-    game.events.on('objective', (next) => {
-      if (next && next.title) setObjective(next);
-    });
+    game.events.on('objective', onObjective);
     game.events.on('gateQuestion', (question) => setGateAsk({ ...question, wrong: false, hint: '' }));
     game.events.on('gateWrong', (payload) => {
       setGateAsk((current) => current && { ...current, wrong: true, hint: payload.hint });
@@ -174,6 +210,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       game.events.off('levelComplete');
       game.events.off('gameOver');
       game.events.off('objective');
+      objectiveTimers.current.forEach(clearTimeout);
       game.events.off('gateQuestion');
       game.events.off('gateWrong');
       game.events.off('gateClosed');
@@ -329,11 +366,19 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
         <span>{place === 'horse' ? 'inside' : 'at night'}</span>
       </h1>
       {place !== 'horse' && !complete && (
-        <div className="troy-tracker" role="status">
-          <span>Objective</span>
-          <strong>{objective.title}</strong>
-          <em>{objective.note}</em>
-        </div>
+        retiring ? (
+          <div className="troy-tracker is-done" aria-hidden="true">
+            <span>Objective complete</span>
+            <strong>{retiring.title}</strong>
+            <em>{retiring.note}</em>
+          </div>
+        ) : (
+          <div className={`troy-tracker${freshObjective ? ' is-new' : ''}`} role="status">
+            <span>{freshObjective ? 'New objective' : 'Objective'}</span>
+            <strong>{objective.title}</strong>
+            <em>{objective.note}</em>
+          </div>
+        )
       )}
       <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
       {runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
@@ -546,6 +591,11 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       )}
     </div>
   );
+}
+
+// "Defeat the Trojan groups (2/3)" -> "Defeat the Trojan groups".
+function stageOf(title) {
+  return String(title || '').replace(/\s*\(.*\)\s*$/, '');
 }
 
 function fmtHp(n) {

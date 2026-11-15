@@ -760,6 +760,9 @@ export class TroyScene extends Phaser.Scene {
     this.feet.setVelocity(0, 0);
     this.game.registry.set('gateOpen', true);
     this.game.events.emit('questDone');
+    // The gate is open: the tracker crosses out "Reach the gate" now, while
+    // the doors open, and shows the next objective (TroyWorld.jsx).
+    this.publishObjective();
     if (this.prompt) this.prompt.setVisible(false);
     playGateFall(this, () => {
       this.gateFalling = false;
