@@ -24,6 +24,7 @@ import {
 } from './map.js';
 import {
   createQuestions,
+  createScatter,
   FOE_HIT,
   FOE_MAX,
   FULL_HIT,
@@ -167,8 +168,14 @@ export class TroyScene extends Phaser.Scene {
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
 
+    addBeachArmy(this);
     this.questions = createQuestions();
     this.walkFight = 0;
+    this.scatter = createScatter(this, {
+      ground,
+      blockers: this.blockers,
+      fromHorse: this.arrive,
+    });
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
     this.fighting = false;
     this.fight = null;
@@ -367,6 +374,7 @@ export class TroyScene extends Phaser.Scene {
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
 
+    this.scatter.update(dt);
     this.maybeHintRun(moving);
     if (!this.fighting && !locked && moving) this.maybeRandomFight(dt);
     aimArrow(this);
@@ -571,7 +579,7 @@ function publishDebug(scene) {
       return 0;
     },
     greeks() {
-      return 0;
+      return scene.scatter.count();
     },
     lookAt(x, y, zoom) {
       const cam = scene.cameras.main;
@@ -608,6 +616,25 @@ function poseHero(hero, facing, moving, time) {
   const hop = Math.abs(Math.sin(time / 110));
   hero.setScale(1 + hop * 0.04, 1 - hop * 0.07);
   return -hop * 1.7;
+}
+
+function addBeachArmy(scene) {
+  const key = WARRIOR_CONFIG.teams.greek.key;
+  const tex = scene.textures.get(key);
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  const frame = WARRIOR_CONFIG.facingFrames.n;
+  // Two ranks pressed against the doors, centered on the gate.
+  for (let row = 0; row < 2; row += 1) {
+    for (let col = 0; col < 7; col += 1) {
+      const x = 480 + (col - 3) * 42;
+      const y = 678 + row * 34;
+      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
+      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
+      const sort = 7000 + y;
+      shadow.setDepth(sort - 2);
+      sprite.setDepth(sort);
+    }
+  }
 }
 
 function addSolidProp(scene, group, prop) {
