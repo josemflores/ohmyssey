@@ -38,7 +38,7 @@ const SCATTER = [
   { ox: -8, oy: -6, goalX: 220, goalY: -140 },
 ];
 
-const CALM_SECONDS = 3.2;
+const CALM_SECONDS = 0.5;
 
 export function createPatrol(scene, { ground, blockers, fromHorse }) {
   const greekKey = WARRIOR_CONFIG.teams.greek.key;

@@ -151,11 +151,8 @@ export const INTERACT_RADIUS = 28;
 const GATE_X = ((GATE.left + GATE.right + 1) / 2) * TILE;
 // He stands just north of the doors, inside the city.
 const GATE_Y = WALL.top * TILE - 12;
-// The doors themselves. The arrow points here.
-export const GATE_MARK = {
-  x: GATE_X,
-  y: ((WALL.top + WALL.bottom) / 2) * TILE + 8,
-};
+// Center of the wooden doors. The picture is 72px tall and sits on baseY 652.
+export const GATE_MARK = { x: GATE_X, y: 616 };
 
 export const INTERACTABLES = [
   {

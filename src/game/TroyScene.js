@@ -488,13 +488,14 @@ export class TroyScene extends Phaser.Scene {
 // are drawn at 15px and then shrunk to 1/3. 15 × (1/3) × 3 = 15 screen
 // pixels, which keeps the letters sharp instead of blurry.
 function aimArrow(scene) {
-  const host = scene.game.canvas?.parentElement?.parentElement;
+  const canvas = scene.game.canvas;
+  const host = canvas?.parentElement?.parentElement;
   if (!host) return;
   let arrow = document.getElementById('gate-arrow');
   if (!arrow) {
     arrow = document.createElement('div');
     arrow.id = 'gate-arrow';
-    arrow.textContent = '➤';
+    arrow.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><polygon points="3,5 21,12 3,19" fill="#f0d48a" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>';
     host.appendChild(arrow);
   }
   if (scene.questDone) {
@@ -503,28 +504,36 @@ function aimArrow(scene) {
   }
   const gate = GATE_MARK;
   const cam = scene.cameras.main;
-  const sx = (gate.x - cam.scrollX) * cam.zoom;
-  const sy = (gate.y - cam.scrollY) * cam.zoom;
+  // Screen position of the door center. midPoint is where the camera is looking.
+  const sx = cam.width * 0.5 + (gate.x - cam.midPoint.x) * cam.zoom;
+  const sy = cam.height * 0.5 + (gate.y - cam.midPoint.y) * cam.zoom;
+  const hostBox = host.getBoundingClientRect();
+  const canvasBox = canvas.getBoundingClientRect();
+  const ox = canvasBox.left - hostBox.left;
+  const oy = canvasBox.top - hostBox.top;
   const w = cam.width;
   const h = cam.height;
-  const onScreen = sx > 48 && sy > 48 && sx < w - 48 && sy < h - 48;
-  let x = sx;
-  let y = sy - 42;
-  let angle = Math.PI / 2;
-  if (!onScreen) {
-    const cx = w / 2;
-    const cy = h / 2;
-    const dx = sx - cx;
-    const dy = sy - cy;
-    const hw = cx - 64;
-    const hh = cy - 120;
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+  const dx = sx - cx;
+  const dy = sy - cy;
+  const onScreen = sx > 40 && sy > 40 && sx < w - 40 && sy < h - 40;
+  let x;
+  let y;
+  if (onScreen) {
+    const len = Math.hypot(dx, dy) || 1;
+    x = sx - (dx / len) * 56;
+    y = sy - (dy / len) * 56;
+  } else {
+    const hw = cx - 56;
+    const hh = cy - 88;
     const scale = Math.min(hw / Math.abs(dx || 0.001), hh / Math.abs(dy || 0.001));
     x = cx + dx * scale;
     y = cy + dy * scale;
-    angle = Math.atan2(dy, dx);
   }
+  const angle = Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
   arrow.style.display = 'block';
-  arrow.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) rotate(${angle}rad)`;
+  arrow.style.transform = `translate(${Math.round(x + ox)}px, ${Math.round(y + oy)}px) rotate(${angle}rad)`;
 }
 
 function makePrompt(scene) {
