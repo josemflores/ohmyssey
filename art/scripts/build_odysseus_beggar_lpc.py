@@ -19,6 +19,10 @@ Level2Scene loads them unchanged (public/assets/sprites/odysseus_beggar/):
   idle_animation.png  2 breathing frames per facing
   attack.png          6 staff-thrust frames per facing, in 64x64 cells
   hit.png             3 flinch frames per facing (LPC hurt faces south)
+  bow_shoot_e.png     13 LPC shoot frames facing east, with the arrow
+  bow_draw_e.png      the same 13 frames without the arrow
+
+and the battle bow sheets in public/assets/battle/ (odysseus_bow_*_e.png).
 
 Run from the repo root (needs Pillow):
 
@@ -42,7 +46,7 @@ PREVIEW = lpc.ROOT / "art" / "previews" / "odysseus-beggar-lpc.png"
 SRC, OUT = lpc.SRC, lpc.OUT
 
 # Columns x rows of each LPC animation sheet.
-SHAPE = {"walk": (9, 4), "idle": (2, 4), "thrust": (8, 4), "hurt": (6, 1)}
+SHAPE = {"walk": (9, 4), "idle": (2, 4), "thrust": (8, 4), "hurt": (6, 1), "shoot": (13, 4)}
 
 # Darkest to lightest.
 GRAY_FRINGE = ["#3e3c3a", "#62605c", "#8a8782", "#aeaaa4", "#cac6c0"]
@@ -137,8 +141,78 @@ def strip(frames: list[Image.Image], size: int = OUT) -> Image.Image:
     return sheet
 
 
+# The great bow of Odysseus (Odyssey 21-22): the LPC recurve bow in plain
+# wood, with an arrow. Used for the contest and the fight in the hall.
+BOW_DIR = lpc.ROOT / "public" / "assets" / "battle"
+BOW_LAYERS = [
+    {"id": "bow-bg", "path": "weapon/ranged/bow/recurve/universal/background/shoot/medium.png", "first": True},
+    {"id": "bow-fg", "path": "weapon/ranged/bow/recurve/universal/foreground/shoot/medium.png"},
+    {"id": "arrow", "path": "weapon/ranged/bow/arrow/shoot/arrow.png"},
+]
+# LPC shoot frames: 0-3 raise the bow, 4 arrow nocked, 5-8 draw to full,
+# 9 release, 10-12 lower it again.
+BOW_IDLE = [12, 11]
+BOW_SHOOT = [4, 6, 8, 9, 10, 12]
+
+
+def bow_frame(col: int, row: int, arrow: bool = True) -> Image.Image:
+    """The beggar (no staff) with the bow, one 64px LPC cell shrunk to 32.
+    arrow=False leaves the arrow off (stringing and testing the bow)."""
+    canvas = Image.new("RGBA", (SRC, SRC))
+    body = [l for l in LAYERS if l["id"] != "staff"]
+    bow_fg = BOW_LAYERS[1:] if arrow else BOW_LAYERS[1:2]
+    for layer in [BOW_LAYERS[0], *body, *bow_fg]:
+        if layer in BOW_LAYERS:
+            image = fetch(layer["path"])
+        else:
+            image, _src = load(layer, "shoot")
+        canvas.alpha_composite(image.crop((col * SRC, row * SRC, (col + 1) * SRC, (row + 1) * SRC)))
+    return lpc.half_size(canvas)
+
+
+def king_bow_frame(col: int, row: int) -> Image.Image:
+    """Odysseus the king (the armour, helmet and cape of build_odysseus_lpc.py,
+    sword put away) with the bow, from the same layers' shoot sheets."""
+    canvas = Image.new("RGBA", (SRC, SRC))
+    body = []
+    for layer in lpc.LAYERS:
+        if layer["id"].startswith("sword"):
+            continue
+        rel = layer["path"].removeprefix("spritesheets/").replace("/walk.png", "/shoot.png").replace("/walk/", "/shoot/")
+        image = fetch(rel)
+        if image.size != (13 * SRC, 4 * SRC):
+            raise SystemExit(f"{rel} is {image.size}, expected a 13x4 shoot sheet")
+        if layer.get("recolor"):
+            image = lpc.recolor(image, *layer["recolor"])
+        body.append(image)
+    bow_bg, bow_fg, arrow = (fetch(l["path"]) for l in BOW_LAYERS)
+    for image in [bow_bg, *body, bow_fg, arrow]:
+        canvas.alpha_composite(image.crop((col * SRC, row * SRC, (col + 1) * SRC, (row + 1) * SRC)))
+    return lpc.half_size(canvas)
+
+
+def build_bow_sheets() -> None:
+    """For the fight in the hall: odysseus_bow_idle_e.png (2 frames) and
+    odysseus_bow_shoot_e.png (6 frames: nock, draw, full draw, release,
+    lower, rest), 32x32, facing east. In battle he is the king again, so
+    these use his armoured LPC look, not the beggar's rags."""
+    east = lpc.LPC_ROWS["right"]
+    BOW_DIR.mkdir(parents=True, exist_ok=True)
+    for name, cols in (("odysseus_bow_idle_e", BOW_IDLE), ("odysseus_bow_shoot_e", BOW_SHOOT)):
+        sheet = strip([king_bow_frame(c, east) for c in cols])
+        sheet.save(BOW_DIR / f"{name}.png")
+        print(f"wrote {(BOW_DIR / f'{name}.png').relative_to(lpc.ROOT)} {sheet.size}")
+    # All 13 LPC shoot frames, with and without the arrow, for the cutscene
+    # pictures (art/scripts/build_hall_contest.py): raise, nock, draw,
+    # release, lower.
+    for name, arrow in (("bow_shoot_e", True), ("bow_draw_e", False)):
+        sheet = strip([bow_frame(c, east, arrow) for c in range(13)])
+        sheet.save(OUT_DIR / f"{name}.png")
+        print(f"wrote {(OUT_DIR / f'{name}.png').relative_to(lpc.ROOT)} {sheet.size}")
+
+
 def main() -> None:
-    stacks = {a: [(layer, load(layer, a)) for layer in LAYERS] for a in SHAPE}
+    stacks = {a: [(layer, load(layer, a)) for layer in LAYERS if a != "shoot" or layer["id"] != "staff"] for a in SHAPE if a != "shoot"}
     rows = [lpc.LPC_ROWS[d] for _n, d in lpc.FACINGS]
     sheets = {
         "idle": strip([frame(stacks["walk"], "walk", 0, r) for r in rows]),
@@ -160,6 +234,7 @@ def main() -> None:
     PREVIEW.parent.mkdir(parents=True, exist_ok=True)
     board.resize((board.width * 4, board.height * 4), Image.NEAREST).save(PREVIEW)
     print(f"preview {PREVIEW.relative_to(lpc.ROOT)}")
+    build_bow_sheets()
 
 
 if __name__ == "__main__":

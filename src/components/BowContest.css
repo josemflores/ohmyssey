@@ -34,6 +34,12 @@
   border: 2px solid #b08a4a;
   box-shadow: 0 0 0 4px #1a120a, 0 12px 40px rgba(0, 0, 0, 0.6);
 }
+/* An animated picture (ScenePic.jsx): a strip of frames as the background,
+   moved one frame at a time. */
+.l2-contest-pic.is-anim {
+  background-repeat: no-repeat;
+  background-color: #07060a;
+}
 .l2-contest-caption {
   margin: 12px auto 0;
   max-width: 720px;

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ChoiceLabel, KeysHint, QuestionHeader, choicesClass, useChoiceKeys } from './QuestionCard.jsx';
+import ScenePic, { preloadScenes } from './ScenePic.jsx';
 import './BowContest.css';
 
 // The end of the story (Odyssey 23). Penelope tests the stranger with their
 // bed; the player answers as Odysseus would. Then they are together, Athena
 // holds back the dawn, and onDone rolls the credits.
-// Pictures: public/assets/contest/, from art/scripts/build_ending.py.
+// Pictures: public/assets/contest/, from art/scripts/build_ending.py, each a
+// short animation played by ScenePic.jsx.
 
 const pic = (name) => `/assets/contest/${name}.png`;
 
@@ -72,6 +74,10 @@ export default function Reunion({ onDone }) {
   const [index, setIndex] = useState(0);
   const [order] = useState(() => shuffledOrder(TEST.choices.length));
   const [picked, setPicked] = useState(null);
+
+  useEffect(() => {
+    preloadScenes(['chamber', 'embrace', 'dawn']);
+  }, []);
 
   const list = stage === 'after' ? AFTER : BEFORE;
   const shot = list[index];
@@ -156,7 +162,7 @@ export default function Reunion({ onDone }) {
   return (
     <div className="l2-contest" role="dialog" aria-label="Penelope" data-stage={stage}>
       <figure className="l2-contest-frame" key={`${stage}-${index}`}>
-        <img className="l2-contest-pic" src={pic(shot.img)} alt="" />
+        <ScenePic name={shot.img} settled={index > 0 && list[index - 1].img === shot.img} />
         <figcaption className="l2-contest-caption">
           {shot.who && <span className="l2-contest-who">{shot.who}</span>}
           <span className="l2-contest-line">{shot.line}</span>

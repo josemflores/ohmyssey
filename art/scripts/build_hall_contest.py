@@ -7,15 +7,17 @@ heads set in a line. Every suitor fails to bend it. The beggar asks to try,
 strings it at once, and shoots through all twelve. Then he turns the bow on
 the suitors.
 
-Everything is built from the game's own pixel sprites and props, plus a bow,
-an arrow and axes drawn here, pixel by pixel:
+Everything is built from the game's own pixel sprites and props (the LPC
+Penelope, suitors, Telemachus and the beggar with his bow), plus an arrow
+and axes drawn here, pixel by pixel:
 
-  public/assets/battle/odysseus_bow_idle_e.png   2 frames, 32 x 32, facing east
-  public/assets/battle/odysseus_bow_shoot_e.png  6 frames: draw, draw, full
-                                                 draw, release, follow, rest
   public/assets/battle/arrow.png                 16 x 5, flies across in CSS
   public/assets/battle/hall_battle.png           480 x 270 battle backdrop
-  public/assets/contest/*.png                    240 x 135 cutscene pictures
+  public/assets/contest/<name>.png               240 x 135 still picture
+  public/assets/contest/<name>_anim.png          the same picture, animated
+
+Odysseus's battle bow sheets (odysseus_bow_*_e.png) come from
+build_odysseus_beggar_lpc.py. Run that one first, then this one.
 
 Run from the repo root (needs Pillow):
 
@@ -118,64 +120,13 @@ def arrow_in(img: Image.Image, x0: int, x1: int, y: int) -> None:
     img.putpixel((x0 + 2, y + 1), FLETCH)
 
 
-# ---- Odysseus with the bow --------------------------------------------------
-
-GRIP_Y = 19
-
-
-def bowman_base() -> Image.Image:
-    """Odysseus facing east, sword taken out of his hand."""
-    sheet = load("battle/odysseus_idle_e.png")
-    body = cell(sheet, 0, 0)
-    px = body.load()
-    for y in range(20, 32):
-        for x in range(20, 32):
-            px[x, y] = CLEAR
-    # The bow arm, reaching forward to the grip.
-    for x in (19, 20, 21, 22):
-        px[x, GRIP_Y] = (41, 37, 58, 255)
-        px[x, GRIP_Y + 1] = (27, 25, 43, 255)
-    px[23, GRIP_Y] = SKIN
-    px[23, GRIP_Y + 1] = SKIN
-    return body
+# ---- The arrow --------------------------------------------------------------
+# Odysseus with the bow (odysseus_bow_idle_e / odysseus_bow_shoot_e) is now
+# built from LPC layers by build_odysseus_beggar_lpc.py. Only the arrow that
+# flies across the screen is drawn here.
 
 
-def bowman(state: str, breathe: int = 0) -> Image.Image:
-    img = bowman_base()
-    if breathe:
-        # One pixel of breath: shift the upper body down.
-        top = img.crop((0, 0, 32, 18))
-        img.paste(CLEAR, (0, 0, 32, 18))
-        img.alpha_composite(top, (0, 1))
-    tip = 23
-    if state == "rest":
-        bow(img, tip, 9, 29, 3)
-    elif state in ("draw1", "draw2", "full"):
-        pull_x = {"draw1": 19, "draw2": 16, "full": 14}[state]
-        bend = {"draw1": 3, "draw2": 4, "full": 4}[state]
-        shrink = {"draw1": 0, "draw2": 1, "full": 1}[state]
-        bow(img, tip - shrink, 9 + shrink, 29 - shrink, bend, pull=(pull_x, GRIP_Y))
-        arrow_in(img, pull_x, min(31, tip + 7), GRIP_Y)
-        img.putpixel((pull_x, GRIP_Y - 1), SKIN)
-        img.putpixel((pull_x + 1, GRIP_Y - 1), SKIN)
-    elif state == "release":
-        # The string snaps forward past the limbs.
-        bow(img, tip, 9, 29, 3, pull=(tip + 2, GRIP_Y))
-    return img
-
-
-def build_bowman() -> None:
-    idle = Image.new("RGBA", (64, 32), CLEAR)
-    idle.alpha_composite(bowman("rest"), (0, 0))
-    idle.alpha_composite(bowman("rest", breathe=1), (32, 0))
-    idle.save(BATTLE / "odysseus_bow_idle_e.png")
-
-    states = ["draw1", "draw2", "full", "release", "rest", "rest"]
-    shoot = Image.new("RGBA", (32 * len(states), 32), CLEAR)
-    for i, state in enumerate(states):
-        shoot.alpha_composite(bowman(state), (32 * i, 0))
-    shoot.save(BATTLE / "odysseus_bow_shoot_e.png")
-
+def build_arrow() -> None:
     arrow = Image.new("RGBA", (16, 5), CLEAR)
     arrow_in(arrow, 0, 15, 2)
     arrow.save(BATTLE / "arrow.png")
@@ -294,6 +245,70 @@ def suitor(name: str) -> Image.Image:
     return load(f"sprites/npcs/{name}")
 
 
+# ---- The cutscene pictures, animated --------------------------------------
+#
+# Every picture is a short loop of frames, played at 8 frames a second by
+# src/components/ScenePic.jsx. Some start with an intro that plays once (a
+# walk, a draw of the bow) and then settle into the loop. Each scene writes:
+#
+#   <name>.png        one still frame (the last one), for the dim backdrops
+#   <name>_anim.png   all the frames side by side, intro first, then the loop
+#
+# ANIMS lists (intro frames, loop frames) for each picture. ScenePic.jsx keeps
+# the same numbers, so change both together.
+
+W2, H2, WALL = 240, 135, 46
+LOOP = 8
+ANIMS = {
+    "bow_brought": (16, LOOP),
+    "axes": (32, LOOP),
+    "suitors_fail": (0, LOOP),
+    "hearth": (0, LOOP),
+    "beggar": (0, LOOP),
+    "string": (16, LOOP),
+    "shot": (8, LOOP),
+    "turn": (0, LOOP),
+    # The ending, from build_ending.py.
+    "chamber": (0, LOOP),
+    "embrace": (24, LOOP),
+    "dawn": (0, LOOP),
+}
+
+# Firelight brightness per frame: the fire flickers, the hall breathes with it.
+FLICKER = [1.0, 0.96, 1.03, 0.98, 1.01, 0.95, 1.02, 0.99]
+
+
+def idle(sheet: Image.Image, row: int, t: int, offset: int = 0) -> Image.Image:
+    """A 4 x 8 LPC sheet: columns are the breathing frames (0, 0, 1, 1).
+    Two picture frames per column, so one breath takes one second."""
+    return cell(sheet, (t // 2 + offset) % 4, row)
+
+
+def save_scene(name: str, frames: list[Image.Image]) -> None:
+    intro, loop = ANIMS[name]
+    if len(frames) != intro + loop:
+        raise SystemExit(f"{name}: {len(frames)} frames, ANIMS says {intro} + {loop}")
+    strip = Image.new("RGBA", (W2 * len(frames), H2))
+    for i, f in enumerate(frames):
+        strip.paste(f, (i * W2, 0))
+    frames[-1].save(CONTEST / f"{name}.png")
+    strip.save(CONTEST / f"{name}_anim.png", optimize=True)
+    print(f"wrote contest/{name}_anim.png ({intro} intro + {loop} loop frames)")
+
+
+def bending_bow(img: Image.Image, x: int, top: int, bottom: int, bend: int) -> None:
+    """The unstrung bow while a suitor leans on it: the limbs bend `bend`
+    pixels, the string still hangs loose because he cannot loop it on."""
+    mid = (top + bottom) / 2
+    half = (bottom - top) / 2
+    for y in range(top, bottom + 1):
+        k = (y - mid) / half
+        bx = x + round(bend * (1 - k * k))
+        img.putpixel((bx, y), WOOD)
+        img.putpixel((bx + 1, y), WOOD_DARK)
+    line(img, (x - 1, top + 2), (x - 3, bottom - 4), STRING)
+
+
 def build_contest() -> None:
     CONTEST.mkdir(parents=True, exist_ok=True)
     antinous = suitor("suitor_lpc/suitor_a_1.png")
@@ -301,91 +316,176 @@ def build_contest() -> None:
     amphinomus = suitor("suitor_lpc/suitor_c_4.png")
     extras = [suitor(f"suitor_lpc/suitor_{k}.png") for k in ("b_3", "c_1", "a_2", "c_3", "a_4", "b_1")]
     penelope = load("sprites/npcs/penelope/penelope_sheet.png")
-    beggar = load("sprites/odysseus_beggar/idle.png")
+    penelope_walk = load("sprites/npcs/penelope/penelope_walk_32.png")
+    # The LPC beggar: idle_animation has 2 breathing frames per facing, in
+    # the order s se e ne n nw w sw, so east is columns 4-5.
+    beggar = load("sprites/odysseus_beggar/idle_animation.png")
+    # The beggar with the bow, the 13 LPC shoot frames facing east:
+    # 0-3 raise the bow, 4 nock, 5-8 draw, 9 release, 10-12 lower it.
+    with_arrow = load("sprites/odysseus_beggar/bow_shoot_e.png")
+    no_arrow = load("sprites/odysseus_beggar/bow_draw_e.png")
     telemachus = suitor("telemachus/telemachus_32.png")
-    hearth = cell(load("props/palace_hearth.png"), 0, 0, 48, 32)
+    telemachus_walk = suitor("telemachus/telemachus_walk_32.png")
+    hearth = load("props/palace_hearth.png")
     throne = load("props/palace_throne.png")
     banquet = load("props/palace_banquet.png")
-    W2, H2, WALL = 240, 135, 46
 
-    def scene():
-        return hall_scene(W2, H2, WALL, 1)
+    brazier = load("props/palace_brazier.png")
 
-    # 1. Penelope brings out the great bow.
-    img = scene()
-    put(img, throne, 120, 82)
-    put(img, cell(penelope, 0, S), 120, 104)
-    carried_bow(img, 131, 76, 98)
-    for x, sheet, row in ((50, antinous, E), (74, extras[0], E), (168, eurymachus, W), (194, extras[1], W)):
-        put(img, cell(sheet, 0, row), x, 120)
-    put(img, banquet, 28, 74)
-    put(img, banquet, 212, 74)
-    grade(img).save(CONTEST / "bow_brought.png")
+    def scene(t: int = 0):
+        # The hall, with a brazier burning against the wall at each side.
+        img = hall_scene(W2, H2, WALL, 1)
+        for i, x in enumerate((12, 228)):
+            put(img, cell(brazier, (t + 2 * i) % 4, 0), x, 60)
+        return img
 
-    # 2. Telemachus sets twelve axes in a line.
-    img = scene()
-    for x, sheet in ((60, extras[2]), (92, amphinomus), (150, extras[3]), (182, extras[4])):
-        put(img, cell(sheet, 0, S), x, 82)
-    axes_row(img, 48, 13, 108)
-    put(img, cell(telemachus, 0, W), 214, 118)
-    grade(img).save(CONTEST / "axes.png")
+    def beggar_east(t: int) -> Image.Image:
+        return cell(beggar, 4 + (t // 4) % 2, 0)
 
-    # 3. The suitors try, and none can bend it.
-    img = scene()
-    put(img, cell(extras[5], 0, E), 98, 104)
-    carried_bow(img, 109, 78, 100, strung=False)
-    sweat(img, 92, 76)
-    sweat(img, 104, 74)
-    for x, sheet, row in ((44, extras[0], E), (64, extras[1], E), (150, antinous, W)):
-        put(img, cell(sheet, 0, row), x, 112)
-    axes_row(img, 168, 6, 112, count=8)
-    grade(img).save(CONTEST / "suitors_fail.png")
+    def bow_rest(t: int) -> Image.Image:
+        # Holding the bow at his side, breathing: LPC shoot frames 12 and 11.
+        return cell(no_arrow, 12 if (t // 4) % 2 == 0 else 11, 0)
 
-    # 4. Antinous warms the bow at the fire. Still it will not bend.
-    img = scene()
-    put(img, hearth, 120, 102)
-    for x in range(100, 141):
-        img.putpixel((x, 82 + ((x - 120) ** 2) // 120), WOOD)
-        img.putpixel((x, 83 + ((x - 120) ** 2) // 120), WOOD_DARK)
-    put(img, cell(antinous, 0, E), 86, 104)
-    put(img, cell(eurymachus, 0, W), 156, 104)
-    sweat(img, 152, 76)
-    grade(img, tint=(214, 150, 100)).save(CONTEST / "hearth.png")
+    # 1. Penelope walks down from her throne with the great bow.
+    #    The suitors at the tables turn to watch her.
+    def bow_brought(t: int) -> Image.Image:
+        img = scene(t)
+        put(img, throne, 120, 82)
+        intro = ANIMS["bow_brought"][0]
+        if t < intro:
+            bottom = 86 + round(18 * t / (intro - 1))
+            her = cell(penelope_walk, t % 8, S)
+        else:
+            bottom = 104
+            her = idle(penelope, S, t)
+        put(img, her, 120, bottom)
+        carried_bow(img, 131, bottom - 28, bottom - 6)
+        for i, (x, sheet, row) in enumerate(((50, antinous, E), (74, extras[0], E), (168, eurymachus, W), (194, extras[1], W))):
+            put(img, idle(sheet, row, t, i), x, 120)
+        put(img, banquet, 28, 74)
+        put(img, banquet, 212, 74)
+        return grade(img, dim=FLICKER[t % 8])
 
-    # 5. The beggar asks to try. He strings it as a singer strings a lyre.
-    img = scene()
-    put(img, cell(beggar, 2, 0), 70, 108)
-    carried_bow(img, 80, 82, 104)
-    for x, sheet in ((150, antinous), (176, eurymachus), (202, extras[2])):
-        put(img, cell(sheet, 0, W), x, 104)
-    put(img, cell(penelope, 0, S), 120, 74)
-    grade(img).save(CONTEST / "beggar.png")
+    # 2. Telemachus walks down the hall, setting the twelve axes in a line
+    #    as he goes, then turns to look along the row of rings.
+    def axes(t: int) -> Image.Image:
+        img = scene(t)
+        for i, (x, sheet) in enumerate(((60, extras[2]), (92, amphinomus), (150, extras[3]), (182, extras[4]))):
+            put(img, idle(sheet, S, t, i), x, 82)
+        intro = ANIMS["axes"][0]
+        start, end = 228, 34
+        x = round(start + (end - start) * min(t, intro - 1) / (intro - 1))
+        xs = [48 + i * 13 for i in range(12)]
+        for ax in xs:
+            if ax > x + 4:  # he has already passed this spot
+                axe(img, ax, 108)
+        if t < intro:
+            put(img, cell(telemachus_walk, t % 8, W), x, 118)
+        else:
+            axe(img, xs[0], 108)
+            put(img, idle(telemachus, E, t), x, 118)
+        return grade(img, dim=FLICKER[t % 8])
 
-    # 6. The shot: the beggar at the left, the axes in a line. The arrow
-    #    itself flies in CSS, through the rings (AXE_RING_DY above the floor).
-    img = scene()
-    put(img, cell(beggar, 2, 0), 26, 104)
-    bow(img, 36, 80, 100, 4, pull=(30, 90))
-    floor = 90 + AXE_RING_DY
-    axes_row(img, 64, 13, floor)
-    for x, sheet in ((90, extras[0]), (130, antinous), (170, extras[3])):
-        put(img, cell(sheet, 0, S), x, 70)
-    grade(img).save(CONTEST / "shot.png")
+    # 3. A suitor leans on the bow with all his weight. It barely bends,
+    #    he shakes with the effort, the others laugh.
+    def suitors_fail(t: int) -> Image.Image:
+        img = scene(t)
+        shake = (0, 1, 0, -1)[t % 4]
+        put(img, idle(extras[5], E, 0), 98 + shake, 104)
+        bending_bow(img, 109 + shake, 78, 100, (0, 1, 2, 2, 2, 1, 0, 0)[t])
+        drop = t % 4
+        sweat(img, 92 + shake, 76 + drop)
+        sweat(img, 104 + shake, 74 + (drop + 2) % 4)
+        for i, (x, sheet, row) in enumerate(((44, extras[0], E), (64, extras[1], E), (150, antinous, W))):
+            # Laughing: a little bob up and down.
+            put(img, idle(sheet, row, t, i), x, 112 - ((t + i) // 2) % 2)
+        axes_row(img, 168, 6, 112, count=8)
+        return grade(img, dim=FLICKER[t % 8])
 
-    # 7. He throws off his rags. The suitors look for their spears.
-    img = scene()
-    king = Image.open(BATTLE / "odysseus_bow_idle_e.png").convert("RGBA").crop((0, 0, 32, 32))
-    put(img, king, 52, 108, 1)
-    for x, y, sheet in ((140, 98, antinous), (166, 110, eurymachus), (190, 96, amphinomus), (210, 114, extras[1])):
-        put(img, cell(sheet, 0, W), x, y)
-    put(img, banquet, 212, 74)
-    grade(img, tint=(220, 140, 110)).save(CONTEST / "turn.png")
+    # 4. Antinous warms the bow over the fire, turning it in his hands.
+    def hearth_scene(t: int) -> Image.Image:
+        img = scene(t)
+        put(img, cell(hearth, t % 4, 0, 48, 32), 120, 102)
+        lift = (0, 0, -1, -1, -1, 0, 0, 0)[t]
+        for x in range(100, 141):
+            y = 82 + lift + ((x - 120) ** 2) // 120
+            img.putpixel((x, y), WOOD)
+            img.putpixel((x, y + 1), WOOD_DARK)
+        put(img, idle(antinous, E, t), 86, 104 + lift)
+        put(img, idle(eurymachus, W, t, 1), 156, 104)
+        sweat(img, 152, 76 + t % 4)
+        return grade(img, tint=(214, 150, 100), dim=FLICKER[(t * 3) % 8] * 1.02)
 
+    # 5. The beggar asks to try, the bow in his hand. The suitors jeer,
+    #    Penelope watches from above.
+    def beggar_scene(t: int, frame: Image.Image) -> Image.Image:
+        img = scene(t)
+        put(img, frame, 70, 108)
+        for i, (x, sheet) in enumerate(((150, antinous), (176, eurymachus), (202, extras[2]))):
+            put(img, idle(sheet, W, t, i), x, 104 - ((t + i) // 2) % 2)
+        put(img, idle(penelope, S, t), 120, 74)
+        return grade(img, dim=FLICKER[t % 8])
+
+    # 6. He strings it as a singer strings a lyre: he raises the bow and
+    #    draws the empty string back to test it, then lowers it.
+    string_steps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9, 10, 11, 12, 12]
+
+    def string_scene(t: int) -> Image.Image:
+        intro = ANIMS["string"][0]
+        frame = cell(no_arrow, string_steps[t], 0) if t < intro else bow_rest(t)
+        return beggar_scene(t, frame)
+
+    # 7. The shot. The beggar at the left draws to full and lets go on the
+    #    fifth frame (0.5 s), when the CSS arrow starts flying through the
+    #    rings. Put at cx=24, bottom=106: the LPC arrow lies on y=90 with its
+    #    point at x=36, the same spot the CSS arrow starts from.
+    shot_steps = [5, 6, 7, 8, 9, 10, 11, 12]
+
+    def shot(t: int, steps=shot_steps) -> Image.Image:
+        img = scene(t)
+        floor = 90 + AXE_RING_DY
+        axes_row(img, 64, 13, floor)
+        for i, (x, sheet) in enumerate(((90, extras[0]), (130, antinous), (170, extras[3]))):
+            put(img, idle(sheet, S, t, i), x, 70)
+        intro = ANIMS["shot"][0]
+        frame = cell(with_arrow if steps[min(t, intro - 1)] < 9 else no_arrow, steps[t], 0) if t < intro else bow_rest(t)
+        put(img, frame, 24, 106)
+        return grade(img, dim=FLICKER[t % 8])
+
+    # 8. He throws off his rags and leaps to the doorway, shooting. The
+    #    suitors scramble for their spears.
+    turn_steps = [4, 6, 8, 8, 9, 10, 12, 12]
+
+    def turn(t: int) -> Image.Image:
+        img = scene(t)
+        step = turn_steps[t]
+        put(img, cell(with_arrow if step < 9 else no_arrow, step, 0), 52, 108)
+        for i, (x, y, sheet) in enumerate(((140, 98, antinous), (166, 110, eurymachus), (190, 96, amphinomus), (210, 114, extras[1]))):
+            row = W if (t // 2 + i) % 3 else SW
+            put(img, idle(sheet, row, t, i), x + (1 if (t + i) % 2 else -1), y)
+        put(img, banquet, 212, 74)
+        return grade(img, tint=(220, 140, 110), dim=FLICKER[t % 8])
+
+    def frames(name: str, draw) -> list[Image.Image]:
+        return [draw(t) for t in range(sum(ANIMS[name]))]
+
+    save_scene("bow_brought", frames("bow_brought", bow_brought))
+    save_scene("axes", frames("axes", axes))
+    save_scene("suitors_fail", frames("suitors_fail", suitors_fail))
+    save_scene("hearth", frames("hearth", hearth_scene))
+    save_scene("beggar", frames("beggar", lambda t: beggar_scene(t, bow_rest(t))))
+    save_scene("string", frames("string", string_scene))
+    shots = frames("shot", shot)
+    save_scene("shot", shots)
+    # The still behind the questions is him at full draw, the arrow on the string.
+    grade_full = shot(0, steps=[8])
+    grade_full.save(CONTEST / "shot.png")
+    save_scene("turn", frames("turn", turn))
     print("ring line in shot.png: y =", 90, "of", H2, f"({90 / H2 * 100:.1f}%)")
 
 
 if __name__ == "__main__":
-    build_bowman()
+    build_arrow()
     build_backdrop()
     build_contest()
-    print("Wrote bow sprites, hall backdrop, and contest pictures.")
+    print("Wrote the arrow, hall backdrop, and contest pictures.")

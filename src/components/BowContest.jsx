@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { makeHallDeck } from '../game/level2/hallQuestions.js';
 import CircuitDiagram from './CircuitDiagram.jsx';
+import ScenePic, { preloadScenes } from './ScenePic.jsx';
 import {
   ChoiceLabel,
   KeysHint,
@@ -16,6 +17,7 @@ import './BowContest.css';
 // all twelve axes. Then he turns on the suitors, and onDone starts the fight.
 //
 // Pictures: public/assets/contest/, from art/scripts/build_hall_contest.py.
+// Each one is a short animation, played by ScenePic.jsx.
 
 const pic = (name) => `/assets/contest/${name}.png`;
 
@@ -48,7 +50,7 @@ export const SCENES = [
     line: 'Let me try my hands at it, friends. The suitors jeer, but Penelope lets him take the bow.',
   },
   {
-    img: 'beggar',
+    img: 'string',
     line: 'He strings it as easily as a singer strings a lyre. Now the shot: answer three questions in a row.',
   },
 ];
@@ -64,6 +66,10 @@ export default function BowContest({ onDone }) {
   const [scene, setScene] = useState(0);
   const [streak, setStreak] = useState(0);
   const [ask, setAsk] = useState(null);
+
+  useEffect(() => {
+    preloadScenes([...SCENES.map((s) => s.img), 'shot', 'turn']);
+  }, []);
 
   function nextScene() {
     if (scene + 1 < SCENES.length) setScene(scene + 1);
@@ -137,7 +143,10 @@ export default function BowContest({ onDone }) {
     return (
       <div className="l2-contest" role="dialog" aria-label="The contest of the bow" data-stage={stage}>
         <figure className="l2-contest-frame" key={`${stage}-${scene}`}>
-          <img className="l2-contest-pic" src={pic(shot.img)} alt="" />
+          <ScenePic
+            name={shot.img}
+            settled={stage === 'scenes' && scene > 0 && SCENES[scene - 1].img === shot.img}
+          />
           <figcaption className="l2-contest-caption">
             {shot.who && <span className="l2-contest-who">{shot.who}</span>}
             <span className="l2-contest-line">{shot.line}</span>
@@ -169,7 +178,7 @@ export default function BowContest({ onDone }) {
       <div className="l2-contest is-through" role="dialog" aria-label="The shot" data-stage={stage}>
         <figure className="l2-contest-frame">
           <div className="l2-contest-shot">
-            <img className="l2-contest-pic" src={pic('shot')} alt="" />
+            <ScenePic name="shot" />
             <span className="l2-contest-arrow" aria-hidden="true" />
           </div>
           <figcaption className="l2-contest-caption">

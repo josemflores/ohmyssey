@@ -8,11 +8,12 @@ know that, and she runs to him. Athena holds back the dawn so their night
 lasts long.
 
   public/assets/contest/chamber.png   the bedchamber and the olive-tree bed
-  public/assets/contest/embrace.png   Penelope and Odysseus together
+  public/assets/contest/embrace.png   Penelope and Odysseus walk to each other
   public/assets/contest/dawn.png      Ithaca at dawn
 
 Same 240 x 135 pixel pictures as the contest of the bow, built from the
-game's own sprites. Run from the repo root (needs Pillow):
+game's own LPC sprites (Penelope, and Odysseus still in his beggar's rags),
+and animated the same way: each also gets a <name>_anim.png strip. Run from the repo root (needs Pillow):
 
   python3 art/scripts/build_ending.py
 """
@@ -24,7 +25,7 @@ import random
 
 from PIL import Image, ImageDraw
 
-from build_hall_contest import CONTEST, W as WEST, E as EAST, cell, grade, hall_scene, load, put
+from build_hall_contest import ANIMS, CONTEST, FLICKER, E as EAST, cell, grade, hall_scene, idle, load, put, save_scene
 
 W2, H2, WALL = 240, 135, 46
 BARK = (98, 84, 66, 255)
@@ -103,19 +104,32 @@ def bed(img: Image.Image, x0: int, top: int, width: int, post_x: int) -> None:
     d.line((post_x - 1, top - 6, post_x - 1, top + 8), fill=BARK_LIGHT)
 
 
-def chamber(odysseus_x: int, penelope_x: int, glow: bool) -> Image.Image:
+PENELOPE = load("sprites/npcs/penelope/penelope_sheet.png")
+PENELOPE_WALK = load("sprites/npcs/penelope/penelope_walk_32.png")
+# The LPC beggar's sheets list the facings s se e ne n nw w sw, so west is
+# facing 6: idle_animation columns 12-13, walk columns 48-55.
+BEGGAR_IDLE = load("sprites/odysseus_beggar/idle_animation.png")
+BEGGAR_WALK = load("sprites/odysseus_beggar/walk.png")
+
+
+def chamber(t: int, odysseus_x: int, penelope_x: int, glow: float, walking: bool = False) -> Image.Image:
+    """The bedchamber at frame t. glow (0 to 0.35) is the lamplight around
+    the two of them; walking shows both mid-stride toward each other."""
     img = hall_scene(W2, H2, WALL, 1)
     olive_trunk(img, 70, 104)
     leaves(img, 70, 14, 46, 14, 3)
     bed(img, 74, 76, 84, 71)
-    king = load("sprites/odysseus_idle.png")
-    penelope = load("sprites/npcs/penelope/penelope_sheet.png")
-    put(img, cell(penelope, 0, EAST), penelope_x, 118)
-    # The king's sheet is one row of eight facings: S, SE, E, NE, N, NW, W, SW.
-    put(img, cell(king, 6, 0), odysseus_x, 118)
-    tint = (230, 170, 120) if glow else (188, 150, 120)
-    out = grade(img, tint=tint)
-    if glow:
+    if walking:
+        put(img, cell(PENELOPE_WALK, t % 8, EAST), penelope_x, 118)
+        put(img, cell(BEGGAR_WALK, 48 + t % 8, 0), odysseus_x, 118)
+    else:
+        put(img, idle(PENELOPE, EAST, t), penelope_x, 118)
+        put(img, cell(BEGGAR_IDLE, 12 + (t // 4) % 2, 0), odysseus_x, 118)
+    # From the cold grey of the test to warm lamplight.
+    k = glow / 0.35
+    tint = tuple(round(a + (b - a) * k) for a, b in zip((188, 150, 120), (230, 170, 120)))
+    out = grade(img, tint=tint, dim=FLICKER[t % 8])
+    if glow > 0:
         # Lamplight around the two of them.
         px = out.load()
         cx = (odysseus_x + penelope_x) / 2
@@ -124,12 +138,28 @@ def chamber(odysseus_x: int, penelope_x: int, glow: bool) -> Image.Image:
                 d = math.hypot((x - cx) / 60, (y - 104) / 40)
                 if d < 1:
                     r, g, b, a = px[x, y]
-                    k = 1 + 0.35 * (1 - d)
-                    px[x, y] = (min(255, int(r * k)), min(255, int(g * k)), min(255, int(b * k * 0.92)), a)
+                    m = 1 + glow * (1 - d)
+                    px[x, y] = (min(255, int(r * m)), min(255, int(g * m)), min(255, int(b * m * 0.92)), a)
     return out
 
 
-def dawn() -> Image.Image:
+def embrace(t: int) -> Image.Image:
+    """Her knees give way and she runs to him; he comes to meet her. Then
+    they stand together in the lamplight, which slowly breathes."""
+    intro = ANIMS["embrace"][0]
+    if t < intro:
+        f = t / (intro - 1)
+        return chamber(t, round(176 - 42 * f), round(40 + 76 * f), 0.35 * f, walking=True)
+    pulse = 0.35 + 0.04 * math.sin(t / LOOP_LEN * math.tau)
+    return chamber(t, 134, 116, pulse)
+
+
+LOOP_LEN = ANIMS["chamber"][1]
+
+
+def dawn(t: int = 0) -> Image.Image:
+    """Ithaca at dawn, frame t: the sea glitters, the last stars twinkle,
+    the palace lamps flicker. The sun stays put: Athena holds it back."""
     img = Image.new("RGBA", (W2, H2), (0, 0, 0, 255))
     px = img.load()
     sky = [(14, 20, 52), (46, 40, 92), (132, 74, 112), (232, 136, 98), (252, 196, 120)]
@@ -149,29 +179,34 @@ def dawn() -> Image.Image:
     # Sea with glints.
     d.rectangle((0, horizon, W2, H2), fill=(30, 48, 82, 255))
     rnd = random.Random(7)
-    for _ in range(90):
+    for i in range(90):
         x, y = rnd.randrange(W2), rnd.randrange(horizon + 2, H2)
+        length = rnd.randint(2, 6)
+        if (i + t) % 3 == 0:
+            continue  # this glint is between waves
         near = abs(x - 180) < 30 - (y - horizon) // 3
-        d.line((x, y, x + rnd.randint(2, 6), y), fill=(255, 210, 140, 255) if near else (88, 116, 150, 255))
+        drift = (t // 2 + i) % 3 - 1  # the water moves a little
+        d.line((x + drift, y, x + drift + length, y), fill=(255, 210, 140, 255) if near else (88, 116, 150, 255))
     # Ithaca: a dark island, the palace on its hill with lit windows.
     d.polygon([(0, 96), (20, 86), (46, 74), (70, 66), (92, 68), (116, 82), (140, 100), (160, 112), (160, 135), (0, 135)], fill=(20, 22, 30, 255))
     d.rectangle((52, 54, 94, 68), fill=(28, 28, 38, 255))
     d.polygon([(48, 54), (73, 44), (98, 54)], fill=(28, 28, 38, 255))
-    for wx in (58, 66, 80, 88):
-        d.rectangle((wx, 59, wx + 2, 62), fill=(255, 196, 110, 255))
+    for i, wx in enumerate((58, 66, 80, 88)):
+        lit = (255, 196, 110, 255) if (t + i * 3) % 7 else (220, 150, 80, 255)
+        d.rectangle((wx, 59, wx + 2, 62), fill=lit)
     # Stars fading in the west.
-    for _ in range(30):
+    for i in range(30):
         x, y = rnd.randrange(W2), rnd.randrange(0, 30)
-        if x < 160:
+        if x < 160 and (i + t // 2) % 4:
             px[x, y] = (220, 220, 240, 255)
     return img
 
 
 def main() -> None:
     CONTEST.mkdir(parents=True, exist_ok=True)
-    chamber(176, 40, glow=False).save(CONTEST / "chamber.png")
-    chamber(132, 116, glow=True).save(CONTEST / "embrace.png")
-    dawn().save(CONTEST / "dawn.png")
+    save_scene("chamber", [chamber(t, 176, 40, 0.0) for t in range(sum(ANIMS["chamber"]))])
+    save_scene("embrace", [embrace(t) for t in range(sum(ANIMS["embrace"]))])
+    save_scene("dawn", [dawn(t) for t in range(sum(ANIMS["dawn"]))])
     print("Wrote chamber, embrace and dawn.")
 
 

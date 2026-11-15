@@ -25,6 +25,7 @@ code reads them the same way). Each row is the LPC idle breath: frames
   telemachus/telemachus_32.png
   telemachus/telemachus_walk_32.png  (8 steps x 8 facings, same row order)
   penelope/penelope_sheet.png
+  penelope/penelope_walk_32.png      (walk cycle, for the cutscene pictures)
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
 
 Run from the repo root (needs Pillow):
@@ -235,7 +236,8 @@ def build_walk_sheet(layers: list[dict]) -> Image.Image:
     """8 columns (LPC walk steps 1-8) x 8 rows (S SW W NW N NE E SE)."""
     sheets = []
     for layer in layers:
-        rel = layer["path"].replace("/idle.png", "/walk.png")
+        # The walk sheet sits beside the idle one: .../idle.png or .../idle/<color>.png.
+        rel = layer["path"].replace("/idle.png", "/walk.png").replace("/idle/", "/walk/")
         dest = CACHE / "spritesheets" / rel
         if not dest.exists() or dest.stat().st_size == 0:
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -298,6 +300,10 @@ def main() -> None:
     # He walks in to the hut, so he also gets a walk cycle.
     walk_path = NPCS / "telemachus" / "telemachus_walk_32.png"
     build_walk_sheet(telemachus()).save(walk_path)
+    print(f"wrote {walk_path.relative_to(lpc.ROOT)}")
+    # Penelope walks in the cutscene pictures (build_hall_contest.py).
+    walk_path = NPCS / "penelope" / "penelope_walk_32.png"
+    build_walk_sheet(penelope()).save(walk_path)
     print(f"wrote {walk_path.relative_to(lpc.ROOT)}")
     for outfit in "abc":
         for n, (main_ramp, accent) in enumerate(COMBOS, start=1):
