@@ -104,7 +104,7 @@ export default function AthenaChat({ topic, place }) {
         <AthenaFace />
         <div>
           <h2>Athena</h2>
-          <p>Goddess of wisdom</p>
+          <p>Goddess of Wisdom</p>
         </div>
       </header>
 
