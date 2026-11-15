@@ -210,13 +210,263 @@
   border-color: #f0d48a;
 }
 .battle-stage {
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10vw;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 4vw 7vh;
+}
+.battle-stage::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 7%;
+  height: 22px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5), transparent 72%);
+  pointer-events: none;
 }
 .battle-side { width: min(280px, 34vw); }
 .battle-side.is-foe { text-align: right; }
+.battle-fighter {
+  position: relative;
+  width: 168px;
+  height: 176px;
+  margin: 0.8rem 0 0;
+}
+.battle-side:not(.is-foe) .battle-fighter { margin-left: auto; }
+.battle-side.is-foe .battle-fighter { margin-right: auto; margin-left: 0; }
+.battle-sprite {
+  width: 144px;
+  height: 144px;
+  margin: 12px auto 0;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: battle-bob 1.15s ease-in-out infinite;
+  filter: drop-shadow(0 14px 0 rgba(0, 0, 0, 0.28));
+}
+.battle-hero {
+  background-image: url('/assets/sprites/odysseus_idle.png');
+  background-size: calc(144px * 8) 144px;
+  background-position: calc(144px * -2) 0;
+}
+.battle-foe {
+  background-image: url('/assets/sprites/soldier_teal_trojan.png');
+  background-size: calc(144px * 8) 144px;
+  background-position: calc(144px * -6) 0;
+}
+.battle-flash,
+.battle-hurt {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 144px;
+  height: 144px;
+  pointer-events: none;
+  opacity: 0;
+}
+.battle-flash { background: #fff; }
+.battle-hurt { background: #e23b2f; }
+.battle-slash {
+  position: absolute;
+  left: 62%;
+  top: 34%;
+  width: 72px;
+  height: 12px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, transparent, #fff8dc 35%, #fff 70%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.battle-float {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  z-index: 2;
+  color: #fff6d0;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  text-shadow: 0 2px 0 #000;
+  animation: battle-float 1s ease-out forwards;
+  pointer-events: none;
+}
+.battle-float.is-miss { color: #d9d0c2; }
+.battle-float.is-hurt { color: #ffb4a8; }
+@keyframes battle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes battle-float {
+  from { transform: translate(-50%, 8px); opacity: 1; }
+  to { transform: translate(-50%, -32px); opacity: 0; }
+}
+@keyframes battle-shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-7px, 3px); }
+  40% { transform: translate(8px, -3px); }
+  60% { transform: translate(-5px, 2px); }
+  80% { transform: translate(4px, -1px); }
+}
+.battle-screen.is-shake { animation: battle-shake 0.38s linear; }
+.battle-screen.is-heavy.is-shake { animation-delay: 0.42s; }
+.battle-screen.is-counter::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(170, 24, 24, 0.28);
+  pointer-events: none;
+  animation: battle-red 0.55s ease-out;
+}
+@keyframes battle-red {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.is-jab .battle-sprite,
+.is-strike .battle-sprite,
+.is-heavy .battle-sprite,
+.is-whiff .battle-sprite,
+.is-counter .battle-sprite,
+.is-defeat .battle-sprite {
+  animation: none;
+}
+.is-jab .battle-hero,
+.is-strike .battle-hero,
+.is-heavy .battle-hero,
+.is-whiff .battle-hero {
+  background-image: url('/assets/sprites/odysseus_walk.png');
+  background-size: calc(144px * 64) 144px;
+  background-position: calc(144px * -18) 0;
+}
+.is-jab .battle-side:not(.is-foe) .battle-fighter { animation: hero-jab 0.5s ease-out; }
+.is-strike .battle-side:not(.is-foe) .battle-fighter { animation: hero-strike 0.68s ease-in-out; }
+.is-heavy .battle-side:not(.is-foe) .battle-fighter { animation: hero-heavy 0.98s ease-in-out; }
+.is-whiff .battle-side:not(.is-foe) .battle-fighter { animation: hero-whiff 0.54s ease-in-out; }
+.is-jab .is-foe .battle-fighter,
+.is-strike .is-foe .battle-fighter { animation: foe-hit 0.55s ease-out; }
+.is-heavy .is-foe .battle-fighter { animation: foe-heavy 0.98s ease-out; }
+.is-counter .is-foe .battle-fighter { animation: foe-counter 0.64s ease-in-out; }
+.is-counter .battle-side:not(.is-foe) .battle-fighter { animation: hero-recoil 0.64s ease-out; }
+.is-defeat .is-foe .battle-fighter { animation: foe-defeat 1.05s ease-in forwards; }
+.is-jab .battle-flash,
+.is-strike .battle-flash { animation: hit-flash 0.5s linear; }
+.is-heavy .battle-flash { animation: hit-flash-late 0.98s linear; }
+.is-counter .battle-hurt { animation: hit-flash 0.55s linear; }
+.is-jab .battle-slash,
+.is-strike .battle-slash { animation: slash-pop 0.55s ease-out; }
+.is-heavy .battle-slash {
+  width: 120px;
+  height: 18px;
+  animation: slash-heavy 0.98s ease-out;
+}
+.is-whiff .battle-slash { animation: slash-whiff 0.54s ease-out; }
+@keyframes hero-jab {
+  0% { transform: translateX(0); }
+  34% { transform: translateX(78px); }
+  58% { transform: translateX(78px); }
+  100% { transform: translateX(0); }
+}
+@keyframes hero-strike {
+  0% { transform: translateX(0); }
+  16% { transform: translateX(-16px); }
+  42% { transform: translateX(96px); }
+  62% { transform: translateX(84px); }
+  100% { transform: translateX(0); }
+}
+@keyframes hero-heavy {
+  0% { transform: translateX(0) scale(1); }
+  30% { transform: translateX(-28px) scale(1.08, 0.92); }
+  48% { transform: translateX(-12px) scale(1); }
+  64% { transform: translateX(118px) scale(1.1, 0.9); }
+  80% { transform: translateX(90px); }
+  100% { transform: translateX(0); }
+}
+@keyframes hero-whiff {
+  0% { transform: translateX(0) rotate(0); }
+  42% { transform: translateX(54px) rotate(-16deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+@keyframes hero-recoil {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(-22px); }
+}
+@keyframes foe-hit {
+  0%, 30% { transform: translateX(0) rotate(0); }
+  46% { transform: translateX(22px) rotate(8deg); }
+  70% { transform: translateX(14px) rotate(-3deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+@keyframes foe-heavy {
+  0%, 54% { transform: translateX(0) rotate(0); }
+  68% { transform: translateX(34px) rotate(12deg); }
+  84% { transform: translateX(18px) rotate(4deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+@keyframes foe-counter {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(-96px); }
+  100% { transform: translateX(0); }
+}
+@keyframes foe-defeat {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  40% { transform: translate(20px, 8px) rotate(74deg); opacity: 1; }
+  100% { transform: translate(34px, 22px) rotate(92deg); opacity: 0; }
+}
+@keyframes hit-flash {
+  0%, 28% { opacity: 0; }
+  40% { opacity: 0.88; }
+  62%, 100% { opacity: 0; }
+}
+@keyframes hit-flash-late {
+  0%, 54% { opacity: 0; }
+  64% { opacity: 0.92; }
+  82%, 100% { opacity: 0; }
+}
+@keyframes slash-pop {
+  0%, 22% { opacity: 0; transform: translateX(40px) rotate(-36deg) scaleX(0.3); }
+  42% { opacity: 1; transform: translateX(92px) rotate(-18deg) scaleX(1); }
+  100% { opacity: 0; transform: translateX(120px) rotate(-8deg) scaleX(1.2); }
+}
+@keyframes slash-heavy {
+  0%, 50% { opacity: 0; transform: translateX(20px) rotate(-42deg) scaleX(0.2); }
+  66% { opacity: 1; transform: translateX(100px) rotate(-14deg) scaleX(1.35); }
+  100% { opacity: 0; transform: translateX(140px) rotate(-6deg) scaleX(1.5); }
+}
+@keyframes slash-whiff {
+  0%, 18% { opacity: 0; transform: translate(24px, -28px) rotate(-72deg) scaleX(0.3); }
+  46% { opacity: 0.85; transform: translate(60px, -46px) rotate(-58deg) scaleX(1); }
+  100% { opacity: 0; transform: translate(80px, -58px) rotate(-48deg); }
+}
+.level-complete {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  animation: level-card-in 0.4s ease-out;
+}
+@keyframes level-card-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.level-complete-card {
+  width: min(440px, 88vw);
+  padding: 2rem 2.2rem 1.8rem;
+  text-align: center;
+  color: var(--ink);
+}
+.level-complete-card h2 {
+  font-size: 2.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.level-complete-card p:last-child {
+  margin-top: 0.8rem;
+  color: var(--ink-soft);
+}
 .battle-name {
   margin: 0;
   font-family: var(--font-display);
@@ -247,7 +497,26 @@
 .battle-commands {
   display: flex;
   flex-direction: column;
-  width: min(240px, 70vw);
+  width: min(380px, 78vw);
+}
+.battle-command {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+.battle-command small {
+  color: #b7c0cc;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
+.battle-ask {
+  margin: 0 0 0.35rem;
+  color: #f0d48a;
+  font-family: var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
 }
 .battle-command,
 .battle-continue,

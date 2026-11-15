@@ -24,17 +24,15 @@ import {
   solidRects,
 } from './map.js';
 import {
-  createQuestions,
   createScatter,
   FOE_HIT,
   FOE_MAX,
-  FULL_HIT,
   HERO_MAX,
   RUN_SPEED,
   WALK_FIGHT_SECONDS,
   WALK_SPEED,
-  WEAK_HIT,
 } from './patrol.js';
+import { attackById, createBattleQuestions } from './battleQuestions.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 import { routeReport } from './routeCheck.js';
 import { buildWorldTextures } from './textures.js';
@@ -44,6 +42,16 @@ import { buildWorldTextures } from './textures.js';
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
 const HERO_SCALE = 4 / 3;
+
+// How long each battle picture plays before the turn strip moves on.
+const BLOW_MS = {
+  jab: 520,
+  strike: 700,
+  heavy: 1000,
+  whiff: 560,
+  counter: 680,
+  defeat: 1500,
+};
 
 export class TroyScene extends Phaser.Scene {
   constructor() {
@@ -174,7 +182,9 @@ export class TroyScene extends Phaser.Scene {
     this.physics.add.collider(this.feet, this.blockers);
 
     addBeachArmy(this);
-    this.questions = createQuestions();
+    addGateSentries(this);
+    this.gateFalling = false;
+    this.questions = createBattleQuestions();
     this.walkFight = 0;
     this.scatter = createScatter(this, {
       ground,
@@ -221,24 +231,35 @@ export class TroyScene extends Phaser.Scene {
     this.prompt = makePrompt(this);
 
     const lockInput = () => { this.inputLocked = true; };
-    const unlockInput = () => { this.inputLocked = false; };
+    const unlockInput = () => {
+      if (this.gateFalling) return;
+      this.inputLocked = false;
+    };
     const onStrike = (payload) => this.resolveStrike(payload);
     const onEnemyAct = () => this.enemyAct();
-    const onAttack = () => {
+    const onAttack = (payload) => {
       if (!this.fight) return;
-      const question = this.questions.next();
+      const attack = attackById(payload && payload.kind);
+      this.fight.attack = attack;
+      const question = this.questions.next(attack.difficulty);
       this.fight.question = question;
       this.game.events.emit('fightQuestion', {
         id: question.id,
         prompt: question.prompt,
         choices: question.choices,
+        attack: attack.label,
       });
+    };
+    const onFlee = () => {
+      if (!this.fighting || !this.fight || this.fight.question) return;
+      this.endFight(false, 'You slip past the sentry.');
     };
     this.game.events.on('lockInput', lockInput);
     this.game.events.on('unlockInput', unlockInput);
     this.game.events.on('fightStrike', onStrike);
     this.game.events.on('fightAttack', onAttack);
     this.game.events.on('fightEnemyAct', onEnemyAct);
+    this.game.events.on('fightFlee', onFlee);
 
     publishDebug(this);
 
@@ -248,6 +269,7 @@ export class TroyScene extends Phaser.Scene {
       this.game.events.off('fightStrike', onStrike);
       this.game.events.off('fightAttack', onAttack);
       this.game.events.off('fightEnemyAct', onEnemyAct);
+      this.game.events.off('fightFlee', onFlee);
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -270,18 +292,14 @@ export class TroyScene extends Phaser.Scene {
       if (this.questDone) return;
       this.questDone = true;
       this.inputLocked = true;
+      this.gateFalling = true;
       this.feet.setVelocity(0, 0);
       this.game.registry.set('gateOpen', true);
       this.game.events.emit('questDone');
-      const cam = this.cameras.main;
-      const cover = this.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
-        .setOrigin(0, 0)
-        .setScrollFactor(0)
-        .setDepth(30000)
-        .setAlpha(0);
-      cover.setDisplaySize(cam.width, cam.height);
-      this.tweens.add({ targets: cover, alpha: 1, duration: 900 });
-      cam.fadeOut(900, 0, 0, 0);
+      if (this.prompt) this.prompt.setVisible(false);
+      playGateFall(this, () => {
+        this.game.events.emit('levelComplete');
+      });
       return;
     }
     this.game.events.emit('interact', {
@@ -371,8 +389,9 @@ export class TroyScene extends Phaser.Scene {
     // JustDown is true only on the frame E goes down, so holding E does not repeat.
     // If a box is already open, the same key asks React to close it.
     if (!this.fighting && Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
-      if (locked) this.game.events.emit('closeInteract');
-      else if (this.nearest) this.interact(this.nearest);
+      if (locked) {
+        if (!this.gateFalling) this.game.events.emit('closeInteract');
+      } else if (this.nearest) this.interact(this.nearest);
     }
 
     const dt = delta / 1000;
@@ -384,6 +403,7 @@ export class TroyScene extends Phaser.Scene {
     this.scatter.update(dt);
     this.maybeHintRun(moving);
     if (!this.fighting && !locked && moving) this.maybeRandomFight(dt);
+    this.poseGateSentries(time);
     aimArrow(this);
   }
 
@@ -392,6 +412,18 @@ export class TroyScene extends Phaser.Scene {
     this.runHintShown = true;
     this.game.registry.set('runHintShown', true);
     this.game.events.emit('runHint');
+  }
+
+  poseGateSentries(time) {
+    if (this.gateFalling || !this.gateSentries) return;
+    for (const man of this.gateSentries) {
+      const wave = Math.sin(time / 260 + man.phase);
+      const squat = (Math.sin(time / 210 + man.phase) + 1) / 2;
+      man.sprite.setPosition(Math.round(man.x + wave * 1.6), Math.round(man.y + squat * 2));
+      man.sprite.setAngle(wave * 3.2);
+      man.sprite.setScale(1 + squat * 0.05, 1 - squat * 0.07);
+      man.shadow.setPosition(man.sprite.x + 3, man.y + 2);
+    }
   }
 
   maybeRandomFight(dt) {
@@ -417,48 +449,85 @@ export class TroyScene extends Phaser.Scene {
     });
   }
 
-  // His turn only. A right answer is a full hit. A wrong one still lands, at 75 percent.
-  // The sentry's turn is a separate step after that.
+  // His turn only. A right answer deals that attack's damage. A wrong answer
+  // misses, and the sentry still takes the next turn.
   resolveStrike(payload) {
     const fight = this.fight;
     if (!fight || !this.fighting) return;
     const question = fight.question;
     if (!question) return;
+    const attack = fight.attack || attackById('light');
     const correct = payload.index === question.answer;
-    const dealt = correct ? FULL_HIT : WEAK_HIT;
-    fight.foeHp = Math.max(0, fight.foeHp - dealt);
+    const damage = correct ? attack.damage : 0;
+    fight.foeHp = Math.max(0, fight.foeHp - damage);
     fight.question = null;
-    if (fight.foeHp <= 0) {
-      this.heroHpStay();
-      this.endFight(true, correct ? 'The sentry falls.' : 'A weak blow, but it was enough.');
-      return;
-    }
-    this.game.events.emit('fightTurn', {
-      side: 'enemy',
+    const defeated = fight.foeHp <= 0;
+    const note = correct ? `${attack.label} lands for ${damage}.` : 'The blow misses.';
+    const anim = correct ? attack.anim : 'whiff';
+    this.game.events.emit('fightBlow', {
+      anim,
+      damage,
+      hit: correct,
       heroHp: this.heroHp,
       foeHp: fight.foeHp,
-      note: correct
-        ? `A clean hit for ${FULL_HIT}.`
-        : `A glancing blow for ${WEAK_HIT}.`,
+      note,
+      defeated,
+    });
+    const wait = BLOW_MS[anim] || 700;
+    this.time.delayedCall(wait, () => {
+      if (!this.fighting) return;
+      if (defeated) {
+        this.game.events.emit('fightBlow', {
+          anim: 'defeat',
+          damage: 0,
+          hit: true,
+          heroHp: this.heroHp,
+          foeHp: 0,
+          note: 'The sentry falls.',
+          defeated: true,
+        });
+        this.time.delayedCall(BLOW_MS.defeat, () => {
+          if (this.fighting) this.endFight(true, 'The sentry falls.');
+        });
+        return;
+      }
+      this.game.events.emit('fightTurn', {
+        side: 'enemy',
+        heroHp: this.heroHp,
+        foeHp: fight.foeHp,
+        note,
+      });
     });
   }
 
   enemyAct() {
     const fight = this.fight;
     if (!fight || !this.fighting) return;
-    this.heroHp = Math.max(0, this.heroHp - FOE_HIT);
+    const nextHp = Math.max(0, this.heroHp - FOE_HIT);
+    const down = nextHp <= 0;
+    this.heroHp = down ? HERO_MAX : nextHp;
     this.heroHpStay();
-    if (this.heroHp <= 0) {
-      this.heroHp = HERO_MAX;
-      this.heroHpStay();
-      this.endFight(false, 'You fall back. The sentry recovers.');
-      return;
-    }
-    this.game.events.emit('fightTurn', {
-      side: 'hero',
-      heroHp: this.heroHp,
+    this.game.events.emit('fightBlow', {
+      anim: 'counter',
+      damage: FOE_HIT,
+      hit: true,
+      heroHp: down ? 0 : this.heroHp,
       foeHp: fight.foeHp,
       note: `The sentry strikes for ${FOE_HIT}.`,
+      defeated: false,
+    });
+    this.time.delayedCall(BLOW_MS.counter, () => {
+      if (!this.fighting) return;
+      if (down) {
+        this.endFight(false, 'You fall back. The sentry recovers.');
+        return;
+      }
+      this.game.events.emit('fightTurn', {
+        side: 'hero',
+        heroHp: this.heroHp,
+        foeHp: fight.foeHp,
+        note: `The sentry strikes for ${FOE_HIT}.`,
+      });
     });
   }
 
@@ -621,7 +690,10 @@ function publishDebug(scene) {
       feet.body.reset(x, y);
     },
     sentries() {
-      return 0;
+      return scene.gateSentries ? scene.gateSentries.length : 0;
+    },
+    startFight() {
+      scene.beginFight();
     },
     greeks() {
       return scene.scatter.count();
@@ -686,6 +758,7 @@ function addBeachArmy(scene) {
   const tex = scene.textures.get(key);
   if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   const frame = WARRIOR_CONFIG.facingFrames.n;
+  const army = [];
   // Two ranks pressed against the doors, centered on the gate.
   for (let row = 0; row < 2; row += 1) {
     for (let col = 0; col < 7; col += 1) {
@@ -699,7 +772,169 @@ function addBeachArmy(scene) {
       // The picture is the solid. He slides along the rank instead of
       // walking through a soldier.
       addPersonBlock(scene, scene.blockers, x, y);
+      army.push({ sprite, shadow, x, y, row, col });
     }
+  }
+  scene.beachArmy = army;
+}
+
+// Four teal sentries braced on the city side of the shut doors.
+function addGateSentries(scene) {
+  const key = WARRIOR_CONFIG.teams.trojan.key;
+  const tex = scene.textures.get(key);
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  const frame = WARRIOR_CONFIG.facingFrames.s;
+  const spots = [
+    { x: 438, y: 642 },
+    { x: 466, y: 648 },
+    { x: 494, y: 648 },
+    { x: 522, y: 642 },
+  ];
+  scene.gateSentries = spots.map((spot, index) => {
+    const shadow = scene.add.ellipse(spot.x + 3, spot.y + 1, 14, 5, 0x0c1424, 0.55);
+    const sprite = scene.add.sprite(spot.x, spot.y, key, frame).setOrigin(0.5, 1);
+    // In front of the wooden doors (depth 7652) so the brace reads.
+    const depth = 7692 + index;
+    shadow.setDepth(depth - 2);
+    sprite.setDepth(depth);
+    return { ...spot, sprite, shadow, phase: index * 0.8 };
+  });
+}
+
+// Doors crash outward, the brace is thrown clear, the Greeks surge through,
+// then the screen fades to the Level 1 card. About four seconds. Input
+// stays locked by the caller.
+function playGateFall(scene, onDone) {
+  const cam = scene.cameras.main;
+  cam.stopFollow();
+  cam.pan(480, 636, 320, 'Sine.easeOut');
+  cam.shake(260, 0.008);
+
+  const door = scene.gateDoor;
+  const src = door && door.sprite;
+  const x = src ? src.x : 480;
+  const y = src ? src.y : 652;
+  if (src) src.setVisible(false);
+  if (door && door.blocker) door.blocker.destroy();
+
+  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
+  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
+  left.setCrop(0, 0, 64, 72);
+  right.setCrop(64, 0, 64, 72);
+
+  scene.tweens.add({
+    targets: left,
+    x: x - 74,
+    y: y + 26,
+    angle: -84,
+    duration: 700,
+    ease: 'Cubic.easeIn',
+  });
+  scene.tweens.add({
+    targets: right,
+    x: x + 74,
+    y: y + 26,
+    angle: 84,
+    duration: 700,
+    ease: 'Cubic.easeIn',
+    onComplete: () => {
+      cam.shake(240, 0.014);
+      burstDust(scene, x, y + 6);
+    },
+  });
+
+  const flash = scene.add.rectangle(0, 0, cam.width, cam.height, 0xfff6e0, 1)
+    .setOrigin(0, 0)
+    .setScrollFactor(0)
+    .setDepth(20000)
+    .setAlpha(0);
+  scene.tweens.add({
+    targets: flash,
+    delay: 660,
+    alpha: 0.42,
+    duration: 50,
+    yoyo: true,
+    hold: 30,
+    onComplete: () => flash.destroy(),
+  });
+
+  (scene.gateSentries || []).forEach((man, index) => {
+    const dir = man.x < x ? -1 : 1;
+    const fallX = man.x + dir * 22;
+    const fallY = man.y - 46;
+    scene.tweens.add({
+      targets: man.sprite,
+      delay: 180 + index * 40,
+      duration: 380,
+      x: fallX,
+      y: fallY,
+      angle: dir * 96,
+      ease: 'Quad.easeIn',
+    });
+    scene.tweens.add({
+      targets: man.sprite,
+      delay: 560 + index * 40,
+      duration: 480,
+      alpha: 0,
+      y: fallY - 10,
+      onComplete: () => man.sprite.destroy(),
+    });
+    scene.tweens.add({
+      targets: man.shadow,
+      delay: 180 + index * 40,
+      duration: 860,
+      x: fallX,
+      y: fallY + 8,
+      alpha: 0,
+      onComplete: () => man.shadow.destroy(),
+    });
+  });
+
+  (scene.beachArmy || []).forEach((man) => {
+    scene.tweens.add({
+      targets: [man.sprite, man.shadow],
+      delay: 780 + man.row * 180 + man.col * 28,
+      duration: 1200,
+      y: '-=172',
+      ease: 'Cubic.easeOut',
+    });
+  });
+
+  scene.time.delayedCall(2900, () => {
+    const cover = scene.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(30000)
+      .setAlpha(0);
+    cover.setDisplaySize(cam.width, cam.height);
+    scene.tweens.add({ targets: cover, alpha: 1, duration: 900 });
+    cam.fadeOut(900, 0, 0, 0);
+  });
+  scene.time.delayedCall(3600, () => {
+    if (onDone) onDone();
+  });
+}
+
+function burstDust(scene, x, y) {
+  const specks = 12;
+  for (let i = 0; i < specks; i += 1) {
+    const puff = scene.add.circle(
+      x + (Math.random() - 0.5) * 90,
+      y + (Math.random() - 0.5) * 14,
+      1.6 + Math.random() * 1.6,
+      i % 3 === 0 ? 0x8a7358 : 0xe6d3b0,
+      0.85,
+    );
+    puff.setDepth(8000);
+    scene.tweens.add({
+      targets: puff,
+      x: puff.x + (Math.random() - 0.5) * 40,
+      y: puff.y - 6 - Math.random() * 16,
+      alpha: 0,
+      scale: 1.6,
+      duration: 420 + Math.random() * 280,
+      onComplete: () => puff.destroy(),
+    });
   }
 }
 
@@ -718,6 +953,7 @@ function addSolidProp(scene, group, prop) {
   const shadow = scene.add.ellipse(prop.x + 5, prop.baseY + 2, wide, tall, 0x1a2438, 0.5);
   // Above the moonlight grade, under the people, so the shadow stays visible.
   shadow.setDepth(5200);
+  let sprite = null;
   if (prop.id === 'horse') {
     // Wheels in the south frame end at pixel 122 of 128. Other facings stay loaded.
     const horse = scene.add.sprite(prop.x, prop.baseY, 'horse', 0);
@@ -725,13 +961,14 @@ function addSolidProp(scene, group, prop) {
     horse.setDepth(7000 + prop.baseY);
   } else {
     // Same band as the horse and the people, so a roof covers whoever is behind it.
-    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
+    sprite = scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
   }
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');
   blocker.setDisplaySize(prop.bodyW, prop.bodyH);
   blocker.refreshBody();
   blocker.setVisible(false);
+  if (prop.id === 'gate-door') scene.gateDoor = { sprite, blocker };
 }
 
 function addLamp(scene, group, lamp) {
