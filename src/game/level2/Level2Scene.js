@@ -193,10 +193,12 @@ export class Level2Scene extends Phaser.Scene {
     this.physics.add.collider(this.feet, this.blockers);
 
     // His picture. A pale rim keeps him readable against dark ground.
+    // The rim is only wider, not taller: a taller copy stood up above his
+    // bald head as a pale second head.
     const idle = ANIM_CONFIG.facingFrames.n;
     this.heroShadow = this.add.ellipse(SPAWN.x, SPAWN.y, 24, 7, 0x0c1424, 0.55);
     this.heroRim = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, idle)
-      .setOrigin(0.5, 1).setTint(0xd0e6ff).setScale(HERO_SCALE * 1.07);
+      .setOrigin(0.5, 1).setTint(0xd0e6ff).setScale(HERO_SCALE * 1.07, HERO_SCALE);
     this.hero = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, idle)
       .setOrigin(0.5, 1).setScale(HERO_SCALE);
 
