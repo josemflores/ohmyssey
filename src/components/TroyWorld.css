@@ -216,8 +216,8 @@
   font-size: 0.82rem;
   color: #e4d3b0;
 }
-/* Finishing an objective: a gold line is drawn through the title, then the
-   whole box fades away. The next objective then pops in with a glow and a
+/* Finishing an objective: a gold line is drawn through the title, it stays
+   crossed out for a second, then the whole box fades away. The next objective then pops in with a glow and a
    "New objective" label (TroyWorld.jsx onObjective). */
 .troy-tracker strong { position: relative; }
 .troy-tracker.is-done strong::after {
@@ -234,7 +234,7 @@
 .troy-tracker.is-done strong,
 .troy-tracker.is-done em { color: #b8a888; transition: color 0.7s; }
 .troy-tracker.is-done {
-  animation: objective-fade 0.9s ease-in 0.7s forwards;
+  animation: objective-fade 0.9s ease-in 1.7s forwards;
 }
 .troy-tracker.is-new {
   animation:

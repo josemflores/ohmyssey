@@ -84,7 +84,8 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       pendingObjective.current = next;
       setFreshObjective(false);
       setRetiring(current);
-      // 0.7 s to draw the line through it, 0.9 s to fade away (TroyWorld.css).
+      // 0.7 s to draw the line through it, 1 s crossed out, 0.9 s to fade
+      // away (TroyWorld.css). Keep these numbers in step with the CSS.
       objectiveTimers.current.push(setTimeout(() => {
         const shown = pendingObjective.current;
         pendingObjective.current = null;
@@ -93,7 +94,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
         setObjective(shown);
         setFreshObjective(true);
         objectiveTimers.current.push(setTimeout(() => setFreshObjective(false), 3600));
-      }, 1600));
+      }, 2600));
     }
 
     // The scene found a spot and the player pressed E.
