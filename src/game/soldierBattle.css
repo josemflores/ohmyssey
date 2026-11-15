@@ -1,0 +1,89 @@
+/* Battle screen: the new LPC Trojan, and a red hurt flash on the sprite only.
+   Sheets come from art/scripts/build_soldiers_lpc.py. Every strip is 32px
+   frames in the facing order s, se, e, ne, n, nw, w, sw. In battle the Trojan
+   faces Odysseus, so he uses the west facing (number 6). */
+
+/* Idle: two breathing frames per facing. West is frames 12 and 13. */
+.battle-screen .battle-sprite.battle-trojan {
+  background-image: url('/assets/sprites/npcs/trojan_lpc/trojan_idle_animation.png');
+  background-size: calc(var(--foe) * 16) var(--foe);
+  background-position: calc(var(--foe) * -12) 0;
+}
+.battle-screen .battle-member:not(.is-down) .battle-sprite.battle-trojan {
+  animation: trojan-idle 0.5s steps(1) infinite alternate;
+}
+@keyframes trojan-idle {
+  from { background-position-x: calc(var(--foe) * -12); }
+  to { background-position-x: calc(var(--foe) * -13); }
+}
+
+/* Attack: when the Trojan hits back (is-counter), the target thrusts his
+   spear. Six frames per facing, so west starts at frame 36. The wrapper's
+   foe-counter lunge still carries him toward Odysseus. */
+.battle-screen.is-counter .battle-member.is-target .battle-sprite.battle-trojan {
+  background-image: url('/assets/sprites/npcs/trojan_lpc/trojan_attack.png');
+  background-size: calc(var(--foe) * 48) var(--foe);
+  background-position: calc(var(--foe) * -36) 0;
+  animation:
+    trojan-attack 0.64s steps(5) forwards,
+    foe-counter 0.64s ease-in-out;
+}
+@keyframes trojan-attack {
+  from { background-position-x: calc(var(--foe) * -36); }
+  to { background-position-x: calc(var(--foe) * -41); }
+}
+
+/* Hurt: when Odysseus lands a blow, the Trojan flinches (frames 0-2 of the
+   hit strip), turns red, and is knocked back by the existing foe-hit move. */
+.battle-screen:is(.is-jab, .is-strike) .battle-member.is-target:not(.is-down) .battle-sprite.battle-trojan,
+.battle-screen.is-heavy .battle-member:is(.is-target, .is-splash):not(.is-down) .battle-sprite.battle-trojan {
+  background-image: url('/assets/sprites/npcs/trojan_lpc/trojan_hit.png');
+  background-size: calc(var(--foe) * 24) var(--foe);
+  background-position: 0 0;
+  animation:
+    trojan-hit 0.55s steps(2) forwards,
+    foe-hit 0.55s ease-out,
+    sprite-hurt 0.55s linear;
+}
+.battle-screen.is-heavy .battle-member:is(.is-target, .is-splash):not(.is-down) .battle-sprite.battle-trojan {
+  animation:
+    trojan-hit 0.98s steps(2) forwards,
+    foe-heavy 0.98s ease-out,
+    sprite-hurt-late 0.98s linear;
+}
+@keyframes trojan-hit {
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--foe) * -2); }
+}
+
+/* Odysseus turns red when a Trojan hits him. The old red square
+   (.battle-hurt) is hidden, so only his own pixels change color. */
+.battle-screen .battle-hurt { display: none; }
+.battle-screen.is-counter .battle-sprite.battle-hero {
+  animation:
+    odysseus-hit 0.64s steps(2) forwards,
+    sprite-hurt 0.64s linear;
+}
+
+/* How the red works: a CSS filter recolors only the drawn pixels of a
+   sprite, never its transparent box. brightness(0.5) darkens it, sepia
+   turns it brownish, saturate pushes that to a strong color, and
+   hue-rotate swings brown over to red. The drop-shadow at the end is the
+   same ground shadow every battle sprite already has. Every keyframe lists
+   the same filters (calm values when not red) so the browser can fade
+   smoothly between them instead of snapping. */
+@keyframes sprite-hurt {
+  0%, 28% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+  40% { filter: brightness(0.55) sepia(1) saturate(9) hue-rotate(-28deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+  62%, 100% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+}
+/* Same flash, timed for the slower heavy blow. */
+@keyframes sprite-hurt-late {
+  0%, 54% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+  64% { filter: brightness(0.55) sepia(1) saturate(9) hue-rotate(-28deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+  82%, 100% { filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg) drop-shadow(0 18px 0 rgba(0, 0, 0, 0.45)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-screen .battle-member:not(.is-down) .battle-sprite.battle-trojan { animation: none; }
+}

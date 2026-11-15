@@ -9,6 +9,7 @@
 
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
+import { loadSoldierActions, createSoldierActions, playSoldierIdle, soldierAnim } from './soldierAnimations.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -75,6 +76,8 @@ export class TroyScene extends Phaser.Scene {
 
   preload() {
     loadHeroActions(this);
+    // Idle, attack, and hit sheets for the LPC Greeks and Trojans.
+    loadSoldierActions(this);
     // Coming back from the horse, these pictures are already loaded.
     // Loading them again wipes the texture other scenes are still using.
     if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
@@ -109,15 +112,16 @@ export class TroyScene extends Phaser.Scene {
       });
     }
 
-    // New walk sheets. Four frames across, eight facing rows.
+    // LPC walk sheets (art/scripts/build_soldiers_lpc.py). Four frames
+    // across, eight facing rows, same layout as the older hoplite sheets.
     if (!this.textures.exists('trojan-soldier')) {
-      this.load.spritesheet('trojan-soldier', '/assets/sprites/npcs/trojan_soldier/trojan_soldier_32.png', {
+      this.load.spritesheet('trojan-soldier', '/assets/sprites/npcs/trojan_lpc/trojan_walk_32.png', {
         frameWidth: 32,
         frameHeight: 32,
       });
     }
     if (!this.textures.exists('greek-hoplite')) {
-      this.load.spritesheet('greek-hoplite', '/assets/sprites/npcs/greek_hoplite/greek_hoplite_32.png', {
+      this.load.spritesheet('greek-hoplite', '/assets/sprites/npcs/greek_lpc/greek_walk_32.png', {
         frameWidth: 32,
         frameHeight: 32,
       });
@@ -126,6 +130,7 @@ export class TroyScene extends Phaser.Scene {
 
   create() {
     createHeroActions(this);
+    createSoldierActions(this);
     const report = routeReport();
     if (!report.ok) {
       console.warn(`Troy layout problem:\n${report.problems.join('\n')}`);
@@ -473,10 +478,18 @@ export class TroyScene extends Phaser.Scene {
       const dy = ty - man.sprite.y;
       const dist = Math.hypot(dx, dy);
       if (dist < 4) {
-        man.sprite.setFrame(passed ? HOPLITE_FRAME.n : HOPLITE_FRAME.s);
+        // Standing still: breathe in place, facing the way he is looking.
+        const idle = soldierAnim('greek', 'idle', passed ? 'n' : 's');
+        if (man.sprite.anims.currentAnim?.key !== idle || !man.sprite.anims.isPlaying) {
+          if (this.anims.exists(idle)) man.sprite.play(idle);
+          else man.sprite.setFrame(passed ? HOPLITE_FRAME.n : HOPLITE_FRAME.s);
+        }
         man.shadow.setPosition(man.sprite.x + 3, man.sprite.y + 1);
         continue;
       }
+      // Walking again: stop breathing and go back to the walk sheet.
+      if (man.sprite.anims.isPlaying) man.sprite.anims.stop();
+      if (man.sprite.texture.key !== man.key) man.sprite.setTexture(man.key);
       const step = Math.min(speed * dt, dist);
       man.sprite.x += (dx / dist) * step;
       man.sprite.y += (dy / dist) * step;
@@ -857,6 +870,8 @@ export class TroyScene extends Phaser.Scene {
         const y = spot.y;
         const shadow = this.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.55);
         const sprite = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1);
+        // The Trojans wait facing south, breathing in place.
+        playSoldierIdle(sprite, 'trojan', 's');
         const depth = 7600 + y;
         shadow.setDepth(depth - 2);
         sprite.setDepth(depth);
@@ -1227,6 +1242,7 @@ function surgeArmy(scene) {
     const man = {
       sprite,
       shadow,
+      key,
       homeX: spot.x,
       homeY: spot.y,
       ox: spot.x - 480,

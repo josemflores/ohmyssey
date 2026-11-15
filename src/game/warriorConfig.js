@@ -2,9 +2,11 @@
 //
 // Frame order matches Odysseus: south, south-east, east, north-east,
 // north, north-west, west, south-west. One frame each, left to right.
-// Odysseus wears a red crest, so the Greek army is the red sheet and the
-// Trojan army is the teal sheet. These sheets are idle only. The scene bobs
-// a frame while a warrior moves.
+// Both sheets are Universal LPC soldiers built by art/scripts/build_soldiers_lpc.py.
+// Greeks wear bronze armor like Odysseus' with a dull maroon crest, so his
+// dark iron and bright scarlet crest still stand out. Trojans are all teal.
+// These sheets are idle only. The scene bobs a frame while a warrior moves.
+// The breathing, spear-thrust, and hit animations are in soldierAnimations.js.
 //
 // Leave a team's path null to fall back to the drawn stand-in in warriorArt.js.
 // A walk sheet, if one arrives later, adds rows AFTER the idle eight.
@@ -27,8 +29,8 @@ export const WARRIOR_CONFIG = {
   // null = idle frames only. { framesPerFacing, frameRate } turns on the walk.
   walk: null,
   teams: {
-    greek: { key: 'soldier-red-greek', path: '/assets/sprites/soldier_red_greek.png' },
-    trojan: { key: 'soldier-teal-trojan', path: '/assets/sprites/soldier_teal_trojan.png' },
+    greek: { key: 'soldier-red-greek', path: '/assets/sprites/npcs/greek_lpc/greek_idle.png' },
+    trojan: { key: 'soldier-teal-trojan', path: '/assets/sprites/npcs/trojan_lpc/trojan_idle.png' },
   },
 };
 
