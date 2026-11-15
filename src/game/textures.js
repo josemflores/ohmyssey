@@ -76,6 +76,23 @@ function paintPave(ctx, x, y, alt) {
   }
 }
 
+function paintGateDoor() {
+  const { canvas, ctx } = makeCanvas(128, 72);
+  fill(ctx, 0, 0, 8, 72, '#c9bfae');
+  fill(ctx, 120, 0, 8, 72, '#c9bfae');
+  fill(ctx, 8, 0, 52, 68, '#8a6244');
+  fill(ctx, 68, 0, 52, 68, '#7a563c');
+  for (let i = 0; i < 6; i += 1) {
+    fill(ctx, 12, 6 + i * 11, 44, 2, '#5c4030');
+    fill(ctx, 72, 6 + i * 11, 44, 2, '#5c4030');
+  }
+  fill(ctx, 58, 0, 12, 68, '#3a2418');
+  fill(ctx, 30, 30, 8, 8, '#e7d3b0');
+  fill(ctx, 90, 30, 8, 8, '#e7d3b0');
+  fill(ctx, 8, 64, 112, 8, '#6a5344');
+  return canvas;
+}
+
 function paintWall(ctx, x, y) {
   fill(ctx, x, y, 16, 16, '#c9bfae');
   fill(ctx, x + 1, y + 1, 6, 6, '#f0e8d8');
@@ -316,6 +333,7 @@ const PROP_ART = {
   brazier: paintBrazier,
   cypress: paintCypress,
   tower: paintTower,
+  'gate-door': paintGateDoor,
 };
 
 function addCanvas(scene, key, canvas) {
@@ -337,7 +355,7 @@ export function buildWorldTextures(scene) {
   // 2×2 placeholder. Static boxes stretch this to the size they need.
   addCanvas(scene, 'blank', makeCanvas(2, 2).canvas);
   addCanvas(scene, 'feet', makeCanvas(FEET.w, FEET.h).canvas);
-  addCanvas(scene, 'feet-small', makeCanvas(8, 6).canvas);
+  addCanvas(scene, 'feet-small', makeCanvas(12, 8).canvas);
   addCanvas(scene, 'vignette', paintVignette());
   addCanvas(scene, 'lamp-glow', paintLampGlow());
   addSheet(scene, 'oil-lamp', paintOilLamp(), 16, 28);

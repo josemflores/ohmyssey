@@ -8,11 +8,11 @@
 // The picture is taller than the box, so he can stand "behind" columns and roofs.
 
 import Phaser from 'phaser';
-import { ENCOUNTER_RESULT_EVENT, requestEncounter } from '../learn/encounters/bus.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
   FEET,
+  GATE_MARK,
   INTERACT_RADIUS,
   INTERACTABLES,
   LAMPS,
@@ -20,20 +20,20 @@ import {
   MAP_W,
   PROPS,
   SPAWN,
-  TILE,
   buildMap,
   solidRects,
 } from './map.js';
 import {
-  createPatrol,
+  createQuestions,
+  createScatter,
   FOE_HIT,
   FOE_MAX,
   FULL_HIT,
   HERO_MAX,
   RUN_SPEED,
+  WALK_FIGHT_SECONDS,
   WALK_SPEED,
   WEAK_HIT,
-  hintDistance,
 } from './patrol.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 import { routeReport } from './routeCheck.js';
@@ -44,9 +44,6 @@ import { buildWorldTextures } from './textures.js';
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
 const HERO_SCALE = 4 / 3;
-// About one fight per half minute of walking, and never twice inside the cooldown.
-const STEP_CHANCE = 0.005;
-const ENCOUNTER_COOLDOWN = 22000;
 
 export class TroyScene extends Phaser.Scene {
   constructor() {
@@ -114,6 +111,7 @@ export class TroyScene extends Phaser.Scene {
     const tiles = map.addTilesetImage('tiles');
     const ground = map.createLayer(0, tiles, 0, 0);
     ground.setDepth(0);
+    this.ground = ground;
     // Walls, sea, and the map edge are rectangles, not a colliding tile each.
     // Per-tile faces were catching his feet and sticking him in open lanes.
     this.blockers = this.physics.add.staticGroup();
@@ -122,7 +120,7 @@ export class TroyScene extends Phaser.Scene {
     }
     for (const prop of PROPS) addSolidProp(this, this.blockers, prop);
     for (const decor of DECOR) {
-      this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(decor.baseY);
+      this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(7000 + decor.baseY);
     }
 
     this.glints = createGlints(this);
@@ -146,6 +144,7 @@ export class TroyScene extends Phaser.Scene {
 
     // Feet are the body. The picture is drawn separately, from the ankles up.
     const start = this.arrive || SPAWN;
+    if (this.arrive) this.game.registry.set('leftHorse', true);
     this.feet = this.physics.add.image(start.x, start.y, 'feet');
     this.feet.setVisible(false);
     this.feet.body.setSize(FEET.w, FEET.h, true);
@@ -174,9 +173,12 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, this.blockers);
 
-    this.patrol = createPatrol(this, {
+    addBeachArmy(this);
+    this.questions = createQuestions();
+    this.walkFight = 0;
+    this.scatter = createScatter(this, {
+      ground,
       blockers: this.blockers,
-      heroBody: this.feet,
       fromHorse: this.arrive,
     });
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
@@ -214,9 +216,6 @@ export class TroyScene extends Phaser.Scene {
     // A dialogue or puzzle sets this so he stops walking.
     // E still works while locked: it asks React to close the box.
     this.inputLocked = false;
-    this.encounterOpen = false;
-    this.encounterReadyAt = 0;
-    this.lastTile = null;
     this.nearest = null;
     this.prompt = makePrompt(this);
 
@@ -226,7 +225,7 @@ export class TroyScene extends Phaser.Scene {
     const onEnemyAct = () => this.enemyAct();
     const onAttack = () => {
       if (!this.fight) return;
-      const question = this.patrol.question();
+      const question = this.questions.next();
       this.fight.question = question;
       this.game.events.emit('fightQuestion', {
         id: question.id,
@@ -239,12 +238,6 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.on('fightStrike', onStrike);
     this.game.events.on('fightAttack', onAttack);
     this.game.events.on('fightEnemyAct', onEnemyAct);
-    this.onEncounterResult = () => {
-      this.encounterOpen = false;
-      this.encounterReadyAt = this.time.now + ENCOUNTER_COOLDOWN;
-      if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
-    };
-    window.addEventListener(ENCOUNTER_RESULT_EVENT, this.onEncounterResult);
 
     publishDebug(this);
 
@@ -254,8 +247,6 @@ export class TroyScene extends Phaser.Scene {
       this.game.events.off('fightStrike', onStrike);
       this.game.events.off('fightAttack', onAttack);
       this.game.events.off('fightEnemyAct', onEnemyAct);
-      window.removeEventListener(ENCOUNTER_RESULT_EVENT, this.onEncounterResult);
-      if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -265,24 +256,32 @@ export class TroyScene extends Phaser.Scene {
     this.arrive = data && Number.isFinite(data.x) ? data : null;
   }
 
-  openEncounter() {
-    this.encounterOpen = true;
-    this.feet.setVelocity(0, 0);
-    if (this.input.keyboard) this.input.keyboard.enabled = false;
-    requestEncounter(1);
-  }
-
   // React listens for this. payload.id is the spot from map.js.
   interact(target) {
     if (!target || this.inputLocked) return;
     if (target.id === 'horse_hatch') {
+      // Once the hatch has let him out, it does not open again.
+      if (this.game.registry.get('leftHorse')) return;
       this.scene.start('horse');
       return;
     }
     if (target.id === 'gate') {
+      if (this.questDone) return;
       this.questDone = true;
+      this.inputLocked = true;
+      this.feet.setVelocity(0, 0);
       this.game.registry.set('gateOpen', true);
       this.game.events.emit('questDone');
+      const cam = this.cameras.main;
+      const cover = this.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(30000)
+        .setAlpha(0);
+      cover.setDisplaySize(cam.width, cam.height);
+      this.tweens.add({ targets: cover, alpha: 1, duration: 900 });
+      cam.fadeOut(900, 0, 0, 0);
+      return;
     }
     this.game.events.emit('interact', {
       id: target.id,
@@ -311,13 +310,6 @@ export class TroyScene extends Phaser.Scene {
 
   update(time, delta) {
     clampToMap(this.feet);
-    // A monster question covers the city. Feet and the sentries wait.
-    if (document.body.dataset.encounter === 'open' || this.encounterOpen) {
-      this.feet.setVelocity(0, 0);
-      if (this.input.keyboard) this.input.keyboard.enabled = false;
-      return;
-    }
-
     // While a box is open he stands still. Keys do nothing until it closes.
     const locked = this.inputLocked;
     const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);
@@ -366,7 +358,7 @@ export class TroyScene extends Phaser.Scene {
     this.hero.setDepth(sort);
 
     // The closest spot he is standing inside, or null.
-    this.nearest = locked ? null : nearestInteractable(this.feet.x, this.feet.y);
+    this.nearest = locked ? null : nearestInteractable(this.feet.x, this.feet.y, this);
     if (this.nearest) {
       this.prompt.setVisible(true);
       this.prompt.setPosition(Math.round(this.feet.x), Math.round(groundY) - 48);
@@ -388,58 +380,38 @@ export class TroyScene extends Phaser.Scene {
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
 
-    // New tiles can start a fight. Not during a dialog or a sentry battle,
-    // and not again until the cooldown. The horse and the intro never reach here.
-    if (!locked && !this.fighting && moving && time >= this.encounterReadyAt) {
-      const tileKey = `${Math.round(this.feet.x / TILE)},${Math.round(this.feet.y / TILE)}`;
-      if (this.lastTile == null) this.lastTile = tileKey;
-      else if (tileKey !== this.lastTile) {
-        this.lastTile = tileKey;
-        if (Math.random() < STEP_CHANCE) this.openEncounter();
-      }
-    }
-
-    this.patrol.update(dt, this.feet.x, this.feet.y, locked || this.fighting || this.encounterOpen);
-    this.maybeHintRun();
-    if (!this.fighting && !locked) this.maybeStartFight();
+    this.scatter.update(dt);
+    this.maybeHintRun(moving);
+    if (!this.fighting && !locked && moving) this.maybeRandomFight(dt);
     aimArrow(this);
   }
 
-  maybeHintRun() {
-    if (this.runHintShown) return;
-    const first = this.patrol.firstSentry();
-    if (!first) return;
-    const dist = Math.hypot(first.body.x - this.feet.x, first.body.y - this.feet.y);
-    if (dist > hintDistance()) return;
+  maybeHintRun(moving) {
+    if (this.runHintShown || !moving) return;
     this.runHintShown = true;
     this.game.registry.set('runHintShown', true);
     this.game.events.emit('runHint');
   }
 
-  maybeStartFight() {
-    const near = this.patrol.nearestSentry(this.feet.x, this.feet.y);
-    if (!near || !near.man.touch) return;
-    this.beginFight(near.man);
+  maybeRandomFight(dt) {
+    this.walkFight += dt;
+    if (this.walkFight < WALK_FIGHT_SECONDS) return;
+    this.walkFight = 0;
+    this.beginFight();
   }
 
-  beginFight(enemy) {
+  beginFight() {
     this.fighting = true;
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);
-    this.fight = {
-      enemy,
-      foeHp: enemy.hp,
-      // A step back from where he was grabbed, used if he falls.
-      backX: this.feet.x,
-      backY: this.feet.y,
-    };
+    this.fight = { foeHp: FOE_MAX };
     this.game.events.emit('fightStart', {
-      id: enemy.id,
+      id: 'trojan',
       name: 'Trojan sentry',
       side: 'hero',
       heroHp: this.heroHp,
       heroMax: HERO_MAX,
-      foeHp: enemy.hp,
+      foeHp: FOE_MAX,
       foeMax: FOE_MAX,
     });
   }
@@ -454,10 +426,8 @@ export class TroyScene extends Phaser.Scene {
     const correct = payload.index === question.answer;
     const dealt = correct ? FULL_HIT : WEAK_HIT;
     fight.foeHp = Math.max(0, fight.foeHp - dealt);
-    fight.enemy.hp = fight.foeHp;
     fight.question = null;
     if (fight.foeHp <= 0) {
-      this.patrol.remove(fight.enemy);
       this.heroHpStay();
       this.endFight(true, correct ? 'The sentry falls.' : 'A weak blow, but it was enough.');
       return;
@@ -479,16 +449,7 @@ export class TroyScene extends Phaser.Scene {
     this.heroHpStay();
     if (this.heroHp <= 0) {
       this.heroHp = HERO_MAX;
-      fight.enemy.hp = FOE_MAX;
-      fight.foeHp = FOE_MAX;
       this.heroHpStay();
-      const dx = fight.backX - fight.enemy.body.x;
-      const dy = fight.backY - fight.enemy.body.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const nx = fight.enemy.body.x + (dx / len) * 140;
-      const ny = fight.enemy.body.y + (dy / len) * 140;
-      this.feet.setPosition(nx, ny);
-      this.feet.body.reset(nx, ny);
       this.endFight(false, 'You fall back. The sentry recovers.');
       return;
     }
@@ -510,49 +471,96 @@ export class TroyScene extends Phaser.Scene {
     this.fight = null;
     this.game.events.emit('fightEnd', { won, note });
   }
+
+  // A straight knockback can land inside a house or past the map. Step back
+  // toward the sentry until the feet box is on open ground, and stay far
+  // enough that the same sentry does not grab him again on the next frame.
+  clearLanding(x, y, foeX, foeY, safeX, safeY) {
+    const dx = foeX - x;
+    const dy = foeY - y;
+    const len = Math.hypot(dx, dy) || 1;
+    const spots = [[x, y]];
+    for (let step = 16; step <= 160; step += 16) {
+      spots.push([x + (dx / len) * step, y + (dy / len) * step]);
+    }
+    for (const [px, py] of spots) {
+      if (Math.hypot(px - foeX, py - foeY) < 56) continue;
+      if (this.standsClear(px, py)) return { x: px, y: py };
+    }
+    if (this.standsClear(safeX, safeY)) return { x: safeX, y: safeY };
+    return { x: foeX, y: Math.min(MAP_H - 16, foeY + 64) };
+  }
+
+  standsClear(x, y) {
+    const hw = this.feet.body.halfWidth;
+    const hh = this.feet.body.halfHeight;
+    if (x - hw < 2 || y - hh < 2 || x + hw > MAP_W - 2 || y + hh > MAP_H - 2) return false;
+    const corners = [
+      [x - hw + 1, y - hh + 1],
+      [x + hw - 1, y - hh + 1],
+      [x - hw + 1, y + hh - 1],
+      [x + hw - 1, y + hh - 1],
+    ];
+    for (const [sx, sy] of corners) {
+      const tile = this.ground.getTileAtWorldXY(sx, sy);
+      if (tile && tile.collides) return false;
+    }
+    this.feet.setPosition(x, y);
+    this.feet.body.reset(x, y);
+    return !this.physics.overlap(this.feet, this.blockers);
+  }
 }
 
 // "Press E" floats over his head. The camera is zoomed 3×, so the letters
 // are drawn at 15px and then shrunk to 1/3. 15 × (1/3) × 3 = 15 screen
 // pixels, which keeps the letters sharp instead of blurry.
 function aimArrow(scene) {
-  const host = scene.game.canvas?.parentElement?.parentElement;
+  const canvas = scene.game.canvas;
+  const host = canvas?.parentElement?.parentElement;
   if (!host) return;
   let arrow = document.getElementById('gate-arrow');
   if (!arrow) {
     arrow = document.createElement('div');
     arrow.id = 'gate-arrow';
-    arrow.textContent = '➤';
+    arrow.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><polygon points="3,5 21,12 3,19" fill="#f0d48a" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>';
     host.appendChild(arrow);
   }
   if (scene.questDone) {
     arrow.style.display = 'none';
     return;
   }
-  const gate = INTERACTABLES.find((spot) => spot.id === 'gate');
+  const gate = GATE_MARK;
   const cam = scene.cameras.main;
-  const sx = (gate.x - cam.scrollX) * cam.zoom;
-  const sy = (gate.y - cam.scrollY) * cam.zoom;
+  // Screen position of the door center. midPoint is where the camera is looking.
+  const sx = cam.width * 0.5 + (gate.x - cam.midPoint.x) * cam.zoom;
+  const sy = cam.height * 0.5 + (gate.y - cam.midPoint.y) * cam.zoom;
+  const hostBox = host.getBoundingClientRect();
+  const canvasBox = canvas.getBoundingClientRect();
+  const ox = canvasBox.left - hostBox.left;
+  const oy = canvasBox.top - hostBox.top;
   const w = cam.width;
   const h = cam.height;
-  const onScreen = sx > 48 && sy > 48 && sx < w - 48 && sy < h - 48;
-  let x = sx;
-  let y = sy - 42;
-  let angle = Math.PI / 2;
-  if (!onScreen) {
-    const cx = w / 2;
-    const cy = h / 2;
-    const dx = sx - cx;
-    const dy = sy - cy;
-    const hw = cx - 64;
-    const hh = cy - 120;
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+  const dx = sx - cx;
+  const dy = sy - cy;
+  const onScreen = sx > 40 && sy > 40 && sx < w - 40 && sy < h - 40;
+  let x;
+  let y;
+  if (onScreen) {
+    const len = Math.hypot(dx, dy) || 1;
+    x = sx - (dx / len) * 56;
+    y = sy - (dy / len) * 56;
+  } else {
+    const hw = cx - 56;
+    const hh = cy - 88;
     const scale = Math.min(hw / Math.abs(dx || 0.001), hh / Math.abs(dy || 0.001));
     x = cx + dx * scale;
     y = cy + dy * scale;
-    angle = Math.atan2(dy, dx);
   }
+  const angle = Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
   arrow.style.display = 'block';
-  arrow.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) rotate(${angle}rad)`;
+  arrow.style.transform = `translate(${Math.round(x + ox)}px, ${Math.round(y + oy)}px) rotate(${angle}rad)`;
 }
 
 function makePrompt(scene) {
@@ -560,8 +568,8 @@ function makePrompt(scene) {
     fontFamily: 'monospace',
     fontSize: '15px',
     color: '#f6ead2',
-    backgroundColor: '#121820',
-    padding: { left: 6, right: 6, top: 3, bottom: 3 },
+    stroke: '#000000',
+    strokeThickness: 4,
   });
   label.setScale(1 / 3);
   label.setOrigin(0.5, 1);
@@ -570,10 +578,11 @@ function makePrompt(scene) {
 }
 
 // The spot whose circle contains his feet, picking the closest if two overlap.
-function nearestInteractable(x, y) {
+function nearestInteractable(x, y, scene) {
   let best = null;
   let bestDist = Infinity;
   for (const spot of INTERACTABLES) {
+    if (spot.id === 'horse_hatch' && scene.game.registry.get('leftHorse')) continue;
     const radius = spot.radius ?? INTERACT_RADIUS;
     const dist = Math.hypot(spot.x - x, spot.y - y);
     if (dist <= radius && dist < bestDist) {
@@ -611,10 +620,10 @@ function publishDebug(scene) {
       feet.body.reset(x, y);
     },
     sentries() {
-      return scene.patrol.sentries.filter((man) => !man.dead).length;
+      return 0;
     },
     greeks() {
-      return scene.patrol.greeks.length;
+      return scene.scatter.count();
     },
     lookAt(x, y, zoom) {
       const cam = scene.cameras.main;
@@ -671,6 +680,25 @@ function addRect(scene, group, x, y, w, h) {
   return blocker;
 }
 
+function addBeachArmy(scene) {
+  const key = WARRIOR_CONFIG.teams.greek.key;
+  const tex = scene.textures.get(key);
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  const frame = WARRIOR_CONFIG.facingFrames.n;
+  // Two ranks pressed against the doors, centered on the gate.
+  for (let row = 0; row < 2; row += 1) {
+    for (let col = 0; col < 7; col += 1) {
+      const x = 480 + (col - 3) * 42;
+      const y = 678 + row * 34;
+      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
+      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
+      const sort = 7000 + y;
+      shadow.setDepth(sort - 2);
+      sprite.setDepth(sort);
+    }
+  }
+}
+
 function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.
   const wide = prop.id === 'column' ? 10 : prop.id === 'horse' ? 72 : prop.bodyW * 0.85;
@@ -684,7 +712,8 @@ function addSolidProp(scene, group, prop) {
     horse.setOrigin(0.5, 122 / 128);
     horse.setDepth(7000 + prop.baseY);
   } else {
-    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(prop.baseY);
+    // Same band as the horse and the people, so a roof covers whoever is behind it.
+    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
   }
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');
@@ -713,9 +742,8 @@ function addLamp(scene, group, lamp) {
     repeat: -1,
     ease: 'Sine.easeInOut',
   });
-  // The post, not the glow. Sits on the picture's base.
-  const blocker = group.create(x, y - 3, 'blank');
-  blocker.setDisplaySize(8, 6);
+  const blocker = group.create(x, y - 4, 'blank');
+  blocker.setDisplaySize(10, 8);
   blocker.refreshBody();
   blocker.setVisible(false);
 }
