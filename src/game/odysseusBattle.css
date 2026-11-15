@@ -45,7 +45,7 @@
    only, rather than showing its fall-to-the-ground frames on every hit. */
 .battle-screen.is-counter .battle-sprite.battle-hero {
   background-image: url('/assets/battle/odysseus_hit_e.png');
-  background-size: calc(var(--sp) * 6) var(--sp);
+  background-size: calc(var(--sp) * 3) var(--sp);
   animation: odysseus-hit 0.64s steps(2) forwards;
 }
 @keyframes odysseus-hit {
