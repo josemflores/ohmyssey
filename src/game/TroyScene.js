@@ -43,6 +43,8 @@ import { buildWorldTextures } from './textures.js';
 const HERO_SCALE = 4 / 3;
 
 // How long each battle picture plays before the turn strip moves on.
+const GATE_HP = 24;
+
 const BLOW_MS = {
   jab: 520,
   strike: 700,
@@ -180,7 +182,9 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, this.blockers);
 
-    // Empty streets until the gate opens. The army and the sentries come in then.
+    // The road stays empty. Four sentries brace the shut doors until the
+    // gate battle is won. Street foes still come from relief, if it starts.
+    addGateSentries(this);
     this.questions = createBattleQuestions();
     this.relief = createRelief(this);
     this.fightCooldown = 0;
@@ -246,7 +250,10 @@ export class TroyScene extends Phaser.Scene {
     };
     const onFlee = () => {
       if (!this.fighting || !this.fight || this.fight.question) return;
-      this.endFight(false, 'You slip past the sentry.');
+      const gate = this.fight.gate;
+      this.endFight(false, gate
+        ? 'You fall back. The gate stays shut.'
+        : 'You slip past the sentry.');
     };
     this.game.events.on('lockInput', lockInput);
     this.game.events.on('unlockInput', unlockInput);
@@ -283,22 +290,10 @@ export class TroyScene extends Phaser.Scene {
       return;
     }
     if (target.id === 'gate') {
-      if (this.questDone) return;
-      this.questDone = true;
-      this.inputLocked = true;
-      this.gateFalling = true;
+      if (this.questDone || this.fighting || this.gateFalling) return;
       this.feet.setVelocity(0, 0);
-      this.game.registry.set('gateOpen', true);
-      this.game.events.emit('questDone');
-      this.game.events.emit('notice', 'The gate is open. The army is coming through.');
       if (this.prompt) this.prompt.setVisible(false);
-      openGateDoors(this);
-      this.relief.start();
-      // Hold him just long enough to see the doors go, then let him move.
-      this.time.delayedCall(700, () => {
-        this.gateFalling = false;
-        if (!this.fighting) this.inputLocked = false;
-      });
+      this.beginFight({ gate: true });
       return;
     }
     this.game.events.emit('interact', {
@@ -403,7 +398,20 @@ export class TroyScene extends Phaser.Scene {
     if (this.fightCooldown > 0) this.fightCooldown -= dt;
     this.maybeHintRun(moving);
     if (!this.fighting && !locked) this.maybeMeetFoe();
+    this.poseGateSentries(time);
     aimArrow(this);
+  }
+
+  poseGateSentries(time) {
+    if (this.gateFalling || !this.gateSentries) return;
+    for (const man of this.gateSentries) {
+      const wave = Math.sin(time / 260 + man.phase);
+      const squat = (Math.sin(time / 210 + man.phase) + 1) / 2;
+      man.sprite.setPosition(Math.round(man.x + wave * 1.6), Math.round(man.y + squat * 2));
+      man.sprite.setAngle(wave * 3.2);
+      man.sprite.setScale(1 + squat * 0.05, 1 - squat * 0.07);
+      man.shadow.setPosition(man.sprite.x + 3, man.y + 2);
+    }
   }
 
   maybeHintRun(moving) {
@@ -422,19 +430,22 @@ export class TroyScene extends Phaser.Scene {
     this.beginFight();
   }
 
-  beginFight() {
+  beginFight(options = {}) {
+    const gate = !!options.gate;
+    const foeMax = gate ? GATE_HP : FOE_MAX;
     this.fighting = true;
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);
-    this.fight = { foeHp: FOE_MAX };
+    this.fight = { foeHp: foeMax, gate };
     this.game.events.emit('fightStart', {
-      id: 'trojan',
-      name: 'Trojan sentry',
+      id: gate ? 'gate-captain' : 'trojan',
+      name: gate ? 'Gate Captain' : 'Trojan sentry',
       side: 'hero',
+      gate,
       heroHp: this.heroHp,
       heroMax: HERO_MAX,
-      foeHp: FOE_MAX,
-      foeMax: FOE_MAX,
+      foeHp: foeMax,
+      foeMax,
     });
   }
 
@@ -451,6 +462,7 @@ export class TroyScene extends Phaser.Scene {
     fight.foeHp = Math.max(0, fight.foeHp - damage);
     fight.question = null;
     const defeated = fight.foeHp <= 0;
+    const fallen = fight.gate ? 'The captain falls.' : 'The sentry falls.';
     const note = correct ? `${attack.label} lands for ${damage}.` : 'The blow misses.';
     const anim = correct ? attack.anim : 'whiff';
     this.game.events.emit('fightBlow', {
@@ -472,11 +484,11 @@ export class TroyScene extends Phaser.Scene {
           hit: true,
           heroHp: this.heroHp,
           foeHp: 0,
-          note: 'The sentry falls.',
+          note: fallen,
           defeated: true,
         });
         this.time.delayedCall(BLOW_MS.defeat, () => {
-          if (this.fighting) this.endFight(true, 'The sentry falls.');
+          if (this.fighting) this.endFight(true, fallen);
         });
         return;
       }
@@ -502,20 +514,23 @@ export class TroyScene extends Phaser.Scene {
       hit: true,
       heroHp: down ? 0 : this.heroHp,
       foeHp: fight.foeHp,
-      note: `The sentry strikes for ${FOE_HIT}.`,
+      note: `${fight.gate ? 'The captain' : 'The sentry'} strikes for ${FOE_HIT}.`,
       defeated: false,
     });
     this.time.delayedCall(BLOW_MS.counter, () => {
       if (!this.fighting) return;
       if (down) {
-        this.endFight(false, 'You fall back. The sentry recovers.');
+        const note = fight.gate
+          ? 'You fall back. The gate stays shut.'
+          : 'You fall back. The sentry recovers.';
+        this.endFight(false, note);
         return;
       }
       this.game.events.emit('fightTurn', {
         side: 'hero',
         heroHp: this.heroHp,
         foeHp: fight.foeHp,
-        note: `The sentry strikes for ${FOE_HIT}.`,
+        note: `${fight.gate ? 'The captain' : 'The sentry'} strikes for ${FOE_HIT}.`,
       });
     });
   }
@@ -525,18 +540,42 @@ export class TroyScene extends Phaser.Scene {
   }
 
   endFight(won, note) {
+    const gate = this.fight && this.fight.gate;
     const foe = this.engagedFoe;
     this.engagedFoe = null;
     this.fighting = false;
-    this.inputLocked = false;
     this.fight = null;
+    this.game.events.emit('fightEnd', { won, note, gate: !!gate });
+    if (gate) {
+      if (won) {
+        this.playGateVictory();
+        return;
+      }
+      this.inputLocked = false;
+      return;
+    }
     this.fightCooldown = 1.2;
+    this.inputLocked = false;
     if (won) this.relief.retire(foe);
     else this.relief.separate(foe, this.feet);
-    this.game.events.emit('fightEnd', { won, note });
     if (won && this.relief.phase() === 'foes' && this.relief.foeCount() === 0) {
       this.game.events.emit('levelComplete');
     }
+  }
+
+  // The doors stay shut until the Gate Captain is beaten.
+  playGateVictory() {
+    if (this.questDone) return;
+    this.questDone = true;
+    this.gateFalling = true;
+    this.inputLocked = true;
+    this.feet.setVelocity(0, 0);
+    this.game.registry.set('gateOpen', true);
+    this.game.events.emit('questDone');
+    if (this.prompt) this.prompt.setVisible(false);
+    playGateFall(this, () => {
+      this.game.events.emit('levelComplete');
+    });
   }
 
   // A straight knockback can land inside a house or past the map. Step back
@@ -759,6 +798,127 @@ function addRect(scene, group, x, y, w, h) {
   blocker.refreshBody();
   blocker.setVisible(false);
   return blocker;
+}
+
+function addGateSentries(scene) {
+  const key = WARRIOR_CONFIG.teams.trojan.key;
+  const tex = scene.textures.get(key);
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  const frame = WARRIOR_CONFIG.facingFrames.s;
+  const spots = [
+    { x: 438, y: 642 },
+    { x: 466, y: 648 },
+    { x: 494, y: 648 },
+    { x: 522, y: 642 },
+  ];
+  scene.gateSentries = spots.map((spot, index) => {
+    const shadow = scene.add.ellipse(spot.x + 3, spot.y + 1, 14, 5, 0x0c1424, 0.55);
+    const sprite = scene.add.sprite(spot.x, spot.y, key, frame).setOrigin(0.5, 1);
+    const depth = 7692 + index;
+    shadow.setDepth(depth - 2);
+    sprite.setDepth(depth);
+    return { ...spot, sprite, shadow, phase: index * 0.8 };
+  });
+}
+
+// Doors crash outward, the brace is thrown clear, and a Greek rank surges
+// through. About four seconds, then the Level 1 card. Input stays locked.
+function playGateFall(scene, onDone) {
+  const cam = scene.cameras.main;
+  cam.stopFollow();
+  cam.pan(480, 636, 320, 'Sine.easeOut');
+  cam.shake(260, 0.008);
+  openGateDoors(scene);
+  throwGateSentries(scene);
+  surgeArmy(scene);
+
+  const flash = scene.add.rectangle(0, 0, cam.width, cam.height, 0xfff6e0, 1)
+    .setOrigin(0, 0)
+    .setScrollFactor(0)
+    .setDepth(20000)
+    .setAlpha(0);
+  scene.tweens.add({
+    targets: flash,
+    delay: 660,
+    alpha: 0.42,
+    duration: 50,
+    yoyo: true,
+    hold: 30,
+    onComplete: () => flash.destroy(),
+  });
+
+  scene.time.delayedCall(2900, () => {
+    const cover = scene.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(30000)
+      .setAlpha(0);
+    cover.setDisplaySize(cam.width, cam.height);
+    scene.tweens.add({ targets: cover, alpha: 1, duration: 900 });
+    cam.fadeOut(900, 0, 0, 0);
+  });
+  scene.time.delayedCall(3600, () => {
+    if (onDone) onDone();
+  });
+}
+
+function throwGateSentries(scene) {
+  const doorX = scene.gateDoor && scene.gateDoor.sprite ? scene.gateDoor.sprite.x : 480;
+  (scene.gateSentries || []).forEach((man, index) => {
+    const dir = man.x < doorX ? -1 : 1;
+    const fallX = man.x + dir * 22;
+    const fallY = man.y - 46;
+    scene.tweens.add({
+      targets: man.sprite,
+      delay: 180 + index * 40,
+      duration: 380,
+      x: fallX,
+      y: fallY,
+      angle: dir * 96,
+      ease: 'Quad.easeIn',
+    });
+    scene.tweens.add({
+      targets: man.sprite,
+      delay: 560 + index * 40,
+      duration: 480,
+      alpha: 0,
+      y: fallY - 10,
+      onComplete: () => man.sprite.destroy(),
+    });
+    scene.tweens.add({
+      targets: man.shadow,
+      delay: 180 + index * 40,
+      duration: 860,
+      x: fallX,
+      alpha: 0,
+      onComplete: () => man.shadow.destroy(),
+    });
+  });
+}
+
+function surgeArmy(scene) {
+  const key = WARRIOR_CONFIG.teams.greek.key;
+  const tex = scene.textures.get(key);
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  const frame = WARRIOR_CONFIG.facingFrames.n;
+  for (let row = 0; row < 2; row += 1) {
+    for (let col = 0; col < 7; col += 1) {
+      const x = 480 + (col - 3) * 42;
+      const y = 700 + row * 28;
+      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
+      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
+      const sort = 7700 + y;
+      shadow.setDepth(sort - 2);
+      sprite.setDepth(sort);
+      scene.tweens.add({
+        targets: [sprite, shadow],
+        delay: 780 + row * 160 + col * 24,
+        duration: 1200,
+        y: '-=172',
+        ease: 'Cubic.easeOut',
+      });
+    }
+  }
 }
 
 function openGateDoors(scene) {

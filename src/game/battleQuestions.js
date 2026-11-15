@@ -1,10 +1,10 @@
-// Questions for the gate battle, picked by the attack the player chose.
+// Questions for the battle, picked by the attack the player chose.
 //
-// Light Attack asks an easy recall question. Strike asks a one-step
-// calculation. Heavy Attack asks a generated multi-step Ohm's law item
-// (series or parallel, then the current). Authored questions come from
-// the encounter bank and the horse hatch. A `difficulty` field wins;
-// otherwise a short heuristic reads the prompt.
+// Light Attack is easy: recall, or one step of V = I × R with small
+// whole numbers. Heavy Attack is hard: series or parallel first, then
+// the current, an LED drop, or the power that follows. Authored
+// questions come from the encounter bank and the horse hatch. A
+// `difficulty` field wins; otherwise a short heuristic reads the prompt.
 
 import { HATCH_QUESTIONS } from './hatchQuestions.js';
 import {
@@ -20,15 +20,7 @@ export const ATTACKS = {
     damage: 5,
     difficulty: 'easy',
     anim: 'jab',
-    hint: 'Easy question · 5 damage',
-  },
-  strike: {
-    id: 'strike',
-    label: 'Strike',
-    damage: 7,
-    difficulty: 'medium',
-    anim: 'strike',
-    hint: 'Medium question · 7 damage',
+    hint: 'Easy',
   },
   heavy: {
     id: 'heavy',
@@ -36,7 +28,7 @@ export const ATTACKS = {
     damage: 10,
     difficulty: 'hard',
     anim: 'heavy',
-    hint: 'Hard question · 10 damage',
+    hint: 'Hard',
   },
 };
 
@@ -81,6 +73,10 @@ function intIn(rng, min, max) {
   return min + Math.floor(rng() * (max - min + 1));
 }
 
+function lead(n) {
+  return `${/^(8|11|18)/.test(String(n)) ? 'An' : 'A'} ${n}`;
+}
+
 function withChoices(rng, answer, wrongs) {
   const labels = [answer];
   for (const wrong of wrongs) {
@@ -100,7 +96,7 @@ function generateHardOhmsQuestion(rng) {
   const stamp = Math.floor(rng() * 1e9).toString(36);
   const roll = rng();
 
-  if (roll < 0.34) {
+  if (roll < 0.25) {
     const r1 = intIn(rng, 2, 5);
     const r2 = intIn(rng, 2, 5);
     const current = intIn(rng, 1, 3);
@@ -114,14 +110,14 @@ function generateHardOhmsQuestion(rng) {
     ]);
     return {
       id: `ohm-hard-series-${stamp}`,
-      prompt: `A ${voltage} V battery feeds a ${r1} Ω resistor and a ${r2} Ω resistor in series. What current flows?`,
+      prompt: `${lead(voltage)} V battery feeds a ${r1} Ω resistor and a ${r2} Ω resistor in series. What current flows?`,
       choices,
       answer: choices.indexOf(answer),
       difficulty: 'hard',
     };
   }
 
-  if (roll < 0.67) {
+  if (roll < 0.5) {
     const branch = intIn(rng, 2, 4) * 2;
     const equivalent = branch / 2;
     const current = intIn(rng, 1, 2) * 2;
@@ -135,7 +131,29 @@ function generateHardOhmsQuestion(rng) {
     ]);
     return {
       id: `ohm-hard-parallel-${stamp}`,
-      prompt: `A ${voltage} V battery feeds two ${branch} Ω resistors in parallel. What current leaves the battery?`,
+      prompt: `${lead(voltage)} V battery feeds two ${branch} Ω resistors in parallel. What current leaves the battery?`,
+      choices,
+      answer: choices.indexOf(answer),
+      difficulty: 'hard',
+    };
+  }
+
+  if (roll < 0.75) {
+    const r1 = intIn(rng, 2, 4);
+    const r2 = intIn(rng, 2, 4);
+    const current = intIn(rng, 1, 3);
+    const total = r1 + r2;
+    const voltage = current * total;
+    const power = voltage * current;
+    const answer = `${power} W`;
+    const choices = withChoices(rng, answer, [
+      `${voltage * total} W`,
+      `${current * total} W`,
+      `${power + voltage} W`,
+    ]);
+    return {
+      id: `ohm-hard-power-${stamp}`,
+      prompt: `${lead(voltage)} V battery feeds a ${r1} Ω resistor and a ${r2} Ω resistor in series. How much power does the battery supply?`,
       choices,
       answer: choices.indexOf(answer),
       difficulty: 'hard',
@@ -157,7 +175,7 @@ function generateHardOhmsQuestion(rng) {
   ]);
   return {
     id: `ohm-hard-drop-${stamp}`,
-    prompt: `A ${drop.battery} V battery, an LED that keeps ${drop.led} V, and a ${drop.ohms} resistor are in series. What current flows?`,
+    prompt: `${lead(drop.battery)} V battery, an LED that keeps ${drop.led} V, and a ${drop.ohms} resistor are in series. What current flows?`,
     choices,
     answer: choices.indexOf(answer),
     difficulty: 'hard',
@@ -183,7 +201,6 @@ function take(deck, cursor, refill) {
 
 export function createBattleQuestions(rng = Math.random) {
   const easy = [];
-  const medium = [];
   const hard = [];
 
   const authored = questionsForLevel(1).map((question) => pack(question));
@@ -193,34 +210,27 @@ export function createBattleQuestions(rng = Math.random) {
   }));
 
   for (const question of authored.concat(hatch)) {
+    // One-step V = I × R sits with the recall items. Multi-step stays hard.
     if (question.difficulty === 'hard') hard.push(question);
-    else if (question.difficulty === 'medium') medium.push(question);
-    else easy.push(question);
+    else if (question.id === 'lamp-current') continue;
+    else easy.push({ ...question, difficulty: 'easy' });
   }
 
-  for (let i = 0; i < 4; i += 1) {
-    medium.push(pack({ ...generateOhmsQuestion(rng, 1), difficulty: 'medium' }));
+  for (let i = 0; i < 6; i += 1) {
+    easy.push(pack({ ...generateOhmsQuestion(rng, 1), difficulty: 'easy' }));
   }
-  for (let i = 0; i < 6; i += 1) hard.push(generateHardOhmsQuestion(rng));
+  for (let i = 0; i < 8; i += 1) hard.push(generateHardOhmsQuestion(rng));
 
   const decks = {
     easy: shuffle(rng, easy),
-    medium: shuffle(rng, medium),
     hard: shuffle(rng, hard),
   };
-  const cursors = { easy: { index: 0 }, medium: { index: 0 }, hard: { index: 0 } };
+  const cursors = { easy: { index: 0 }, hard: { index: 0 } };
 
   return {
     next(difficulty) {
-      const key = decks[difficulty] && decks[difficulty].length ? difficulty : 'medium';
-      if (key === 'hard') {
+      if (difficulty === 'hard') {
         return take(decks.hard, cursors.hard, () => generateHardOhmsQuestion(rng));
-      }
-      if (key === 'medium') {
-        return take(decks.medium, cursors.medium, () => pack({
-          ...generateOhmsQuestion(rng, 1),
-          difficulty: 'medium',
-        }));
       }
       return take(decks.easy, cursors.easy, () => pack({
         ...generateOhmsQuestion(rng, 1),

@@ -4,7 +4,7 @@ import { createTroyGame } from '../game/createTroyGame.js';
 import { hatchQuestionAfter } from '../game/hatchQuestions.js';
 import './TroyWorld.css';
 
-const MOVES = [ATTACKS.light, ATTACKS.strike, ATTACKS.heavy];
+const MOVES = [ATTACKS.light, ATTACKS.heavy];
 
 const MOVE_KEYS = new Set([
   'KeyW', 'KeyA', 'KeyS', 'KeyD',
@@ -249,14 +249,14 @@ export default function TroyWorld() {
       {place !== 'horse' && (
         <p className={questDone ? 'troy-quest is-done' : 'troy-quest'}>
           <span>Quest</span>
-          {questDone ? 'The army is inside' : 'Open the gate'}
+          {questDone ? 'The army is inside' : 'Fight the sentries holding the gate'}
         </p>
       )}
       {place !== 'horse' && !questDone && !fight && !talk && (
         <div className="troy-objective" role="status">
           <p className="troy-objective-kicker">Objective</p>
-          <p className="troy-objective-title">Open the gate</p>
-          <p className="troy-objective-note">Follow the arrow. Press E at the doors.</p>
+          <p className="troy-objective-title">Fight for the gate</p>
+          <p className="troy-objective-note">Follow the arrow. Press E to challenge the captain.</p>
         </div>
       )}
       <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
@@ -316,7 +316,7 @@ export default function TroyWorld() {
       )}
       {fight && (
         <div
-          className={`battle-screen${fight.anim ? ` is-${fight.anim}` : ''}${fight.shake ? ' is-shake' : ''}`}
+          className={`battle-screen${fight.gate ? ' is-gate' : ''}${fight.anim ? ` is-${fight.anim}` : ''}${fight.shake ? ' is-shake' : ''}`}
           role="dialog"
           aria-label="Battle"
         >
@@ -347,6 +347,7 @@ export default function TroyWorld() {
                 <span style={{ width: `${Math.max(0, fight.foeHp / fight.foeMax) * 100}%` }} />
               </div>
               <div className="battle-fighter" key={`foe-${fight.blow || 0}`}>
+                {fight.gate && <div className="battle-sprite battle-foe battle-rear" />}
                 <div className={`battle-sprite battle-foe${fight.anim === 'defeat' ? ' is-down' : ''}`} />
                 <span className="battle-flash" />
                 {fight.float && fight.float.side === 'foe' && (
