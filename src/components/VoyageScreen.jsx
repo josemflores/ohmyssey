@@ -318,18 +318,11 @@ function Island({ kind, stopKey }) {
 }
 
 function Ship() {
+  // The same ship as in Troy and Ithaca (level2/art.js paintShip), exported
+  // as public/assets/props/ithaca_ship.png. Flipped so the bow leads east.
   return (
-    <svg className="voyage-ship" viewBox="0 0 360 150" aria-hidden="true">
-      <path
-        d="M78 74 C62 74 48 56 56 38 C62 28 76 32 80 46 L92 70 L268 74 C286 72 302 64 312 70 L340 76 L318 84 C304 94 290 100 270 102 L104 106 C88 106 78 96 78 74 Z"
-        fill="#0b1018"
-      />
-      <path d="M96 76 L262 80" stroke="#3d3124" strokeWidth="2" />
-      <circle cx="300" cy="78" r="4.2" fill="#f4e6c8" />
-      <rect x="168" y="18" width="4" height="58" fill="#1c140c" />
-      <rect x="118" y="16" width="116" height="4" rx="1" fill="#1c140c" />
-      <path d="M124 22 Q176 32 228 22 L222 70 Q176 80 130 70 Z" fill="#f3e6c4" />
-      <path d="M127 46 Q176 54 223 46" fill="none" stroke="#c4963c" strokeWidth="2.5" />
-    </svg>
+    <div className="voyage-ship" aria-hidden="true">
+      <img src="/assets/props/ithaca_ship.png" alt="" />
+    </div>
   );
 }
