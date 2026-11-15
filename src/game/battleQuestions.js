@@ -11,6 +11,7 @@ import {
   generateOhmsQuestion,
   questionsForLevel,
   shuffle,
+  shuffleChoices,
 } from '../learn/encounters/questions.js';
 
 export const ATTACKS = {
@@ -46,9 +47,9 @@ export function attackById(id) {
 export const GATE_FALLBACK = {
   id: 'gate-fallback',
   prompt: 'A 12 V battery feeds a 4 Ω resistor. What current flows?',
-  choices: ['3 A', '6 A', '2 A', '8 A'],
+  choices: ['3 A', '48 A', '16 A', '8 A'],
   answer: 0,
-  hint: 'I = V / R = 12 / 4 = 3 A.',
+  hint: 'I = V / R = 12 / 4 = 3 A. Multiplying, adding or subtracting gives the other three.',
 };
 
 function asGateQuestion(question) {
@@ -70,14 +71,14 @@ function asGateQuestion(question) {
 export function nextGateQuestion(rng = Math.random) {
   try {
     const made = asGateQuestion(generateOhmsQuestion(rng, 1));
-    if (made) return made;
+    if (made) return shuffleChoices(made, rng);
   } catch {
     // The bank can fail to load. The gate still has to ask something.
   }
-  return {
+  return shuffleChoices({
     ...GATE_FALLBACK,
     choices: GATE_FALLBACK.choices.slice(),
-  };
+  }, rng);
 }
 
 export function classifyQuestion(question) {
@@ -104,6 +105,7 @@ function pack(question) {
     choices: question.choices.slice(),
     answer,
     difficulty: classifyQuestion(question),
+    hint: question.explanation || question.hint || '',
   };
 }
 
@@ -115,107 +117,149 @@ function lead(n) {
   return `${/^(8|11|18)/.test(String(n)) ? 'An' : 'A'} ${n}`;
 }
 
-function withChoices(rng, answer, wrongs) {
+// Right answer first, then the wrong ones; shuffled before it is shown.
+function choicesFrom(rng, answer, wrongs, unit) {
   const labels = [answer];
   for (const wrong of wrongs) {
+    if (labels.length === 4) break;
     if (typeof wrong === 'string' && wrong !== answer && !labels.includes(wrong)) labels.push(wrong);
   }
-  let extra = 2;
-  while (labels.length < 4) {
-    const filler = `${extra} A`;
-    extra += 1;
+  for (let n = 2; labels.length < 4; n += 1) {
+    const filler = `${n * 7} ${unit}`;
     if (!labels.includes(filler)) labels.push(filler);
   }
-  return shuffle(rng, labels.slice(0, 4));
+  const order = shuffle(rng, labels);
+  return { choices: order, answer: order.indexOf(answer) };
 }
 
-// Two resistors, then the current. Whole amps, so the arithmetic stays fair.
+// Red LEDs keep about 2 V, blue and white about 3 V. Every row gives a
+// whole number of milliamps and a resistor a beginner would meet.
+const LED_ROWS = [
+  { battery: 3, led: 2, ohms: 100, ma: 10 },
+  { battery: 5, led: 2, ohms: 150, ma: 20 },
+  { battery: 5, led: 2, ohms: 300, ma: 10 },
+  { battery: 6, led: 2, ohms: 200, ma: 20 },
+  { battery: 6, led: 2, ohms: 400, ma: 10 },
+  { battery: 9, led: 2, ohms: 1000, ma: 7 },
+  { battery: 9, led: 3, ohms: 300, ma: 20 },
+  { battery: 9, led: 3, ohms: 600, ma: 10 },
+  { battery: 12, led: 2, ohms: 500, ma: 20 },
+  { battery: 12, led: 2, ohms: 1000, ma: 10 },
+  { battery: 12, led: 3, ohms: 900, ma: 10 },
+];
+
+function tenth(n) {
+  return Math.round(n * 10) / 10;
+}
+
+function ohmsLabel(ohms) {
+  return ohms >= 1000 ? `${ohms / 1000} kΩ` : `${ohms} Ω`;
+}
+
+function ledName(volts) {
+  return volts === 2 ? 'a red LED (2 V)' : 'a blue LED (3 V)';
+}
+
+// Two steps every time: combine resistors, or take off the LED's volts,
+// then use Ohm's law. Wrong answers are the step a beginner skips.
 function generateHardOhmsQuestion(rng) {
   const stamp = Math.floor(rng() * 1e9).toString(36);
   const roll = rng();
 
-  if (roll < 0.25) {
-    const r1 = intIn(rng, 2, 5);
-    const r2 = intIn(rng, 2, 5);
-    const current = intIn(rng, 1, 3);
+  if (roll < 0.2) {
+    // Series: resistances add. Slips: one resistor only, or treat as parallel.
+    const r1 = intIn(rng, 1, 4);
+    const r2 = intIn(rng, 1, 5);
+    const current = intIn(rng, 1, 4);
     const total = r1 + r2;
     const voltage = current * total;
-    const answer = `${current} A`;
-    const choices = withChoices(rng, answer, [
-      `${current + r1} A`,
-      `${total} Ω`,
-      `${current + 1} A`,
-    ]);
+    const parallel = (voltage * total) / (r1 * r2);
+    const made = choicesFrom(rng, `${current} mA`, [
+      `${tenth(voltage / r1)} mA`,
+      `${tenth(parallel)} mA`,
+      `${voltage * total} mA`,
+      `${tenth(voltage / r2)} mA`,
+    ], 'mA');
     return {
       id: `ohm-hard-series-${stamp}`,
-      prompt: `${lead(voltage)} V battery feeds a ${r1} Ω resistor and a ${r2} Ω resistor in series. What current flows?`,
-      choices,
-      answer: choices.indexOf(answer),
+      prompt: `${lead(voltage)} V battery drives a ${r1} kΩ and a ${r2} kΩ resistor in series. What current flows?`,
+      ...made,
+      hint: `Series resistances add: ${total} kΩ. I = ${voltage} ÷ ${total} = ${current} mA.`,
       difficulty: 'hard',
     };
   }
 
-  if (roll < 0.5) {
-    const branch = intIn(rng, 2, 4) * 2;
-    const equivalent = branch / 2;
-    const current = intIn(rng, 1, 2) * 2;
-    const voltage = current * equivalent;
-    const answer = `${current} A`;
-    const oneBranch = voltage / branch;
-    const choices = withChoices(rng, answer, [
-      `${oneBranch} A`,
-      `${equivalent} Ω`,
-      `${current + 2} A`,
-    ]);
+  if (roll < 0.4) {
+    // Parallel, equal branches. Slips: one branch only, or add like series.
+    const branch = intIn(rng, 1, 4) * 2;
+    const each = intIn(rng, 1, 3);
+    const voltage = each * branch;
+    const made = choicesFrom(rng, `${each * 2} mA`, [
+      `${each} mA`,
+      `${Math.round((voltage / (branch * 2)) * 10) / 10} mA`,
+      `${each * 4} mA`,
+    ], 'mA');
     return {
       id: `ohm-hard-parallel-${stamp}`,
-      prompt: `${lead(voltage)} V battery feeds two ${branch} Ω resistors in parallel. What current leaves the battery?`,
-      choices,
-      answer: choices.indexOf(answer),
+      prompt: `${lead(voltage)} V battery feeds two ${branch} kΩ resistors in parallel. What current leaves the battery?`,
+      ...made,
+      hint: `Each branch gets all ${voltage} V: ${voltage} ÷ ${branch} = ${each} mA, and two branches make ${each * 2} mA.`,
       difficulty: 'hard',
     };
   }
 
-  if (roll < 0.75) {
-    const r1 = intIn(rng, 2, 4);
-    const r2 = intIn(rng, 2, 4);
-    const current = intIn(rng, 1, 3);
-    const total = r1 + r2;
-    const voltage = current * total;
-    const power = voltage * current;
-    const answer = `${power} W`;
-    const choices = withChoices(rng, answer, [
-      `${voltage * total} W`,
-      `${current * total} W`,
-      `${power + voltage} W`,
-    ]);
+  if (roll < 0.55) {
+    // Power in a resistor. Slips: forget mA → A, or V ÷ I, or V + I.
+    const current = intIn(rng, 2, 9);
+    const ohms = intIn(rng, 1, 4);
+    const voltage = current * ohms;
+    const mw = voltage * current;
+    const made = choicesFrom(rng, `${mw} mW`, [
+      `${mw} W`,
+      `${voltage + current} mW`,
+      `${Math.round((voltage / current) * 10) / 10} mW`,
+    ], 'mW');
     return {
       id: `ohm-hard-power-${stamp}`,
-      prompt: `${lead(voltage)} V battery feeds a ${r1} Ω resistor and a ${r2} Ω resistor in series. How much power does the battery supply?`,
-      choices,
-      answer: choices.indexOf(answer),
+      prompt: `A ${ohms} kΩ resistor carries ${current} mA. How much power does it turn into heat?`,
+      ...made,
+      hint: `First V = ${current} mA × ${ohms} kΩ = ${voltage} V. Then P = V × I = ${voltage} V × ${current} mA = ${mw} mW.`,
       difficulty: 'hard',
     };
   }
 
-  const drops = [
-    { battery: 9, led: 2, ohms: '1 kΩ', ma: 7 },
-    { battery: 9, led: 2, ohms: '700 Ω', ma: 10 },
-    { battery: 12, led: 2, ohms: '1 kΩ', ma: 10 },
-    { battery: 12, led: 3, ohms: '1.5 kΩ', ma: 6 },
-  ];
-  const drop = drops[intIn(rng, 0, drops.length - 1)];
-  const answer = `${drop.ma} mA`;
-  const choices = withChoices(rng, answer, [
-    `${drop.battery} mA`,
-    `${drop.ma} A`,
-    `${drop.led} mA`,
-  ]);
+  const row = LED_ROWS[intIn(rng, 0, LED_ROWS.length - 1)];
+  const left = row.battery - row.led;
+  if (roll < 0.78) {
+    // LED current. Slips: forget the LED, use only the LED's volts, add them.
+    const per = (v) => `${Math.round((v / row.ohms) * 1000 * 10) / 10} mA`;
+    const made = choicesFrom(rng, `${row.ma} mA`, [
+      per(row.battery),
+      per(row.led),
+      per(row.battery + row.led),
+    ], 'mA');
+    return {
+      id: `ohm-hard-led-current-${stamp}`,
+      prompt: `${lead(row.battery)} V battery, ${ledName(row.led)}, and a ${ohmsLabel(row.ohms)} resistor are in series. What current flows?`,
+      ...made,
+      hint: `The resistor gets ${row.battery} − ${row.led} = ${left} V. I = ${left} V ÷ ${ohmsLabel(row.ohms)} = ${row.ma} mA.`,
+      difficulty: 'hard',
+    };
+  }
+
+  // Pick the LED's resistor. Same slips, the other way round.
+  const amps = row.ma / 1000;
+  const per = (v) => ohmsLabel(Math.round(v / amps));
+  const made = choicesFrom(rng, ohmsLabel(row.ohms), [
+    per(row.battery),
+    per(row.led),
+    per(row.battery + row.led),
+  ], 'Ω');
   return {
-    id: `ohm-hard-drop-${stamp}`,
-    prompt: `${lead(drop.battery)} V battery, an LED that keeps ${drop.led} V, and a ${drop.ohms} resistor are in series. What current flows?`,
-    choices,
-    answer: choices.indexOf(answer),
+    id: `ohm-hard-led-pick-${stamp}`,
+    prompt: `You want ${row.ma} mA through ${ledName(row.led)} from a ${row.battery} V battery. Which resistor?`,
+    ...made,
+    hint: `The resistor gets ${row.battery} − ${row.led} = ${left} V. R = ${left} V ÷ ${row.ma} mA = ${ohmsLabel(row.ohms)}.`,
     difficulty: 'hard',
   };
 }
@@ -228,13 +272,14 @@ function take(deck, cursor, refill) {
   }
   const question = deck[cursor.index % deck.length];
   cursor.index += 1;
-  return {
+  return shuffleChoices({
     id: question.id,
     prompt: question.prompt,
     choices: question.choices.slice(),
     answer: question.answer,
     difficulty: question.difficulty,
-  };
+    hint: question.hint,
+  });
 }
 
 export function createBattleQuestions(rng = Math.random) {

@@ -6,6 +6,7 @@
 
 import { facingFromVector } from './animConfig.js';
 import { HATCH_QUESTIONS } from './hatchQuestions.js';
+import { shuffleChoices } from '../learn/encounters/questions.js';
 import { MAP_W } from './map.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 
@@ -32,12 +33,12 @@ export function createQuestions() {
     next() {
       const q = HATCH_QUESTIONS[index % HATCH_QUESTIONS.length];
       index += 1;
-      return {
+      return shuffleChoices({
         id: q.id,
         prompt: q.prompt,
         choices: q.choices.slice(),
         answer: q.answer,
-      };
+      });
     },
   };
 }

@@ -50,62 +50,80 @@ function pick(rng, list) {
   return list[Math.floor(rng() * list.length)];
 }
 
-function distractors(answer) {
-  const seeds = [answer + 1, answer + 2, answer + 3, answer * 2, answer + 4];
-  const picked = [];
-  for (const value of seeds) {
-    if (!Number.isInteger(value) || value <= 0 || value === answer || picked.includes(value)) continue;
-    picked.push(value);
-    if (picked.length === 3) return picked;
+/**
+ * Mix the choices so the right answer is not always in the same place.
+ * Works with either `answer` or `answerIndex`, and returns a copy.
+ */
+export function shuffleChoices(question, rng = Math.random) {
+  if (!question || !Array.isArray(question.choices)) return question;
+  const key = Number.isInteger(question.answer) ? 'answer' : 'answerIndex';
+  const right = question.choices[question[key]];
+  const choices = shuffle(rng, question.choices);
+  return { ...question, choices, [key]: choices.indexOf(right) };
+}
+
+// Wrong answers come from real slips, so the right one cannot be spotted by
+// size alone: multiplying instead of dividing, adding, subtracting, or
+// flipping the fraction. Duplicates and non-positive values are skipped.
+function slipChoices(answer, slips, unit) {
+  const out = [];
+  for (const value of slips) {
+    if (!(value > 0) || value === answer || out.includes(value)) continue;
+    out.push(value);
+    if (out.length === 3) break;
   }
-  let extra = answer + 5;
-  while (picked.length < 3) {
-    if (extra !== answer && !picked.includes(extra)) picked.push(extra);
-    extra += 1;
+  for (let extra = answer * 3; out.length < 3; extra += 1) {
+    if (extra !== answer && !out.includes(extra)) out.push(extra);
   }
-  return picked;
+  return [answer, ...out].map((n) => `${formatNumber(n)} ${unit}`);
+}
+
+function formatNumber(n) {
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
 }
 
 /**
- * One easy Ohm's-law question with whole-number volts, ohms, and amps.
+ * One Ohm's-law question. Half use small whole amps and ohms; half use the
+ * beach-lamp scale (volts, kilohms, milliamps), where V ÷ kΩ = mA.
  * rng is a function that returns a number in [0, 1), same contract as Math.random.
  */
 export function generateOhmsQuestion(rng = Math.random, level = 1) {
   const form = pick(rng, FORMS);
-  const current = intIn(rng, 1, 4);
-  const resistance = intIn(rng, 1, 6);
+  const lamp = rng() < 0.5;
+  const current = intIn(rng, lamp ? 2 : 1, lamp ? 9 : 4);
+  const resistance = intIn(rng, 2, 6);
   const voltage = current * resistance;
   const place = Number(level) === 2 ? 2 : 1;
+  const I = lamp ? 'mA' : 'A';
+  const R = lamp ? 'kΩ' : 'Ω';
+  const ohms = `${resistance} ${R}`;
 
   let prompt;
-  let answer;
-  let unit;
+  let choices;
   let explanation;
   if (form === 'current') {
-    prompt = `A ${voltage} V source feeds a ${resistance} Ω resistor. What current flows?`;
-    answer = current;
-    unit = 'A';
-    explanation = `I = V / R = ${voltage} / ${resistance} = ${current} A.`;
+    prompt = `A ${voltage} V battery feeds a ${ohms} resistor. What current flows?`;
+    choices = slipChoices(current, [voltage * resistance, voltage + resistance, resistance / voltage, voltage], I);
+    explanation = `I = V / R = ${voltage} ÷ ${resistance} = ${current} ${I}.${lamp ? ' Volts ÷ kΩ gives mA.' : ''}`;
   } else if (form === 'voltage') {
-    prompt = `${current} A flows through a ${resistance} Ω resistor. What is the voltage across it?`;
-    answer = voltage;
-    unit = 'V';
-    explanation = `V = I × R = ${current} × ${resistance} = ${voltage} V.`;
+    prompt = `${current} ${I} flows through a ${ohms} resistor. What is the voltage across it?`;
+    choices = slipChoices(voltage, [current + resistance, resistance / current, Math.abs(resistance - current), resistance], 'V');
+    explanation = `V = I × R = ${current} × ${resistance} = ${voltage} V.${lamp ? ' mA × kΩ gives volts.' : ''}`;
   } else {
-    prompt = `You need ${current} A from a ${voltage} V battery. What resistance does that take?`;
-    answer = resistance;
-    unit = 'Ω';
-    explanation = `R = V / I = ${voltage} / ${current} = ${resistance} Ω.`;
+    prompt = `You want ${current} ${I} from a ${voltage} V battery. What resistance does that take?`;
+    choices = slipChoices(resistance, [voltage * current, voltage + current, voltage - current, current / voltage], R);
+    explanation = `R = V / I = ${voltage} ÷ ${current} = ${resistance} ${R}.`;
   }
 
-  const labeled = shuffle(rng, [answer, ...distractors(answer)].map((n) => `${n} ${unit}`));
+  const right = choices[0];
+  const labeled = shuffle(rng, choices);
   const stamp = Math.floor(rng() * 1e9).toString(36);
   return {
     id: `ohm-${place}-${form}-${voltage}v-${resistance}r-${stamp}`,
     level: place,
     prompt,
     choices: labeled,
-    answerIndex: labeled.indexOf(`${answer} ${unit}`),
+    answerIndex: labeled.indexOf(right),
     explanation,
     flavor: place === 2
       ? 'The hall lamp at Ithaca waits on the same three numbers.'
@@ -118,7 +136,7 @@ export function generateOhmsQuestion(rng = Math.random, level = 1) {
  * mixed into the opening so a short fight still meets one.
  */
 export function buildDeck(level, rng = Math.random) {
-  const authored = shuffle(rng, questionsForLevel(level));
+  const authored = shuffle(rng, questionsForLevel(level)).map((q) => shuffleChoices(q, rng));
   const generated = [0, 1, 2].map(() => generateOhmsQuestion(rng, level));
   if (authored.length === 0) return generated;
   const opening = shuffle(rng, [...authored.slice(0, 5), ...generated]);
