@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { createLevel2Game } from '../game/level2/createLevel2Game.js';
 import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
 import { firstHallQuestion, hallQuestionAfter } from '../game/level2/hallQuestions.js';
+import BowContest from './BowContest.jsx';
 import CircuitDiagram from './CircuitDiagram.jsx';
+import HallBattle from './HallBattle.jsx';
 import {
   ChoiceLabel,
   KeysHint,
@@ -24,6 +26,8 @@ export default function Level2World() {
   const [objective, setObjective] = useState(null);
   // The question at the hall doors. status: open, wrong.
   const [quiz, setQuiz] = useState(null);
+  // The contest of the bow and the fight in the hall: contest, battle, won.
+  const [story, setStory] = useState(null);
 
   useEffect(() => {
     const game = createLevel2Game(host.current);
@@ -37,6 +41,8 @@ export default function Level2World() {
     game.events.on('talk', onTalk);
     game.events.on('objective', onObjective);
     game.events.on('hallDoor', onHallDoor);
+    const onBowFound = () => setStory('contest');
+    game.events.on('bowFound', onBowFound);
     const timer = window.setTimeout(() => setHint(false), 5200);
     return () => {
       window.clearTimeout(timer);
@@ -44,6 +50,7 @@ export default function Level2World() {
       game.events.off('talk', onTalk);
       game.events.off('objective', onObjective);
       game.events.off('hallDoor', onHallDoor);
+      game.events.off('bowFound', onBowFound);
       clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
@@ -100,6 +107,35 @@ export default function Level2World() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [quiz]);
+
+  // While the contest, the fight or the victory card is up, the Athena and
+  // Lessons buttons step aside, as they do in a fight at Troy (TroyLearn).
+  const storyOn = Boolean(story);
+  useEffect(() => {
+    const game = gameRef.current;
+    if (!game) return undefined;
+    if (!storyOn) return undefined;
+    game.events.emit('fightStart', {});
+    return () => game.events.emit('fightEnd', {});
+  }, [storyOn]);
+
+  // The last suitor falls: a proclamation, then the hall is his again.
+  function hallWon() {
+    setStory('won');
+  }
+
+  useEffect(() => {
+    if (story !== 'won') return undefined;
+    const timer = window.setTimeout(() => {
+      setStory(null);
+      gameRef.current?.events.emit('hallWon');
+      setObjective({
+        title: 'Go to Penelope',
+        note: 'The hall is yours again. She waits in the courtyard, not yet sure it is you.',
+      });
+    }, 6000);
+    return () => window.clearTimeout(timer);
+  }, [story]);
 
   function closeTalk() {
     setTalk(null);
@@ -158,6 +194,18 @@ export default function Level2World() {
               </>
             )}
             <button type="button" className="l2-quiz-leave" onClick={closeQuiz}>Step back (Esc)</button>
+          </div>
+        </div>
+      )}
+      {story === 'contest' && <BowContest onDone={() => setStory('battle')} />}
+      {story === 'battle' && <HallBattle onWon={hallWon} />}
+      {story === 'won' && (
+        <div className="l2-victory" role="status" aria-live="polite">
+          <div className="q-card l2-victory-card">
+            <p className="q-eyebrow">Ω · Victory</p>
+            <h2 className="q-title">The hall is won</h2>
+            <div className="q-rule" aria-hidden="true" />
+            <p className="l2-victory-line">The suitors are beaten. After twenty years, Odysseus stands in his own hall again.</p>
           </div>
         </div>
       )}

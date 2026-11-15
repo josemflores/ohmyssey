@@ -190,7 +190,7 @@ export const HALL_SPOTS = [
 ];
 
 // Every solid in the hall, as world-pixel rectangles.
-export function hallSolids(grid = buildHallGrid()) {
+export function hallSolids(grid = buildHallGrid(), { people = true } = {}) {
   const rects = [];
   for (let r = 0; r < HALL_ROWS; r += 1) {
     let start = -1;
@@ -208,7 +208,7 @@ export function hallSolids(grid = buildHallGrid()) {
     rects.push({ x: p.x - p.bodyW / 2, y: bottom - p.bodyH, w: p.bodyW, h: p.bodyH });
   }
   for (const b of HALL_BRAZIERS) rects.push({ x: b.x - 7, y: b.baseY - 8, w: 14, h: 8 });
-  for (const person of HALL_PEOPLE) rects.push(personRect(person));
+  if (people) for (const person of HALL_PEOPLE) rects.push(personRect(person));
   return rects;
 }
 

@@ -155,3 +155,29 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* "The hall is won": a large proclamation over the hall. */
+.l2-victory {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: radial-gradient(ellipse at center, rgba(8, 6, 4, 0.35), rgba(8, 6, 4, 0.8));
+  animation: l2-victory-in 0.6s ease-out;
+}
+.l2-victory-card.q-card {
+  width: min(640px, 100%);
+  padding: 1.6rem 1.8rem;
+  text-align: center;
+}
+.l2-victory-card .q-title { font-size: clamp(1.8rem, 5vw, 2.8rem); }
+.l2-victory-line { margin: 0.6rem 0 0; font-size: 1.05rem; line-height: 1.5; }
+@keyframes l2-victory-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .l2-victory { animation: none; }
+}
