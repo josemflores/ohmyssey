@@ -1,0 +1,109 @@
+/*
+ * Battle log plaque: dark bronze-edged plate, a Greek key along the top
+ * and bottom, carved Cinzel letters in marble cream.
+ */
+
+/* The Athena / Lessons buttons step aside during a battle. */
+body:has(.battle-screen) .troy-learn-hud { display: none; }
+
+/* A dedicated row between the turn chips and the fighters. */
+.battle-screen { grid-template-rows: auto auto 1fr auto; }
+/* If the fighters run out of room, they spill downward, not up into the log. */
+.battle-screen .battle-stage { min-height: 0; align-items: safe flex-end; }
+.battle-log-row {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 4px 16px 0;
+  pointer-events: none;
+}
+
+.battle-log {
+  --bronze: #b8862b;
+  --key: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0 5.5H12M2.5 5.5V.5H9.5V4H6V2.5' fill='none' stroke='%23b8862b' stroke-width='1'/%3E%3C/svg%3E");
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35em 0.5em;
+  max-width: min(92vw, 640px);
+  margin: 0;
+  padding: 6px 14px;
+  border: 2px solid var(--bronze);
+  border-radius: 4px;
+  background: rgba(20, 12, 6, 0.85);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  color: #f3e6c4;
+  font-family: "Cinzel", Georgia, serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 1px;
+  line-height: 1.3;
+  text-align: center;
+  text-shadow: 0 1px 0 #000, 0 0 4px rgba(0, 0, 0, 0.9);
+  animation: battle-log 1.8s ease forwards;
+}
+/* Meander strips inside the top and bottom edges. */
+.battle-log::before,
+.battle-log::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 5px;
+  background: var(--key) left center / 10px 5px repeat-x;
+  opacity: 0.9;
+}
+.battle-log::before { top: 2px; }
+.battle-log::after { bottom: 2px; transform: scaleY(-1); }
+/* Room for the strips above and below the words. */
+.battle-log { padding-top: 8px; padding-bottom: 8px; }
+
+.battle-log-helmet {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  filter: drop-shadow(0 1px 0 #000);
+}
+.battle-log-name.is-greek { color: #d9534f; }
+.battle-log-name.is-trojan { color: #3fb4a8; }
+.battle-log-dmg {
+  font-weight: 700;
+  font-size: 1.12em;
+}
+.battle-log-dmg.is-trojan { color: #c0392b; }
+.battle-log-dmg.is-greek { color: #e0b84a; }
+.battle-log-splash { font-size: 0.85em; }
+
+/* In 150 ms (fade + slide up 6px), hold to 1.5 s, then fade out. */
+@keyframes battle-log {
+  0% { opacity: 0; transform: translateY(6px); }
+  8.3% { opacity: 1; transform: translateY(0); }
+  83% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-log { animation: battle-log-still 1.8s linear forwards; }
+  @keyframes battle-log-still {
+    0%, 83% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
+@media (max-width: 560px) {
+  .battle-log { font-size: 15px; padding-left: 10px; padding-right: 10px; }
+  .battle-log-row { min-height: 50px; padding-top: 12px; }
+}
+
+.battle-log .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
