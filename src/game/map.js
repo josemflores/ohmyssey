@@ -38,7 +38,15 @@ export const T = {
   paveAlt: 14,
   weed: 15,
   roadSide: 16,
+  // Grass growing in the joints of the city paving, along the foot of the wall.
+  paveWeed: 17,
+  // Grass tufts on the beach sand, along the outside of the wall.
+  sandWeed: 18,
+  // A cracked paving stone, so the plaza is not perfectly new.
+  paveCrack: 19,
 };
+const PAVED = new Set([T.pave, T.paveAlt]);
+const SANDY = new Set([T.sand, T.sandAlt]);
 
 // Odysseus can walk these. Every other index is solid.
 export const WALKABLE = new Set([
@@ -53,6 +61,9 @@ export const WALKABLE = new Set([
   T.paveAlt,
   T.weed,
   T.roadSide,
+  T.paveWeed,
+  T.sandWeed,
+  T.paveCrack,
 ]);
 
 // Opening in the great wall, in tile columns, inclusive.
@@ -103,8 +114,9 @@ export const PROPS = [
   // Wooden doors in the wall opening. He opens them from the north side.
   { id: 'gate-door', x: 480, baseY: 652, bodyW: 120, bodyH: 72, insetBottom: 0 },
 
-  { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
-  { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
+  // Storage jars (pithoi) in the yards. Troy VIIa houses kept big jars like these.
+  { id: 'pithoi', x: 272, baseY: 204, bodyW: 26, bodyH: 12, insetBottom: 2 },
+  { id: 'pithoi', x: 690, baseY: 196, bodyW: 26, bodyH: 12, insetBottom: 2 },
   { id: 'rubble', x: 120, baseY: 754, bodyW: 28, bodyH: 12, insetBottom: 2 },
   { id: 'rubble', x: 860, baseY: 754, bodyW: 28, bodyH: 12, insetBottom: 2 },
 
@@ -119,9 +131,12 @@ export const PROPS = [
 
   // Trees beside the diagonal, clear of the stones.
   { id: 'cypress', x: 560, baseY: 280, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 200, baseY: 320, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'olive', x: 200, baseY: 320, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 120, baseY: 400, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 760, baseY: 440, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'olive', x: 760, baseY: 440, bodyW: 10, bodyH: 8, insetBottom: 0 },
+
+  // The oak outside the Scaean gate, which the Iliad names more than once.
+  { id: 'oak', x: 352, baseY: 712, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 600, baseY: 520, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 360, baseY: 560, bodyW: 10, bodyH: 8, insetBottom: 0 },
 ];
@@ -246,12 +261,13 @@ export function buildMap() {
   // Dry weeds along the foot of the wall, and a few cracks in the paving.
   for (let x = 2; x < COLS - 2; x += 1) {
     if (x >= GATE.left - 1 && x <= GATE.right + 1) continue;
-    if (x % 4 === 0) grid[WALL.top - 1][x] = T.weed;
-    if (x % 5 === 2 && grid[WALL.bottom + 1]) grid[WALL.bottom + 1][x] = T.weed;
+    if (x % 4 === 0) grid[WALL.top - 1][x] = weedFor(grid[WALL.top - 1][x]);
+    if (x % 5 === 2 && grid[WALL.bottom + 1]) grid[WALL.bottom + 1][x] = weedFor(grid[WALL.bottom + 1][x]);
   }
   const cracks = [[20, 8], [36, 7], [24, 12], [40, 11], [18, WALL.bottom + 1], [44, WALL.bottom]];
   for (const [x, y] of cracks) {
-    if (WALKABLE.has(grid[y][x]) && grid[y][x] !== T.road) grid[y][x] = T.pebble;
+    if (!WALKABLE.has(grid[y][x]) || grid[y][x] === T.road) continue;
+    grid[y][x] = PAVED.has(grid[y][x]) ? T.paveCrack : T.pebble;
   }
 
   // Solid rocks: map edges on land, plus a few boulders off the path.
@@ -268,6 +284,13 @@ export function buildMap() {
   for (const [x, y] of rocks) grid[y][x] = T.rock;
 
   return grid;
+}
+
+// Weeds match the ground they grow from, so they do not show up as squares.
+function weedFor(tile) {
+  if (PAVED.has(tile)) return T.paveWeed;
+  if (SANDY.has(tile)) return T.sandWeed;
+  return T.weed;
 }
 
 function roadLine(grid, x0, y0, x1, y1, thick) {

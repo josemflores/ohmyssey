@@ -1,4 +1,4 @@
-// Pictures for Troy, drawn with rectangles. No image files for the scenery.
+// Pictures for Troy, painted pixel by pixel in code. No image files for the scenery.
 // Ground tiles are warm and light. TroyScene lays a cool blue multiply over
 // them so the night reads as moonlight, not as black paint.
 
@@ -21,124 +21,286 @@ function fill(ctx, x, y, w, h, color) {
   ctx.fillRect(x | 0, y | 0, w | 0, h | 0);
 }
 
+// One pixel.
+function dot(ctx, x, y, color) {
+  fill(ctx, x, y, 1, 1, color);
+}
+
+// A tiny repeatable random generator. The same seed always gives the same
+// speckles, so the art looks hand-placed but never changes between loads.
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Scatter `count` single pixels of the given colors inside a box.
+function speckle(ctx, x, y, w, h, count, colors, seed) {
+  const r = rng(seed);
+  for (let i = 0; i < count; i += 1) {
+    dot(ctx, x + Math.floor(r() * w), y + Math.floor(r() * h), colors[Math.floor(r() * colors.length)]);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Colors. Everything is painted warm and light. TroyScene lays a blue
+// multiply over the ground at night, so these become moonlit stone and earth.
+// Sources for the look (see the commit message): Troy VI/VIIa had sloping
+// limestone ashlar walls with mudbrick on top, houses with stone socles,
+// mudbrick upper walls and flat timber-reed-clay roofs, paved streets, and
+// big storage jars (pithoi) sunk in the floors.
+// ---------------------------------------------------------------------------
+const EARTH = { base: '#e3cfa2', light: '#efdeb6', dark: '#cdb585', deep: '#b89e70' };
+const GRASS = ['#9fae5a', '#86984a', '#c2c776', '#6f8040'];
+const LIME = { base: '#ddd1bb', light: '#ece3d1', top: '#f6f0e3', dark: '#c4b59b', joint: '#9a8a70' };
+const BRICK = { base: '#c9a27a', light: '#d9b48c', dark: '#b08860', mortar: '#9c7650' };
+const WOOD = { base: '#8a6038', light: '#a87a4a', dark: '#5e3e22', deep: '#3e2816' };
+const CLAY_ROOF = { base: '#d2b48a', light: '#e2c8a0', dark: '#b89870', reed: '#c4a478' };
+
+// Grass tufts: a few blades, lighter on the left where the light comes from.
+function tuft(ctx, x, y, big) {
+  dot(ctx, x, y, GRASS[1]);
+  dot(ctx, x + 1, y - 1, GRASS[0]);
+  dot(ctx, x + 2, y, GRASS[1]);
+  if (big) {
+    dot(ctx, x + 1, y - 2, GRASS[2]);
+    dot(ctx, x + 3, y - 1, GRASS[3]);
+    dot(ctx, x - 1, y - 1, GRASS[0]);
+  }
+}
+
+// Beaten earth of the Troad: dry, with pebbles and the odd tuft of grass.
 function paintEarth(ctx, x, y, alt) {
-  fill(ctx, x, y, 16, 16, '#ead8b4');
-  fill(ctx, x + (alt ? 1 : 8), y + (alt ? 8 : 1), 7, 6, alt ? '#f6e6c6' : '#e2cca0');
-  fill(ctx, x + (alt ? 9 : 2), y + (alt ? 2 : 10), 4, 3, '#d4c096');
+  fill(ctx, x, y, 16, 16, EARTH.base);
+  speckle(ctx, x, y, 16, 16, 18, [EARTH.light, EARTH.dark], alt ? 11 : 7);
+  fill(ctx, x + (alt ? 2 : 9), y + (alt ? 9 : 2), 4, 2, EARTH.light);
+  dot(ctx, x + (alt ? 11 : 4), y + (alt ? 4 : 12), EARTH.deep);
+  tuft(ctx, x + (alt ? 10 : 3), y + (alt ? 13 : 6), alt);
 }
 
 function paintSand(ctx, x, y, alt) {
-  fill(ctx, x, y, 16, 16, alt ? '#f3e2b4' : '#f6e6c0');
-  fill(ctx, x + (alt ? 4 : 11), y + (alt ? 10 : 4), 3, 2, '#e2c98a');
+  // Both sand tiles share one base color so the beach has no checkerboard.
+  fill(ctx, x, y, 16, 16, '#f3e3b8');
+  speckle(ctx, x, y, 16, 16, 14, ['#fbf0d2', '#e2c98a', '#ead39c'], alt ? 21 : 23);
+  // Ripples left by the wind.
+  fill(ctx, x + 2, y + (alt ? 5 : 10), 6, 1, '#e6cf98');
+  fill(ctx, x + 9, y + (alt ? 11 : 4), 5, 1, '#e6cf98');
 }
 
 function paintWet(ctx, x, y) {
-  fill(ctx, x, y, 16, 16, '#d5c8a4');
-  fill(ctx, x, y + 10, 16, 6, '#b7c4c0');
-  fill(ctx, x + 2, y + 11, 5, 1, '#eef6f4');
+  fill(ctx, x, y, 16, 16, '#d5c6a0');
+  speckle(ctx, x, y, 16, 9, 8, ['#c8b88f', '#e0d2ae'], 31);
+  fill(ctx, x, y + 9, 16, 7, '#b4c0b8');
+  fill(ctx, x, y + 9, 16, 1, '#9fb0aa');
+  fill(ctx, x + 2, y + 11, 6, 1, '#eef6f4');
+  fill(ctx, x + 10, y + 13, 4, 1, '#d8e8e6');
 }
 
 function paintWater(ctx, x, y, deep) {
   fill(ctx, x, y, 16, 16, deep ? '#163a58' : '#1e5678');
-  fill(ctx, x, y + 6, 16, 2, deep ? '#1c4868' : '#2f6e94');
-  if (!deep) fill(ctx, x + 2, y + 6, 5, 1, '#d5eef4');
+  speckle(ctx, x, y, 16, 16, 6, deep ? ['#1a4262'] : ['#24607f', '#1a4e6e'], deep ? 41 : 43);
+  fill(ctx, x + 1, y + 5, 7, 1, deep ? '#1f4a6c' : '#3a7aa0');
+  fill(ctx, x + 9, y + 11, 5, 1, deep ? '#1f4a6c' : '#3a7aa0');
+  if (!deep) {
+    fill(ctx, x + 2, y + 5, 3, 1, '#d5eef4');
+    dot(ctx, x + 11, y + 11, '#b8dcea');
+  }
 }
 
+// The main road: big worn limestone slabs with dark joints and cart ruts.
 function paintRoad(ctx, x, y) {
-  // Long slabs that run to the tile edge, so the road is not a stack of squares.
-  fill(ctx, x, y, 16, 16, '#e7d5b2');
-  fill(ctx, x, y, 16, 7, '#f6e7c8');
-  fill(ctx, x, y + 8, 16, 8, '#f3e0b8');
-  fill(ctx, x + 3, y + 7, 4, 1, '#d9c49a');
-  fill(ctx, x + 11, y, 1, 4, '#d9c49a');
+  fill(ctx, x, y, 16, 16, '#a8957a');
+  const slabs = [
+    [0, 0, 9, 7, '#eadab8'],
+    [10, 0, 6, 7, '#f2e4c4'],
+    [0, 8, 5, 8, '#f0e0be'],
+    [6, 8, 10, 8, '#e6d4ae'],
+  ];
+  for (const [sx, sy, w, h, c] of slabs) {
+    fill(ctx, x + sx, y + sy, w, h, c);
+    fill(ctx, x + sx, y + sy, w, 1, '#f8f0dc');
+    fill(ctx, x + sx, y + sy + h - 1, w, 1, '#d2bf98');
+  }
+  speckle(ctx, x, y, 16, 16, 8, ['#d8c6a0', '#fbf3e0'], 51);
+  // Faint wheel ruts.
+  fill(ctx, x + 4, y, 1, 16, 'rgba(120, 100, 70, 0.18)');
+  fill(ctx, x + 11, y, 1, 16, 'rgba(120, 100, 70, 0.18)');
 }
 
 function paintRoadSide(ctx, x, y) {
   paintSand(ctx, x, y, false);
-  fill(ctx, x + 2, y + 3, 6, 4, '#f0e0c0');
-  fill(ctx, x + 9, y + 9, 5, 4, '#e7d4ae');
+  fill(ctx, x + 2, y + 3, 5, 4, '#efe0bf');
+  fill(ctx, x + 2, y + 6, 5, 1, '#d8c39a');
+  fill(ctx, x + 9, y + 9, 5, 4, '#e8d5ae');
+  fill(ctx, x + 9, y + 12, 5, 1, '#d2bd92');
+  tuft(ctx, x + 12, y + 5, false);
 }
 
+// Cobbled city street: rounded stones of several sizes and tones.
 function paintPave(ctx, x, y, alt) {
-  // Dark joints stay visible under the moonlight, so each tile reads as
-  // several small stones instead of one big square.
   fill(ctx, x, y, 16, 16, '#8f7b60');
-  if (!alt) {
-    fill(ctx, x, y, 7, 6, '#f4e6ce');
-    fill(ctx, x + 8, y, 8, 7, '#e4d0aa');
-    fill(ctx, x, y + 7, 8, 9, '#f7ead4');
-    fill(ctx, x + 9, y + 8, 7, 8, '#dcc49a');
-  } else {
-    fill(ctx, x, y, 5, 9, '#f6ead6');
-    fill(ctx, x + 6, y, 10, 5, '#e8d2ae');
-    fill(ctx, x + 6, y + 6, 10, 10, '#f0dcb8');
-    fill(ctx, x, y + 10, 5, 6, '#d8c096');
+  const r = rng(alt ? 61 : 67);
+  const stones = alt
+    ? [[0, 0, 5, 5], [6, 0, 5, 4], [12, 0, 4, 5], [0, 6, 4, 5], [5, 5, 6, 5], [12, 6, 4, 4], [0, 12, 6, 4], [7, 11, 4, 5], [12, 11, 4, 5]]
+    : [[0, 0, 6, 4], [7, 0, 4, 5], [12, 0, 4, 4], [0, 5, 4, 6], [5, 6, 5, 4], [11, 5, 5, 6], [0, 12, 5, 4], [6, 11, 5, 5], [12, 12, 4, 4]];
+  const tones = ['#ecdec4', '#e2d2b4', '#f3e8d4', '#d8c6a4', '#e8d8ba'];
+  for (const [sx, sy, w, h] of stones) {
+    const c = tones[Math.floor(r() * tones.length)];
+    fill(ctx, x + sx, y + sy, w, h, c);
+    // Light top-left, shade bottom-right, corners knocked off so they look round.
+    fill(ctx, x + sx, y + sy, w, 1, '#faf3e4');
+    fill(ctx, x + sx, y + sy + h - 1, w, 1, '#c4b08c');
+    fill(ctx, x + sx + w - 1, y + sy, 1, h, '#cdb994');
+    dot(ctx, x + sx, y + sy, '#8f7b60');
+    dot(ctx, x + sx + w - 1, y + sy + h - 1, '#8f7b60');
   }
 }
 
+// Heavy timber gate: two leaves of planks bound with bronze, set in stone jambs.
 function paintGateDoor() {
   const { canvas, ctx } = makeCanvas(128, 72);
-  fill(ctx, 0, 0, 8, 72, '#c9bfae');
-  fill(ctx, 120, 0, 8, 72, '#c9bfae');
-  fill(ctx, 8, 0, 52, 68, '#8a6244');
-  fill(ctx, 68, 0, 52, 68, '#7a563c');
-  for (let i = 0; i < 6; i += 1) {
-    fill(ctx, 12, 6 + i * 11, 44, 2, '#5c4030');
-    fill(ctx, 72, 6 + i * 11, 44, 2, '#5c4030');
+  // Limestone jambs.
+  for (const jx of [0, 120]) {
+    fill(ctx, jx, 0, 8, 72, LIME.dark);
+    for (let i = 0; i < 6; i += 1) {
+      fill(ctx, jx, i * 12, 8, 11, i % 2 ? LIME.base : LIME.light);
+      fill(ctx, jx, i * 12, 8, 1, LIME.top);
+    }
   }
-  fill(ctx, 58, 0, 12, 68, '#3a2418');
-  fill(ctx, 30, 30, 8, 8, '#e7d3b0');
-  fill(ctx, 90, 30, 8, 8, '#e7d3b0');
-  fill(ctx, 8, 64, 112, 8, '#6a5344');
+  for (const [lx, tone] of [[8, WOOD.base], [68, '#7e5632']]) {
+    fill(ctx, lx, 0, 52, 68, tone);
+    // Vertical planks.
+    for (let i = 0; i < 7; i += 1) {
+      fill(ctx, lx + i * 7 + 6, 0, 1, 68, WOOD.dark);
+      fill(ctx, lx + i * 7, 0, 1, 68, WOOD.light);
+    }
+    speckle(ctx, lx, 0, 52, 68, 40, [WOOD.dark, WOOD.light, '#6e4a2a'], lx + 3);
+    // Bronze bands with studs.
+    for (const by of [8, 32, 56]) {
+      fill(ctx, lx, by, 52, 4, '#b07a3a');
+      fill(ctx, lx, by, 52, 1, '#e0b070');
+      fill(ctx, lx, by + 3, 52, 1, '#7a4e22');
+      for (let sx = lx + 3; sx < lx + 52; sx += 8) dot(ctx, sx, by + 1, '#f6d898');
+    }
+  }
+  // The seam between the leaves, and a bronze ring on each.
+  fill(ctx, 59, 0, 10, 68, WOOD.deep);
+  fill(ctx, 63, 0, 2, 68, '#24160c');
+  for (const rx of [50, 74]) {
+    fill(ctx, rx, 42, 5, 5, '#c08a44');
+    fill(ctx, rx + 1, 43, 3, 3, WOOD.deep);
+  }
+  // Threshold stone.
+  fill(ctx, 8, 66, 112, 6, '#8a7a62');
+  fill(ctx, 8, 66, 112, 1, '#b8a888');
   return canvas;
 }
 
+// Fitted limestone ashlar, the way the Troy VI wall was built.
+function ashlar(ctx, x, y, seed) {
+  fill(ctx, x, y, 16, 16, LIME.joint);
+  const rows = seed % 2
+    ? [[0, 0, 7, 5], [8, 0, 8, 5], [0, 6, 4, 5], [5, 6, 7, 5], [13, 6, 3, 5], [0, 12, 9, 4], [10, 12, 6, 4]]
+    : [[0, 0, 5, 5], [6, 0, 10, 5], [0, 6, 9, 5], [10, 6, 6, 5], [0, 12, 4, 4], [5, 12, 11, 4]];
+  const r = rng(seed);
+  const tones = [LIME.base, LIME.light, '#e2d7c2', '#d3c6ae'];
+  for (const [bx, by, w, h] of rows) {
+    fill(ctx, x + bx, y + by, w, h, tones[Math.floor(r() * tones.length)]);
+    fill(ctx, x + bx, y + by, w, 1, LIME.top);
+    fill(ctx, x + bx, y + by + h - 1, w, 1, LIME.dark);
+  }
+  speckle(ctx, x, y, 16, 16, 6, ['#c8baa0', '#f2eadb'], seed + 5);
+}
+
 function paintWall(ctx, x, y) {
-  fill(ctx, x, y, 16, 16, '#c9bfae');
-  fill(ctx, x + 1, y + 1, 6, 6, '#f0e8d8');
-  fill(ctx, x + 8, y + 1, 7, 6, '#e4d9c6');
-  fill(ctx, x + 1, y + 8, 7, 7, '#ddd2be');
-  fill(ctx, x + 9, y + 8, 6, 7, '#e8decc');
-  fill(ctx, x + 1, y + 1, 6, 1, '#faf6ee');
-  fill(ctx, x + 8, y + 1, 7, 1, '#f7f1e6');
+  ashlar(ctx, x, y, 71);
 }
 
+// Top of the wall: a mudbrick breastwork with square merlons, as in Troy VIIa.
 function paintBattlement(ctx, x, y) {
-  paintWall(ctx, x, y);
-  // Notches. Cool shadow, not a black hole.
-  fill(ctx, x, y, 4, 5, '#8ea0b4');
-  fill(ctx, x + 8, y, 4, 5, '#8ea0b4');
-  fill(ctx, x + 4, y, 4, 3, '#f4ecde');
-  fill(ctx, x + 12, y, 4, 3, '#f4ecde');
+  ashlar(ctx, x, y, 72);
+  fill(ctx, x, y, 16, 7, BRICK.base);
+  fill(ctx, x, y + 3, 16, 1, BRICK.mortar);
+  fill(ctx, x + 7, y, 1, 3, BRICK.mortar);
+  fill(ctx, x + 3, y + 4, 1, 3, BRICK.mortar);
+  fill(ctx, x + 11, y + 4, 1, 3, BRICK.mortar);
+  // Notches between the merlons, in cool shadow.
+  fill(ctx, x + 5, y, 6, 3, '#8ea0b4');
+  fill(ctx, x + 5, y + 3, 6, 1, '#7a8ca2');
+  fill(ctx, x, y, 5, 1, BRICK.light);
+  fill(ctx, x + 11, y, 5, 1, BRICK.light);
+  fill(ctx, x, y + 7, 16, 1, '#9c7a56');
 }
 
+// The outer face of the wall slopes outward at the foot. Bright where the
+// slope catches the moon, darker at the base.
 function paintWallFace(ctx, x, y) {
-  fill(ctx, x, y, 16, 16, '#d9cfc0');
-  fill(ctx, x, y, 16, 4, '#f3ebdd');
-  fill(ctx, x, y, 16, 1, '#faf6ee');
-  fill(ctx, x, y + 12, 16, 4, '#a89880');
+  ashlar(ctx, x, y, 73);
+  fill(ctx, x, y, 16, 3, 'rgba(255, 250, 240, 0.35)');
+  fill(ctx, x, y + 10, 16, 6, 'rgba(90, 70, 50, 0.28)');
+  fill(ctx, x, y + 15, 16, 1, '#8a7a60');
 }
 
 function paintRock(ctx, x, y) {
-  // Broken limestone, same family as the wall, so the edge is not a gray blob.
-  fill(ctx, x, y, 16, 16, '#e6d7b8');
-  fill(ctx, x + 2, y + 5, 11, 8, '#f4ead4');
-  fill(ctx, x + 4, y + 2, 7, 5, '#faf4e8');
-  fill(ctx, x + 3, y + 10, 5, 3, '#cbb898');
-  fill(ctx, x + 10, y + 8, 4, 4, '#d9c8a8');
+  paintEarth(ctx, x, y, false);
+  // A broken limestone boulder with a shadow to the lower right.
+  fill(ctx, x + 2, y + 4, 12, 9, '#cdbc9c');
+  fill(ctx, x + 3, y + 3, 9, 8, '#e8dcc4');
+  fill(ctx, x + 4, y + 2, 6, 3, '#f6eedf');
+  fill(ctx, x + 9, y + 7, 4, 5, '#bba888');
+  fill(ctx, x + 6, y + 8, 1, 3, '#a89474');
+  dot(ctx, x + 3, y + 12, '#a89474');
 }
 
 function paintPebble(ctx, x, y) {
   paintEarth(ctx, x, y, false);
-  fill(ctx, x + 4, y + 6, 3, 2, '#b7a488');
-  fill(ctx, x + 10, y + 10, 2, 2, '#c4b496');
+  for (const [px, py] of [[4, 6], [10, 10], [12, 4]]) {
+    fill(ctx, x + px, y + py, 3, 2, '#c4b496');
+    dot(ctx, x + px, y + py, '#e8dcc4');
+    dot(ctx, x + px + 2, y + py + 1, '#9c8a6c');
+  }
 }
 
+// Weeds at the foot of the wall: taller grass with a few small flowers.
 function paintWeed(ctx, x, y) {
   paintEarth(ctx, x, y, true);
-  fill(ctx, x + 4, y + 8, 2, 5, '#7d8a58');
-  fill(ctx, x + 7, y + 6, 2, 6, '#9aaa6a');
-  fill(ctx, x + 10, y + 9, 2, 4, '#6e7c4c');
+  tuft(ctx, x + 2, y + 12, true);
+  tuft(ctx, x + 7, y + 9, true);
+  tuft(ctx, x + 11, y + 13, true);
+  fill(ctx, x + 6, y + 4, 1, 6, GRASS[3]);
+  fill(ctx, x + 9, y + 5, 1, 5, GRASS[0]);
+  dot(ctx, x + 6, y + 3, '#f4f0e0');
+  dot(ctx, x + 9, y + 4, '#f0d060');
+  dot(ctx, x + 12, y + 10, '#f4f0e0');
+}
+
+// Paving with grass pushing up between the stones.
+function paintPaveWeed(ctx, x, y) {
+  paintPave(ctx, x, y, true);
+  tuft(ctx, x + 4, y + 6, true);
+  tuft(ctx, x + 11, y + 11, false);
+  fill(ctx, x + 5, y + 10, 1, 1, GRASS[0]);
+}
+
+function paintSandWeed(ctx, x, y) {
+  paintSand(ctx, x, y, true);
+  tuft(ctx, x + 3, y + 12, true);
+  tuft(ctx, x + 9, y + 8, true);
+  dot(ctx, x + 10, y + 5, '#f4f0e0');
+}
+
+function paintPaveCrack(ctx, x, y) {
+  paintPave(ctx, x, y, false);
+  // A crack running across two stones.
+  for (const [cx, cy] of [[3, 2], [4, 3], [5, 4], [5, 5], [6, 6], [7, 7], [8, 8], [8, 9], [9, 10]]) {
+    dot(ctx, x + cx, y + cy, '#7a6a52');
+  }
+  dot(ctx, x + 10, y + 11, '#9a8a70');
 }
 
 function paintTileset() {
@@ -162,6 +324,9 @@ function paintTileset() {
   painters[T.pave] = (c, x, y) => paintPave(c, x, y, false);
   painters[T.paveAlt] = (c, x, y) => paintPave(c, x, y, true);
   painters[T.weed] = paintWeed;
+  painters[T.paveWeed] = paintPaveWeed;
+  painters[T.sandWeed] = paintSandWeed;
+  painters[T.paveCrack] = paintPaveCrack;
   for (let i = 0; i <= max; i += 1) {
     if (!painters[i]) throw new Error(`Missing painter for tile ${i}`);
     painters[i](ctx, i * 16, 0);
@@ -169,108 +334,311 @@ function paintTileset() {
   return canvas;
 }
 
+// A column shaft with fluting, lit from the left.
+function shaft(ctx, x, y, w, h) {
+  fill(ctx, x, y, w, h, '#e8e0d0');
+  fill(ctx, x, y, 2, h, '#fffaf2');
+  fill(ctx, x + w - 2, y, 2, h, '#b7aa96');
+  for (let i = 3; i < w - 2; i += 2) fill(ctx, x + i, y, 1, h, '#d3c8b4');
+}
+
+// The temple of Athena on the height of the citadel (Iliad 6). A stone
+// podium, a porch of columns, a timber-framed pediment, and a lamp inside.
 function paintTemple() {
   const { canvas, ctx } = makeCanvas(104, 80);
-  // Steps, lit from the upper left. The shadow sits on the south edge.
-  fill(ctx, 0, 68, 104, 12, '#c4b8a4');
-  fill(ctx, 6, 56, 92, 16, '#e4d8c4');
-  fill(ctx, 6, 56, 92, 2, '#faf4ea');
-  fill(ctx, 0, 76, 104, 4, '#8f8372');
-  for (let i = 0; i < 5; i += 1) {
-    const x = 16 + i * 16;
-    fill(ctx, x + 6, 30, 3, 28, '#b7aa96');
-    fill(ctx, x, 30, 8, 28, '#f4efe4');
-    fill(ctx, x, 30, 2, 28, '#fffaf2');
-    fill(ctx, x - 2, 26, 12, 5, '#faf6ee');
-    fill(ctx, x - 2, 54, 12, 4, '#d5cbb8');
+  // Stepped podium of ashlar.
+  for (let i = 0; i < 3; i += 1) {
+    const sx = 6 - i * 3;
+    const sy = 56 + i * 7;
+    fill(ctx, sx, sy, 104 - sx * 2, 7, i % 2 ? LIME.base : LIME.light);
+    fill(ctx, sx, sy, 104 - sx * 2, 1, LIME.top);
+    fill(ctx, sx, sy + 6, 104 - sx * 2, 1, LIME.dark);
+    for (let jx = sx + 7 + i * 3; jx < 104 - sx; jx += 13) fill(ctx, jx, sy + 1, 1, 5, LIME.joint);
   }
-  fill(ctx, 14, 18, 76, 12, '#a84838');
-  fill(ctx, 26, 10, 52, 10, '#c45a42');
-  fill(ctx, 40, 4, 24, 8, '#d47858');
-  fill(ctx, 46, 0, 12, 5, '#e6c27a');
-  // Dark doorway and one small lamp, not a fire.
-  fill(ctx, 46, 36, 12, 20, '#2a241c');
-  fill(ctx, 50, 44, 4, 6, '#e8b060');
+  fill(ctx, 0, 77, 104, 3, '#8f8372');
+  // Back wall of the cella in shadow, with the doorway and a small lamp.
+  fill(ctx, 10, 30, 84, 26, '#b8ab94');
+  fill(ctx, 44, 34, 16, 22, '#2a241c');
+  fill(ctx, 46, 36, 12, 20, '#3a3024');
+  fill(ctx, 50, 44, 4, 5, '#e8b060');
+  dot(ctx, 51, 43, '#fff2c0');
+  // Porch columns.
+  for (let i = 0; i < 6; i += 1) {
+    const cx = 10 + i * 16;
+    shaft(ctx, cx, 30, 8, 26);
+    fill(ctx, cx - 2, 26, 12, 4, '#faf6ee');
+    fill(ctx, cx - 2, 29, 12, 1, '#c8bca6');
+    fill(ctx, cx - 1, 54, 10, 2, '#d5cbb8');
+  }
+  // Architrave and a painted frieze band.
+  fill(ctx, 4, 20, 96, 7, '#ece4d4');
+  fill(ctx, 4, 20, 96, 1, '#fffaf2');
+  fill(ctx, 4, 24, 96, 3, '#7a3a2e');
+  for (let fx = 6; fx < 100; fx += 6) fill(ctx, fx, 25, 3, 1, '#e6c27a');
+  // Pediment: timber roof with clay tiles, darker underside.
+  ctx.fillStyle = '#a84838';
+  ctx.beginPath();
+  ctx.moveTo(2, 21);
+  ctx.lineTo(52, 2);
+  ctx.lineTo(102, 21);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#c45a42';
+  ctx.beginPath();
+  ctx.moveTo(12, 19);
+  ctx.lineTo(52, 5);
+  ctx.lineTo(92, 19);
+  ctx.closePath();
+  ctx.fill();
+  for (let ty = 8; ty < 20; ty += 3) fill(ctx, 30, ty, 44, 1, 'rgba(90, 30, 20, 0.35)');
+  fill(ctx, 46, 9, 12, 7, '#e2d4b8');
+  fill(ctx, 49, 11, 6, 4, '#c9a24a');
+  fill(ctx, 50, 0, 4, 4, '#e6c27a');
   return canvas;
 }
 
-function paintHouse(roof, roofHi) {
+// A Trojan house: stone socle, mudbrick walls bound with timber, a flat roof
+// of reeds and clay on beams whose ends stick out, and no ground-floor
+// windows, only small high ones. The 'alt' house has jars and a reed mat
+// on its roof instead of a ladder hatch and an oven chimney.
+function paintHouse(variant) {
   const { canvas, ctx } = makeCanvas(60, 64);
-  fill(ctx, 4, 36, 52, 22, '#6a5e50');
-  fill(ctx, 0, 54, 60, 10, '#3e342c');
-  fill(ctx, 2, 6, 56, 34, roof);
-  fill(ctx, 8, 0, 44, 12, roofHi);
-  fill(ctx, 4, 6, 52, 3, '#e6c8a0');
-  // Plank lines on the roof.
-  for (let i = 0; i < 3; i += 1) fill(ctx, 6, 16 + i * 7, 48, 1, 'rgba(0,0,0,0.35)');
-  fill(ctx, 24, 44, 12, 18, '#1a120e');
-  fill(ctx, 26, 50, 8, 10, '#2a1c14');
-  fill(ctx, 8, 40, 10, 8, '#243040');
-  fill(ctx, 42, 40, 8, 8, '#1c2830');
+  const alt = variant === 'alt';
+
+  // Flat roof, seen from above: packed clay over reeds, with a raised edge.
+  fill(ctx, 1, 2, 58, 30, CLAY_ROOF.dark);
+  fill(ctx, 2, 3, 56, 27, alt ? '#d8bc94' : CLAY_ROOF.base);
+  speckle(ctx, 3, 4, 54, 25, 70, [CLAY_ROOF.light, CLAY_ROOF.reed, CLAY_ROOF.dark], alt ? 81 : 83);
+  for (let ry = 7; ry < 28; ry += 5) fill(ctx, 4, ry, 52, 1, 'rgba(150, 120, 80, 0.35)');
+  fill(ctx, 1, 2, 58, 2, CLAY_ROOF.light);
+  fill(ctx, 1, 2, 2, 30, CLAY_ROOF.light);
+  fill(ctx, 57, 2, 2, 30, '#a88a62');
+  if (alt) {
+    // A pithos and a reed mat drying on the roof.
+    fill(ctx, 8, 10, 7, 9, '#b06a3c');
+    fill(ctx, 9, 10, 5, 2, '#d08a54');
+    fill(ctx, 9, 9, 5, 1, '#6e3e1e');
+    fill(ctx, 34, 12, 16, 10, '#c8b070');
+    for (let mx = 35; mx < 50; mx += 2) fill(ctx, mx, 12, 1, 10, '#a89050');
+  } else {
+    // Roof hatch with a ladder poking out.
+    fill(ctx, 40, 9, 10, 8, '#4a3626');
+    fill(ctx, 41, 10, 8, 6, '#2e2016');
+    fill(ctx, 42, 5, 1, 12, WOOD.light);
+    fill(ctx, 47, 5, 1, 12, WOOD.light);
+    for (let ly = 6; ly < 16; ly += 3) fill(ctx, 42, ly, 6, 1, WOOD.base);
+    // Clay oven chimney.
+    fill(ctx, 10, 8, 6, 6, '#b89070');
+    fill(ctx, 11, 9, 4, 3, '#3a2a20');
+  }
+
+  // Roof edge: a row of beam ends under the parapet.
+  fill(ctx, 1, 31, 58, 3, WOOD.dark);
+  for (let bx = 3; bx < 58; bx += 6) {
+    fill(ctx, bx, 31, 3, 3, WOOD.light);
+    dot(ctx, bx + 1, 32, WOOD.deep);
+  }
+
+  // Mudbrick upper wall with a timber band (timber-laced brick).
+  fill(ctx, 2, 34, 56, 14, BRICK.base);
+  for (let row = 0; row < 3; row += 1) {
+    const by = 35 + row * 4;
+    fill(ctx, 2, by + 3, 56, 1, BRICK.mortar);
+    for (let bx = 2 + (row % 2) * 4; bx < 58; bx += 8) fill(ctx, bx, by, 1, 3, BRICK.mortar);
+  }
+  speckle(ctx, 2, 34, 56, 14, 30, [BRICK.light, BRICK.dark], alt ? 91 : 93);
+  fill(ctx, 2, 34, 56, 1, '#e0bc94');
+  fill(ctx, 2, 46, 56, 2, WOOD.base);
+  fill(ctx, 2, 46, 56, 1, WOOD.light);
+  // Small high windows with timber frames.
+  for (const wx of alt ? [10, 42] : [12]) {
+    fill(ctx, wx - 1, 37, 8, 7, WOOD.dark);
+    fill(ctx, wx, 38, 6, 5, '#243040');
+    fill(ctx, wx + 2, 38, 1, 5, WOOD.base);
+    dot(ctx, wx + 4, 39, '#e8b060');
+  }
+
+  // Stone socle: rough limestone blocks, like the city wall.
+  fill(ctx, 2, 48, 56, 12, LIME.joint);
+  const r = rng(alt ? 95 : 97);
+  for (let row = 0; row < 2; row += 1) {
+    let bx = 2 + (row ? 3 : 0);
+    while (bx < 58) {
+      const w = Math.min(5 + Math.floor(r() * 6), 58 - bx);
+      fill(ctx, bx, 48 + row * 6, w - 1, 5, r() > 0.5 ? LIME.base : '#d0c3aa');
+      fill(ctx, bx, 48 + row * 6, w - 1, 1, LIME.light);
+      bx += w;
+    }
+  }
+
+  // Wooden door in a deep stone frame, with a step.
+  const dx = alt ? 25 : 34;
+  fill(ctx, dx - 2, 38, 14, 22, '#a89474');
+  fill(ctx, dx, 40, 10, 20, WOOD.base);
+  fill(ctx, dx, 40, 10, 1, WOOD.light);
+  fill(ctx, dx + 4, 40, 1, 20, WOOD.dark);
+  dot(ctx, dx + 7, 50, '#e0b070');
+  fill(ctx, dx - 3, 59, 16, 2, LIME.light);
+
+  // Things by the door: a storage jar and a little bench of planks.
+  const jx = alt ? 46 : 8;
+  fill(ctx, jx, 51, 7, 9, '#b8743e');
+  fill(ctx, jx + 1, 51, 2, 7, '#d6955a');
+  fill(ctx, jx + 1, 50, 5, 1, '#6e3e1e');
+  fill(ctx, jx + 1, 59, 5, 1, '#7a4a24');
   return canvas;
 }
 
 function paintColumn() {
   const { canvas, ctx } = makeCanvas(16, 48);
-  fill(ctx, 1, 40, 14, 8, '#d5cbb8');
-  fill(ctx, 0, 44, 16, 4, '#a89880');
-  fill(ctx, 11, 8, 3, 34, '#b7aa96');
-  fill(ctx, 3, 8, 8, 34, '#f4efe4');
-  fill(ctx, 3, 8, 2, 34, '#fffaf2');
-  fill(ctx, 1, 4, 14, 6, '#faf6ee');
-  fill(ctx, 1, 4, 4, 6, '#fffdf8');
-  fill(ctx, 3, 0, 10, 5, '#e6d7b0');
+  fill(ctx, 1, 40, 14, 6, '#d5cbb8');
+  fill(ctx, 1, 40, 14, 1, '#f2ebdc');
+  fill(ctx, 0, 45, 16, 3, '#a89880');
+  shaft(ctx, 3, 9, 10, 31);
+  // Capital: a cushion and a square abacus on top.
+  fill(ctx, 1, 5, 14, 4, '#f4ede0');
+  fill(ctx, 1, 8, 14, 1, '#c8bca6');
+  fill(ctx, 0, 1, 16, 4, '#faf6ee');
+  fill(ctx, 0, 4, 16, 1, '#b7aa96');
+  fill(ctx, 0, 0, 16, 1, '#fffdf8');
   return canvas;
 }
 
 function paintRubble() {
+  // Fallen limestone blocks with a little grass growing between them.
   const { canvas, ctx } = makeCanvas(34, 24);
-  fill(ctx, 2, 12, 10, 8, '#d9c8a8');
-  fill(ctx, 10, 8, 14, 12, '#f0e4cc');
-  fill(ctx, 20, 14, 12, 8, '#cbb898');
-  fill(ctx, 12, 6, 8, 4, '#faf4e8');
-  fill(ctx, 6, 16, 4, 3, '#a89070');
-  fill(ctx, 16, 18, 6, 3, '#b8a488');
+  const blocks = [[2, 12, 10, 8], [10, 7, 14, 12], [21, 13, 11, 8]];
+  for (const [bx, by, w, h] of blocks) {
+    fill(ctx, bx, by, w, h, '#cbb898');
+    fill(ctx, bx, by, w - 2, h - 2, '#e8dcc4');
+    fill(ctx, bx, by, w - 2, 1, '#f8f2e4');
+    fill(ctx, bx + w - 2, by + 1, 2, h - 1, '#b2a080');
+  }
+  fill(ctx, 15, 9, 1, 6, '#c2b090');
+  tuft(ctx, 9, 21, true);
+  tuft(ctx, 24, 22, false);
+  return canvas;
+}
+
+// Storage jars (pithoi), half sunk, the way Troy VIIa houses kept grain,
+// oil and wine. A small amphora leans against them.
+function paintPithoi() {
+  const { canvas, ctx } = makeCanvas(34, 26);
+  const jar = (x, y, w, h, base, hi) => {
+    fill(ctx, x + 1, y, w - 2, h, base);
+    fill(ctx, x, y + 2, w, h - 4, base);
+    fill(ctx, x + 1, y + 2, 2, h - 4, hi);
+    fill(ctx, x + w - 2, y + 3, 1, h - 5, '#7a4422');
+    // Rim and the rope-pattern bands potters pressed into the clay.
+    fill(ctx, x + 2, y - 1, w - 4, 2, '#6e3e1e');
+    fill(ctx, x + 3, y - 1, w - 6, 1, hi);
+    fill(ctx, x, y + Math.floor(h / 2), w, 1, '#8a5028');
+    for (let i = x + 1; i < x + w - 1; i += 2) dot(ctx, i, y + Math.floor(h / 2) - 1, '#d89a62');
+  };
+  jar(2, 6, 12, 17, '#b8743e', '#dc9a5e');
+  jar(14, 3, 13, 20, '#a8683a', '#d08c52');
+  // Amphora leaning on the right.
+  fill(ctx, 27, 10, 5, 12, '#c48a54');
+  fill(ctx, 28, 8, 3, 2, '#c48a54');
+  fill(ctx, 27, 10, 1, 10, '#e0aa74');
+  fill(ctx, 32, 11, 1, 4, '#8a5028');
+  fill(ctx, 28, 22, 3, 2, '#8a5028');
   return canvas;
 }
 
 function paintBrazier() {
-  // Empty bowl. The city is not burning.
+  // Bronze bowl on a tripod. Empty: the city is not burning.
   const { canvas, ctx } = makeCanvas(16, 24);
-  fill(ctx, 2, 14, 2, 10, '#6a5840');
-  fill(ctx, 12, 14, 2, 10, '#6a5840');
-  fill(ctx, 7, 16, 2, 8, '#6a5840');
-  fill(ctx, 2, 12, 12, 5, '#a08058');
-  fill(ctx, 3, 10, 10, 4, '#4a3c2c');
-  fill(ctx, 5, 11, 6, 2, '#c4a878');
+  fill(ctx, 3, 14, 1, 9, '#6a4a28');
+  fill(ctx, 12, 14, 1, 9, '#6a4a28');
+  fill(ctx, 7, 15, 2, 8, '#7a5630');
+  fill(ctx, 1, 11, 14, 5, '#a8743a');
+  fill(ctx, 1, 11, 14, 1, '#e0b070');
+  fill(ctx, 2, 15, 12, 1, '#6a4422');
+  fill(ctx, 3, 9, 10, 3, '#3a2a1c');
+  fill(ctx, 5, 10, 6, 1, '#7a6a5a');
   return canvas;
 }
 
 function paintCypress() {
   const { canvas, ctx } = makeCanvas(16, 44);
-  fill(ctx, 6, 32, 4, 12, '#3a2a18');
-  fill(ctx, 3, 22, 10, 14, '#1e3a2c');
-  fill(ctx, 4, 12, 8, 14, '#2a4a36');
-  fill(ctx, 5, 4, 6, 12, '#1a3328');
-  fill(ctx, 7, 0, 2, 8, '#143024');
-  fill(ctx, 6, 14, 2, 10, '#3e6a50');
+  fill(ctx, 7, 34, 2, 9, '#4a3420');
+  fill(ctx, 7, 34, 1, 9, '#6a4c30');
+  // Tall flame-shaped crown in clumps, light on the left.
+  const greens = ['#1e3a2c', '#2a4a36', '#3e6a50', '#173024'];
+  const clumps = [[3, 24, 10, 12], [4, 16, 8, 11], [5, 8, 6, 10], [6, 2, 4, 8], [7, 0, 2, 3]];
+  for (const [cx, cy, w, h] of clumps) {
+    fill(ctx, cx, cy, w, h, greens[0]);
+    fill(ctx, cx, cy + 1, Math.ceil(w / 2), h - 2, greens[1]);
+    fill(ctx, cx, cy + 2, 1, h - 4, greens[2]);
+  }
+  speckle(ctx, 3, 2, 10, 34, 22, [greens[2], greens[3], '#4e7a5c'], 101);
+  return canvas;
+}
+
+// A broad Valonia oak, the tree of the Troad. The Iliad keeps an oak by
+// the Scaean gate.
+function paintOak() {
+  const { canvas, ctx } = makeCanvas(40, 44);
+  // Trunk and two branches.
+  fill(ctx, 18, 26, 5, 16, '#5a3e24');
+  fill(ctx, 18, 26, 2, 16, '#7a5634');
+  fill(ctx, 14, 26, 4, 2, '#5a3e24');
+  fill(ctx, 23, 24, 4, 2, '#5a3e24');
+  fill(ctx, 16, 40, 9, 2, '#5a3e24');
+  // Crown: overlapping rounded clumps.
+  const clumps = [[4, 12, 14, 14], [14, 4, 16, 16], [24, 12, 14, 14], [10, 16, 20, 12]];
+  for (const [cx, cy, w, h] of clumps) {
+    fill(ctx, cx + 2, cy, w - 4, h, '#4a6a34');
+    fill(ctx, cx, cy + 2, w, h - 4, '#4a6a34');
+    fill(ctx, cx + 2, cy + 1, w - 6, 4, '#6e8a44');
+    fill(ctx, cx + w - 3, cy + 3, 2, h - 5, '#344c26');
+  }
+  speckle(ctx, 2, 4, 36, 24, 60, ['#86a050', '#3a5428', '#a2b862'], 111);
+  return canvas;
+}
+
+// Olive tree: twisted gray trunk, silvery-green leaves.
+function paintOlive() {
+  const { canvas, ctx } = makeCanvas(32, 36);
+  fill(ctx, 14, 20, 4, 14, '#7a6c5a');
+  fill(ctx, 13, 26, 2, 8, '#8e8070');
+  fill(ctx, 17, 18, 3, 4, '#6a5e4e');
+  fill(ctx, 12, 32, 9, 2, '#6a5e4e');
+  const clumps = [[3, 8, 12, 12], [12, 2, 14, 13], [19, 10, 11, 10]];
+  for (const [cx, cy, w, h] of clumps) {
+    fill(ctx, cx + 1, cy, w - 2, h, '#7c8c5a');
+    fill(ctx, cx, cy + 1, w, h - 2, '#7c8c5a');
+    fill(ctx, cx + 1, cy + 1, w - 4, 3, '#a4b080');
+  }
+  speckle(ctx, 2, 2, 28, 20, 50, ['#b8c498', '#5e6e42', '#94a272'], 121);
   return canvas;
 }
 
 function paintTower() {
+  // Rectangular stone tower with a mudbrick top and timber floor beams.
   const { canvas, ctx } = makeCanvas(32, 56);
-  fill(ctx, 4, 10, 24, 42, '#e4d9c6');
-  fill(ctx, 20, 10, 8, 42, '#c9bfae');
-  fill(ctx, 4, 10, 4, 42, '#faf6ee');
-  fill(ctx, 2, 46, 28, 8, '#d5cbb8');
-  fill(ctx, 2, 52, 28, 4, '#8f8372');
-  fill(ctx, 2, 4, 8, 8, '#f4ecde');
-  fill(ctx, 14, 2, 6, 10, '#efe6d4');
-  fill(ctx, 22, 4, 8, 8, '#e4d9c6');
-  fill(ctx, 6, 0, 6, 4, '#8ea0b4');
-  fill(ctx, 20, 0, 6, 4, '#8ea0b4');
-  // A small lamp in the tower, not a blaze.
-  fill(ctx, 14, 30, 4, 5, '#e8c080');
+  for (let ty = 14; ty < 52; ty += 16) ashlar(ctx, 3, ty, 130 + ty);
+  for (let ty = 14; ty < 52; ty += 16) ashlar(ctx, 13, ty, 140 + ty);
+  // Batter: the foot spreads out.
+  fill(ctx, 1, 44, 30, 9, LIME.base);
+  fill(ctx, 1, 44, 30, 1, LIME.top);
+  fill(ctx, 1, 52, 30, 1, LIME.joint);
+  fill(ctx, 25, 14, 4, 38, 'rgba(80, 70, 60, 0.25)');
+  // Timber band and mudbrick top with merlons.
+  fill(ctx, 3, 12, 26, 2, WOOD.base);
+  for (let bx = 4; bx < 28; bx += 5) dot(ctx, bx, 12, WOOD.light);
+  fill(ctx, 3, 4, 26, 8, BRICK.base);
+  fill(ctx, 3, 7, 26, 1, BRICK.mortar);
+  for (let bx = 5; bx < 28; bx += 6) fill(ctx, bx, 8, 1, 4, BRICK.mortar);
+  fill(ctx, 3, 0, 6, 4, BRICK.light);
+  fill(ctx, 13, 0, 6, 4, BRICK.light);
+  fill(ctx, 23, 0, 6, 4, BRICK.base);
+  fill(ctx, 9, 0, 4, 4, '#8ea0b4');
+  fill(ctx, 19, 0, 4, 4, '#8ea0b4');
+  // A narrow window with lamplight.
+  fill(ctx, 14, 26, 4, 7, '#2a2018');
+  fill(ctx, 15, 28, 2, 4, '#e8c080');
   return canvas;
 }
 
@@ -326,8 +694,11 @@ function paintVignette() {
 
 const PROP_ART = {
   temple: paintTemple,
-  house: () => paintHouse('#8c3a2a', '#b5523a'),
-  houseAlt: () => paintHouse('#5c4634', '#7a5a40'),
+  house: () => paintHouse('main'),
+  houseAlt: () => paintHouse('alt'),
+  pithoi: paintPithoi,
+  oak: paintOak,
+  olive: paintOlive,
   column: paintColumn,
   rubble: paintRubble,
   brazier: paintBrazier,

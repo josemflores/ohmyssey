@@ -172,9 +172,10 @@ export class TroyScene extends Phaser.Scene {
     }
 
     this.glints = createGlints(this);
-    // Deep blue moonlight, about half the brightness of the pale stone underneath.
+    // Blue moonlight, a little lighter than before so the stone and earth
+    // textures still read at night.
     // Lamps and people are drawn later, above this grade.
-    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0x6a7c9e, 1);
+    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0x8496b8, 1);
     moon.setBlendMode(Phaser.BlendModes.MULTIPLY);
     moon.setDepth(5000);
     for (const lamp of LAMPS) addLamp(this, this.blockers, lamp);
