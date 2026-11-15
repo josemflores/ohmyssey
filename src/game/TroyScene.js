@@ -46,6 +46,13 @@ import { buildWorldTextures } from './textures.js';
 // Odysseus is drawn at the same 1x as the Greek and Trojan soldiers. They
 // all share the same 32x32 LPC body, so 4/3 made him a head taller than
 // everyone else in the horse and in Troy.
+// Night in Troy. The ground is darkened by a blue multiply over the whole
+// map (MOON). Buildings, trees and props draw above that grade, so they get
+// their own blue tint (NIGHT_TINT), a little lighter than the ground so they
+// still stand out. People are not tinted, so they stay easy to read.
+const MOON = 0x55648a;
+const NIGHT_TINT = 0x7482a8;
+
 const HERO_SCALE = 1;
 
 // How long each battle picture plays before the turn strip moves on.
@@ -168,14 +175,14 @@ export class TroyScene extends Phaser.Scene {
     }
     for (const prop of PROPS) addSolidProp(this, this.blockers, prop);
     for (const decor of DECOR) {
-      this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(7000 + decor.baseY);
+      this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(7000 + decor.baseY)
+        .setTint(NIGHT_TINT);
     }
 
     this.glints = createGlints(this);
-    // Blue moonlight, a little lighter than before so the stone and earth
-    // textures still read at night.
+    // Deep blue moonlight over the ground (see MOON at the top of the file).
     // Lamps and people are drawn later, above this grade.
-    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0x8496b8, 1);
+    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, MOON, 1);
     moon.setBlendMode(Phaser.BlendModes.MULTIPLY);
     moon.setDepth(5000);
     for (const lamp of LAMPS) addLamp(this, this.blockers, lamp);
@@ -1212,10 +1219,11 @@ function openGateDoors(scene) {
   // a pocket in the wall: it moves outward while the part that has passed
   // the jamb is cropped away, so it disappears behind the stone. The jambs
   // are drawn on top to cover the seam. Flat 2D, nothing tips toward us.
-  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
-  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
+  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420).setTint(NIGHT_TINT);
+  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420).setTint(NIGHT_TINT);
   for (const [cropX, cropW] of [[0, 8], [120, 8]]) {
-    scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7421).setCrop(cropX, 0, cropW, 72);
+    scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7421).setCrop(cropX, 0, cropW, 72)
+      .setTint(NIGHT_TINT);
   }
   const LEAF = 56;
   // Leave a thin edge of each leaf showing in the opening, like a door
@@ -1248,9 +1256,11 @@ function addSolidProp(scene, group, prop) {
     const horse = scene.add.sprite(prop.x, prop.baseY, 'horse', 0);
     horse.setOrigin(0.5, 122 / 128);
     horse.setDepth(7000 + prop.baseY);
+    horse.setTint(NIGHT_TINT);
   } else {
     // Same band as the horse and the people, so a roof covers whoever is behind it.
     sprite = scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
+    sprite.setTint(NIGHT_TINT);
   }
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');

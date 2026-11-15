@@ -140,7 +140,7 @@
    - the fighters stand in the open middle of the screen,
    - the turn order sits top left,
    - Odysseus' HP lives in a status panel at the bottom left,
-   - the command menu is a compact list at the right,
+   - the command menu is a compact list floating above Odysseus,
    - questions open as a panel at the bottom right,
    so nothing covers Odysseus. Same parchment, gold and Cinzel as before.
    Desktop only; phones keep the stacked layout from TroyWorld.css.
@@ -270,10 +270,13 @@
     align-items: stretch;
   }
 
-  /* Command menu: a compact list on the right, like FF's command window. */
+  /* Command menu: a compact list floating just above Odysseus' head, so
+     his choices sit with him. His fighter box is var(--sp) + 28px wide and
+     var(--sp) + 36px tall, standing at left 20%, bottom 30%. */
   .troy .battle-screen .battle-dock:has(.battle-commands) {
-    top: 18vh;
-    bottom: auto;
+    left: calc(20% + (var(--sp) + 28px) / 2 - 150px);
+    right: auto;
+    bottom: calc(30% + var(--sp) + 44px);
     width: 300px;
   }
   .troy .battle-screen .battle-commands.q-card {

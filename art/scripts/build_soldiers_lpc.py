@@ -9,9 +9,8 @@ Who looks like what:
             sword. He is the only one with a cape, a beard, or a sword.
   Greeks    the same legion helmet and plate cuirass as Odysseus, but in
             bronze, with a dull maroon crest, a spear, and a Spartan shield.
-  Trojans   one tone only, head to toe, skin included: every pixel is
-            redrawn in a purple ramp (MUREX) by how light it is. A different helmet
-            (barbuta with a ridge crest), spear and shield.
+  Trojans   armor all in one dark gray (GRAY), skin left as it is. A
+            different helmet (barbuta with a ridge crest), spear and shield.
 
 Output (all 32x32 frames, origin bottom-center, in public/assets/sprites/npcs):
 
@@ -66,8 +65,11 @@ MAROON = ["#1D131E", "#33090E", "#4E1015", "#62161A", "#752220", "#8C302A"]
 LINEN = ["#281820", "#4D4A5D", "#8A7A6A", "#B0A08A", "#CFC2A8", "#E6DCC4"]
 
 # Trojan teal ramp, darkest to lightest. Everything they wear uses it.
-TEAL = ["#0A2228", "#145058", "#1E7480", "#2E96A0", "#56BCC2", "#A8E6E4"]
-TEAL_DARK = ["#061317", "#0C2A30", "#123E46", "#1A5A64", "#246E78", "#3A8A92"]
+# Trojan armor: one dark gray, darkest to lightest. Armor, helmet, crest,
+# shield and spear all use it; only the skin keeps its own color.
+GRAY = ["#0e0e10", "#1c1c20", "#2c2c31", "#3e3e44", "#56565e", "#7c7c84"]
+# Cloth (pants, sandals) one step darker than the metal.
+GRAY_DARK = ["#08080a", "#121215", "#1c1c20", "#26262b", "#323238", "#46464d"]
 
 
 def ramp(src: list[str], dst: list[str]) -> tuple[list[str], list[str]]:
@@ -103,31 +105,27 @@ def greek_layers() -> list[dict]:
 
 def trojan_layers() -> list[dict]:
     return [
-        {"id": "shield-bg", "path": "spritesheets/shield/spartan/bg/{action}/spartan.png", "no_idle": True, "recolor": ramp(SHIELD, TEAL)},
-        {"id": "spear-bg", "path": "spritesheets/weapon/polearm/spear/background/{action}/bronze.png", "no_idle": True, "recolor": ramp(SPEAR, TEAL)},
+        {"id": "shield-bg", "path": "spritesheets/shield/spartan/bg/{action}/spartan.png", "no_idle": True, "recolor": ramp(SHIELD, GRAY)},
+        {"id": "spear-bg", "path": "spritesheets/weapon/polearm/spear/background/{action}/bronze.png", "no_idle": True, "recolor": ramp(SPEAR, GRAY)},
         {"id": "body", "path": "spritesheets/body/bodies/male/{action}.png"},
-        {"id": "sandals", "path": "spritesheets/feet/sandals/male/{action}.png", "recolor": (WHITE_CLOTH, TEAL_DARK)},
-        {"id": "pants", "path": "spritesheets/legs/pants/male/{action}.png", "recolor": (WHITE_CLOTH, TEAL_DARK)},
-        {"id": "plate", "path": "spritesheets/torso/armour/plate/male/{action}.png", "recolor": (STEEL, TEAL)},
-        {"id": "bracers", "path": "spritesheets/arms/bracers/male/{action}.png", "recolor": (STEEL, TEAL)},
+        {"id": "sandals", "path": "spritesheets/feet/sandals/male/{action}.png", "recolor": (WHITE_CLOTH, GRAY_DARK)},
+        {"id": "pants", "path": "spritesheets/legs/pants/male/{action}.png", "recolor": (WHITE_CLOTH, GRAY_DARK)},
+        {"id": "plate", "path": "spritesheets/torso/armour/plate/male/{action}.png", "recolor": (STEEL, GRAY)},
+        {"id": "bracers", "path": "spritesheets/arms/bracers/male/{action}.png", "recolor": (STEEL, GRAY)},
         {"id": "head", "path": "spritesheets/head/heads/human/male/{action}.png", "head": True},
-        {"id": "helmet", "path": "spritesheets/hat/helmet/barbuta/male/{action}.png", "recolor": (STEEL, TEAL), "head": True},
-        {"id": "crest", "path": "spritesheets/hat/accessory/crest/adult/{action}.png", "recolor": (STEEL, TEAL), "head": True},
-        {"id": "shield-fg", "path": "spritesheets/shield/spartan/fg/{action}/spartan.png", "no_idle": True, "recolor": ramp(SHIELD, TEAL)},
-        {"id": "spear-fg", "path": "spritesheets/weapon/polearm/spear/foreground/{action}/bronze.png", "no_idle": True, "recolor": ramp(SPEAR, TEAL)},
+        {"id": "helmet", "path": "spritesheets/hat/helmet/barbuta/male/{action}.png", "recolor": (STEEL, GRAY), "head": True},
+        {"id": "crest", "path": "spritesheets/hat/accessory/crest/adult/{action}.png", "recolor": (STEEL, GRAY), "head": True},
+        {"id": "shield-fg", "path": "spritesheets/shield/spartan/fg/{action}/spartan.png", "no_idle": True, "recolor": ramp(SHIELD, GRAY)},
+        {"id": "spear-fg", "path": "spritesheets/weapon/polearm/spear/foreground/{action}/bronze.png", "no_idle": True, "recolor": ramp(SPEAR, GRAY)},
     ]
 
 
 TEAMS = {"greek": greek_layers, "trojan": trojan_layers}
 
-# Trojans in one tone of murex purple, the dye made in Troy's lower town.
-# Purple stands out from the gray-blue night paving, the bronze Greeks, and
-# Odysseus' near-black iron with its red crest. The ramp is kept bright so
-# even the shadows sit well above the dark paving at night.
-MUREX = ["#2a0e30", "#5a1c62", "#8a2e8e", "#b84cb4", "#dc7ad6", "#f6b8ee"]
-
-# Teams drawn in a single color. The ramp runs darkest to lightest.
-MONOCHROME = {"trojan": MUREX}
+# Teams repainted in a single color, skin included, after composing. None
+# right now: the Trojans wear dark gray armor but keep their skin tone.
+# Example: MONOCHROME = {"trojan": ["#1a0a1e", ..., "#d684c0"]}
+MONOCHROME: dict[str, list[str]] = {}
 
 
 def monochrome(image: Image.Image, ramp_colors: list[str]) -> Image.Image:
