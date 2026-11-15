@@ -3,7 +3,8 @@
 // Phaser draws the map. React only hosts the canvas (see TroyWorld.jsx).
 // Odysseus is two pieces:
 //   feet — a small invisible box that collides with the world
-//   hero — the picture, which follows the feet and bobs while he walks
+//   hero — the picture, which follows the feet. A walk sheet plays while he
+//   moves; without one, the idle frame bobs instead.
 // The picture is taller than the box, so he can stand "behind" columns and roofs.
 
 import Phaser from 'phaser';
@@ -25,6 +26,10 @@ import { buildWorldTextures } from './textures.js';
 
 // Pixels per second. Diagonals are scaled so they are not faster.
 const SPEED = 80;
+// The LPC figure fills about 25 of the 32px cell. 4/3 brings him in line
+// with the army sprites (about 30px tall) and stays on whole screen pixels
+// at the camera's 3× zoom.
+const HERO_SCALE = 4 / 3;
 
 export class TroyScene extends Phaser.Scene {
   constructor() {
@@ -117,10 +122,11 @@ export class TroyScene extends Phaser.Scene {
     this.heroRim = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.heroRim.setOrigin(0.5, 1);
     this.heroRim.setTint(0xd0e6ff);
-    this.heroRim.setScale(1.07);
+    this.heroRim.setScale(HERO_SCALE * 1.07);
     this.hero = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.hero.setOrigin(0.5, 1);
-    this.heroShadow = this.add.ellipse(SPAWN.x, SPAWN.y, 18, 6, 0x0c1424, 0.55);
+    this.hero.setScale(HERO_SCALE);
+    this.heroShadow = this.add.ellipse(SPAWN.x, SPAWN.y, 24, 7, 0x0c1424, 0.55);
 
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
@@ -203,8 +209,15 @@ export class TroyScene extends Phaser.Scene {
     const hx = Math.round(this.feet.x);
     const hy = Math.round(groundY + bob);
     this.hero.setPosition(hx, hy);
-    this.heroRim.setPosition(hx, hy);
+    // The rim is a second copy of the same picture. Walk frames live on a
+    // different sheet than idle, so the rim has to follow the texture too.
+    if (this.heroRim.texture !== this.hero.texture) {
+      this.heroRim.setTexture(this.hero.texture.key);
+    }
     this.heroRim.setFrame(this.hero.frame.name);
+    this.heroRim.setOrigin(0.5, 1);
+    this.heroRim.setScale(this.hero.scaleX * 1.07, this.hero.scaleY * 1.07);
+    this.heroRim.setPosition(hx, hy);
     this.heroShadow.setPosition(hx + 4, Math.round(groundY) + 1);
     // Above the moonlight so he stays readable. y still decides who is in front.
     const sort = 7000 + groundY;
@@ -263,9 +276,9 @@ function poseHero(hero, facing, moving, time) {
     } else {
       hero.anims.stop();
       hero.setTexture(ANIM_CONFIG.textureKey, idle);
-      hero.setOrigin(0.5, 1);
     }
-    hero.setScale(1, 1);
+    hero.setOrigin(0.5, 1);
+    hero.setScale(HERO_SCALE, HERO_SCALE);
     return 0;
   }
 
