@@ -19,6 +19,7 @@ export default function TroyWorld() {
   const [quiz, setQuiz] = useState(null);
   const [fight, setFight] = useState(null);
   const [questDone, setQuestDone] = useState(false);
+  const [faded, setFaded] = useState(false);
   const [runHint, setRunHint] = useState(false);
   const [banner, setBanner] = useState('');
   const [place, setPlace] = useState('horse');
@@ -72,7 +73,10 @@ export default function TroyWorld() {
     game.events.on('fightQuestion', onFightQuestion);
     game.events.on('fightTurn', onFightTurn);
     game.events.on('fightEnd', onFightEnd);
-    game.events.on('questDone', () => setQuestDone(true));
+    game.events.on('questDone', () => {
+      setQuestDone(true);
+      setFaded(true);
+    });
     game.events.on('runHint', () => setRunHint(true));
     return () => {
       game.events.off('interact', onInteract);
@@ -189,19 +193,19 @@ export default function TroyWorld() {
     <div className="troy" data-screen="world">
       <p className="troy-sr" role="status">{arrived}</p>
       <div ref={host} className="troy-host" />
-      <h1 className="troy-plaque">
+      {!faded && <h1 className="troy-plaque">
         {place === 'horse' ? 'The horse' : 'Troy'}
         <span>{place === 'horse' ? 'inside' : 'at night'}</span>
-      </h1>
-      {place !== 'horse' && (
+      </h1>}
+      {!faded && place !== 'horse' && (
         <p className={questDone ? 'troy-quest is-done' : 'troy-quest'}>
           <span>Quest</span>
           {questDone ? 'The gate is open' : 'Follow the arrow to the gate and open it'}
         </p>
       )}
-      <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
-      {runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
-      {banner && <p className="troy-banner">{banner}</p>}
+      {!faded && <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>}
+      {!faded && runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
+      {!faded && banner && <p className="troy-banner">{banner}</p>}
       {talk && (
         <div className="troy-talk" role="dialog" aria-label={talk.id}>
           <p className="troy-talk-id">{talk.id}</p>

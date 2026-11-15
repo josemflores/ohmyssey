@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import EncounterHost from './components/EncounterHost.jsx';
 import IntroScreen from './components/IntroScreen.jsx';
 import LoginScreen from './components/LoginScreen.jsx';
 import TroyWorld from './components/TroyWorld.jsx';
@@ -19,7 +18,6 @@ export default function App() {
       {screen === 'login' && <LoginScreen onEnter={() => setScreen('intro')} />}
       {screen === 'intro' && <IntroScreen onBegin={() => setScreen('world')} />}
       {screen === 'world' && <TroyWorld />}
-      <EncounterHost />
     </div>
   );
 }

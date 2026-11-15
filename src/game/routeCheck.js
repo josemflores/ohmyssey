@@ -15,15 +15,18 @@ export function routeReport() {
   }
 
   const reach = reachable(solid, SPAWN.x, SPAWN.y);
-  const gateY = (WALL.top + 1) * TILE + 8;
+  const fromHorse = reachable(solid, 480, 260);
   const beachY = (WALL.bottom + 4) * TILE;
   const wallY = (WALL.top + 2) * TILE;
+  const gateStand = WALL.top * TILE - 20;
   const want = [
-    ['the gate', 480, gateY],
-    ['the plaza beside the horse', 400, 180],
-    ['behind the horse head', 480, 172],
     ['the west beach', 176, beachY],
     ['the east beach', 800, beachY],
+  ];
+  const wantFromHorse = [
+    ['the gate', 480, gateStand],
+    ['the plaza beside the horse', 400, 180],
+    ['behind the horse head', 480, 172],
   ];
   const blocked = [
     ['the open sea', 480, MAP_H - 24],
@@ -34,10 +37,14 @@ export function routeReport() {
   ];
 
   for (const [name, x, y] of want) {
-    // The search steps 4px from spawn, so test the nearest point on that grid.
     const sx = SPAWN.x + Math.round((x - SPAWN.x) / STEP) * STEP;
     const sy = SPAWN.y + Math.round((y - SPAWN.y) / STEP) * STEP;
     if (!reach.has(key(sx, sy))) problems.push(`Cannot walk to ${name} (${sx},${sy}).`);
+  }
+  for (const [name, x, y] of wantFromHorse) {
+    const sx = 480 + Math.round((x - 480) / STEP) * STEP;
+    const sy = 260 + Math.round((y - 260) / STEP) * STEP;
+    if (!fromHorse.has(key(sx, sy))) problems.push(`Cannot walk to ${name} (${sx},${sy}).`);
   }
   for (const [name, x, y] of blocked) {
     if (canStand(solid, x, y)) problems.push(`${name} is not solid.`);
