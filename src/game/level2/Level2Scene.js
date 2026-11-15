@@ -6,6 +6,7 @@
 // on long wall rectangles; the picture is drawn above it and y-sorted.
 
 import Phaser from 'phaser';
+import { loadHeroActions, createHeroActions } from '../heroAnimations.js';
 import { ANIM_CONFIG, facingFromVector } from '../animConfig.js';
 import { RUN_SPEED, WALK_SPEED } from '../patrol.js';
 import { buildWorldTextures } from '../textures.js';
@@ -41,6 +42,7 @@ export class Level2Scene extends Phaser.Scene {
   }
 
   preload() {
+    loadHeroActions(this);
     if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
       this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
         frameWidth: ANIM_CONFIG.frameWidth,
@@ -66,6 +68,7 @@ export class Level2Scene extends Phaser.Scene {
   }
 
   create() {
+    createHeroActions(this);
     const report = level2LayoutReport();
     if (!report.ok) console.warn(`Level 2 layout problem:\n${report.problems.join('\n')}`);
 
@@ -310,8 +313,7 @@ function poseHero(hero, facing, moving) {
   if (ANIM_CONFIG.walk && moving) {
     hero.anims.play(`walk-${facing}`, true);
   } else {
-    hero.anims.stop();
-    hero.setTexture(ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames[facing]);
+    hero.anims.play(`hero-idle-${facing}`, true);
   }
 }
 
