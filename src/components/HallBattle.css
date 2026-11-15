@@ -37,28 +37,26 @@
   background-size: calc(var(--sp) * 2) var(--sp);
   animation: odysseus-idle 0.6s steps(1) infinite alternate;
 }
-/* Draw, full draw, release, follow through: six 32px cells. */
+/* Nock, draw the string back to his cheek, hold, release, lower: eight
+   32px cells (build_odysseus_beggar_lpc.py BOW_SHOOT). */
 .battle-screen:is(.is-shot, .is-volley, .is-loose) .battle-sprite.battle-hero.battle-archer {
   background-image: url('/assets/battle/odysseus_bow_shoot_e.png');
-  background-size: calc(var(--sp) * 6) var(--sp);
+  background-size: calc(var(--sp) * 8) var(--sp);
   background-position: 0 0;
-  animation: archer-shoot 0.7s steps(5) forwards;
-}
-.battle-screen.is-volley .battle-sprite.battle-hero.battle-archer {
-  animation: archer-shoot 0.5s steps(5) 2 forwards;
+  animation: archer-shoot 0.65s steps(7) forwards;
 }
 @keyframes archer-shoot {
   from { background-position-x: 0; }
-  to { background-position-x: calc(var(--sp) * -5); }
+  to { background-position-x: calc(var(--sp) * -7); }
 }
 /* He steps back into the draw and leans into the release. */
 .battle-screen:is(.is-shot, .is-volley, .is-loose) .battle-side:not(.is-foe) .battle-fighter {
-  animation: archer-lean 0.7s ease-in-out;
+  animation: archer-lean 0.75s ease-in-out;
 }
 @keyframes archer-lean {
   0% { transform: translateX(0); }
-  40% { transform: translateX(-6px); }
-  62% { transform: translateX(4px); }
+  70% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
   100% { transform: translateX(0); }
 }
 .battle-screen.is-counter .battle-sprite.battle-hero.battle-archer {
@@ -82,8 +80,9 @@
   pointer-events: none;
   opacity: 0;
   transform: translate(0, 0) rotate(var(--angle));
-  /* Loosed on the release frame of the shot (about 0.42 s in). */
-  animation: arrow-fly 0.34s linear 0.42s forwards;
+  /* Loosed on the release frame of the shot, 0.56 s in. The delay is set
+     in HallBattle.jsx (RELEASE_MS plus a small stagger for a volley). */
+  animation: arrow-fly 0.34s linear 0.56s forwards;
 }
 .l2-arrow.is-miss { animation-duration: 0.45s; }
 @keyframes arrow-fly {
@@ -106,11 +105,11 @@
 /* Struck when the arrow lands. */
 .battle-screen:is(.is-shot, .is-volley) .battle-member.is-target:not(.is-down) .battle-sprite.battle-suitor {
   animation:
-    foe-hit 0.5s ease-out 0.72s,
-    sprite-hurt 0.5s linear 0.72s;
+    foe-hit 0.5s ease-out 0.9s,
+    sprite-hurt 0.5s linear 0.9s;
 }
 .battle-screen .battle-member.is-down .battle-sprite.battle-suitor {
-  animation: foe-defeat 0.85s ease-in 0.72s forwards;
+  animation: foe-defeat 0.85s ease-in 0.9s forwards;
 }
 /* A suitor lunges with his sword when Odysseus misses. */
 .battle-screen.is-counter .battle-member.is-target .battle-sprite.battle-suitor {
@@ -122,7 +121,7 @@
   60% { transform: translateX(-40px); }
   100% { transform: translateX(0); }
 }
-.battle-screen .battle-member .battle-float { animation-delay: 0.72s; }
+.battle-screen .battle-member .battle-float { animation-delay: 0.9s; }
 
 /* The note after a miss, or between groups, sits in the dock. */
 .l2-battle-miss {

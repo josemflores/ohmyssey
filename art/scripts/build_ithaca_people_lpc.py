@@ -26,6 +26,8 @@ code reads them the same way). Each row is the LPC idle breath: frames
   telemachus/telemachus_walk_32.png  (8 steps x 8 facings, same row order)
   penelope/penelope_sheet.png
   penelope/penelope_walk_32.png      (walk cycle, for the cutscene pictures)
+  penelope/penelope_bow_s.png        3 frames facing south, holding out the
+                                     great bow in both hands (cutscenes)
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
 
 Run from the repo root (needs Pillow):
@@ -281,6 +283,30 @@ def build_sheet(layers: list[dict]) -> Image.Image:
     return out
 
 
+def build_penelope_bow() -> Image.Image:
+    """Penelope facing south with the great bow in her hands: the first
+    three LPC shoot frames (holding it level, raising it, lifting it out),
+    with no arrow. Uses the bow layers and the 64 -> 32 shrink that keeps
+    the hands and string from build_odysseus_beggar_lpc.py."""
+    import build_odysseus_beggar_lpc as archer
+
+    layers = penelope()
+    sheets = []
+    for layer in layers:
+        rel = layer["path"].replace("/idle.png", "/shoot.png").replace("/idle/", "/shoot/")
+        image = archer.fetch(rel)
+        if layer.get("ramp"):
+            image = by_lightness(image, layer["ramp"])
+        sheets.append(image)
+    ids = [layer["id"] for layer in layers]
+    south = lpc.LPC_ROWS["down"]
+    out = Image.new("RGBA", (OUT * 3, OUT))
+    for c in range(3):
+        frame = archer.archer_frame(sheets, ids.index("body"), ids.index("head"), c, south, arrow=False)
+        out.paste(frame, (c * OUT, 0))
+    return out
+
+
 def main() -> None:
     built = {}
     path = NPCS / "eumaeus" / "eumaeus_32.png"
@@ -305,6 +331,9 @@ def main() -> None:
     walk_path = NPCS / "penelope" / "penelope_walk_32.png"
     build_walk_sheet(penelope()).save(walk_path)
     print(f"wrote {walk_path.relative_to(lpc.ROOT)}")
+    bow_path = NPCS / "penelope" / "penelope_bow_s.png"
+    build_penelope_bow().save(bow_path)
+    print(f"wrote {bow_path.relative_to(lpc.ROOT)}")
     for outfit in "abc":
         for n, (main_ramp, accent) in enumerate(COMBOS, start=1):
             name = f"suitor_{outfit}_{n}"

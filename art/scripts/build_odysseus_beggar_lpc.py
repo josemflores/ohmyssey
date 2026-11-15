@@ -152,49 +152,108 @@ BOW_LAYERS = [
 # LPC shoot frames: 0-3 raise the bow, 4 arrow nocked, 5-8 draw to full,
 # 9 release, 10-12 lower it again.
 BOW_IDLE = [12, 11]
-BOW_SHOOT = [4, 6, 8, 9, 10, 12]
+# Nock, draw back, draw, draw, full draw, hold, release, lower.
+BOW_SHOOT = [4, 5, 6, 7, 8, 8, 9, 11]
+
+
+def visible_part(layer: Image.Image, full: Image.Image, skip: Image.Image) -> Image.Image:
+    """The pixels of `layer` that still show in the finished frame, except
+    where `skip` (the head) is drawn: so only the hands, not the face."""
+    out = Image.new("RGBA", layer.size)
+    a, f, o, k = layer.load(), full.load(), out.load(), skip.load()
+    for y in range(layer.height):
+        for x in range(layer.width):
+            if a[x, y][3] and not k[x, y][3] and a[x, y] == f[x, y]:
+                o[x, y] = a[x, y]
+    return out
+
+
+def bow_half(full: Image.Image, details: list[Image.Image]) -> Image.Image:
+    """64 -> 32 for the archer frames. The plain shrink (lpc.half_size) keeps
+    one pixel of every 2x2 block and so loses the thin bow string, the arrow
+    and the drawing hand. Here, any block that holds a detail pixel keeps
+    that pixel instead: details are tried in order (hands, arrow, bow and
+    string), so the pull of the string still reads at 32 px."""
+    out = lpc.half_size(full)
+    dst = out.load()
+    srcs = [d.load() for d in details]
+    for y in range(OUT):
+        for x in range(OUT):
+            for src in srcs:
+                hit = None
+                for dy in (1, 0):
+                    for dx in (1, 0):
+                        px = src[x * 2 + dx, y * 2 + dy]
+                        if px[3] and hit is None:
+                            hit = px
+                if hit is not None:
+                    dst[x, y] = hit
+                    break
+    return out
+
+
+def archer_frame(body: list[Image.Image], skin: int, head: int, col: int, row: int, arrow: bool = True) -> Image.Image:
+    """Stack the bow behind, the character's shoot layers (back to front;
+    body[skin] is the bare body, whose skin shows at the hands, and
+    body[head] the head), then the
+    bow in front and the arrow. Shrink to 32 px keeping hands, arrow, string."""
+    def crop(image: Image.Image) -> Image.Image:
+        return image.crop((col * SRC, row * SRC, (col + 1) * SRC, (row + 1) * SRC))
+
+    bow_bg, bow_fg, arrow_sheet = (fetch(l["path"]) for l in BOW_LAYERS)
+    front = [crop(bow_fg)] + ([crop(arrow_sheet)] if arrow else [])
+    full = Image.new("RGBA", (SRC, SRC))
+    for image in [crop(bow_bg), *(crop(b) for b in body), *front]:
+        full.alpha_composite(image)
+    hands = visible_part(crop(body[skin]), full, crop(body[head]))
+    return bow_half(full, [hands, *reversed(front)])
+
+
+_LAYER_CACHE: dict[str, list[Image.Image]] = {}
+
+
+def beggar_shoot_layers() -> list[Image.Image]:
+    """The beggar's layers (no staff) on their shoot sheets, back to front."""
+    if "beggar" not in _LAYER_CACHE:
+        _LAYER_CACHE["beggar"] = [load(l, "shoot")[0] for l in LAYERS if l["id"] != "staff"]
+    return _LAYER_CACHE["beggar"]
+
+
+def king_shoot_layers() -> list[Image.Image]:
+    """Odysseus the king (armour, helmet and cape of build_odysseus_lpc.py,
+    sword put away), from the same layers' shoot sheets, back to front."""
+    if "king" not in _LAYER_CACHE:
+        sheets = []
+        for layer in lpc.LAYERS:
+            if layer["id"].startswith("sword"):
+                continue
+            rel = layer["path"].removeprefix("spritesheets/").replace("/walk.png", "/shoot.png").replace("/walk/", "/shoot/")
+            image = fetch(rel)
+            if image.size != (13 * SRC, 4 * SRC):
+                raise SystemExit(f"{rel} is {image.size}, expected a 13x4 shoot sheet")
+            if layer.get("recolor"):
+                image = lpc.recolor(image, *layer["recolor"])
+            sheets.append(image)
+        _LAYER_CACHE["king"] = sheets
+    return _LAYER_CACHE["king"]
 
 
 def bow_frame(col: int, row: int, arrow: bool = True) -> Image.Image:
-    """The beggar (no staff) with the bow, one 64px LPC cell shrunk to 32.
-    arrow=False leaves the arrow off (stringing and testing the bow)."""
-    canvas = Image.new("RGBA", (SRC, SRC))
-    body = [l for l in LAYERS if l["id"] != "staff"]
-    bow_fg = BOW_LAYERS[1:] if arrow else BOW_LAYERS[1:2]
-    for layer in [BOW_LAYERS[0], *body, *bow_fg]:
-        if layer in BOW_LAYERS:
-            image = fetch(layer["path"])
-        else:
-            image, _src = load(layer, "shoot")
-        canvas.alpha_composite(image.crop((col * SRC, row * SRC, (col + 1) * SRC, (row + 1) * SRC)))
-    return lpc.half_size(canvas)
+    """The beggar with the bow (cutscenes). arrow=False: no arrow on the string."""
+    ids = [l["id"] for l in LAYERS if l["id"] != "staff"]
+    return archer_frame(beggar_shoot_layers(), ids.index("body"), ids.index("head"), col, row, arrow)
 
 
 def king_bow_frame(col: int, row: int) -> Image.Image:
-    """Odysseus the king (the armour, helmet and cape of build_odysseus_lpc.py,
-    sword put away) with the bow, from the same layers' shoot sheets."""
-    canvas = Image.new("RGBA", (SRC, SRC))
-    body = []
-    for layer in lpc.LAYERS:
-        if layer["id"].startswith("sword"):
-            continue
-        rel = layer["path"].removeprefix("spritesheets/").replace("/walk.png", "/shoot.png").replace("/walk/", "/shoot/")
-        image = fetch(rel)
-        if image.size != (13 * SRC, 4 * SRC):
-            raise SystemExit(f"{rel} is {image.size}, expected a 13x4 shoot sheet")
-        if layer.get("recolor"):
-            image = lpc.recolor(image, *layer["recolor"])
-        body.append(image)
-    bow_bg, bow_fg, arrow = (fetch(l["path"]) for l in BOW_LAYERS)
-    for image in [bow_bg, *body, bow_fg, arrow]:
-        canvas.alpha_composite(image.crop((col * SRC, row * SRC, (col + 1) * SRC, (row + 1) * SRC)))
-    return lpc.half_size(canvas)
+    """The king with the bow (the fight in the hall)."""
+    ids = [l["id"] for l in lpc.LAYERS if not l["id"].startswith("sword")]
+    return archer_frame(king_shoot_layers(), ids.index("body"), ids.index("head"), col, row)
 
 
 def build_bow_sheets() -> None:
     """For the fight in the hall: odysseus_bow_idle_e.png (2 frames) and
-    odysseus_bow_shoot_e.png (6 frames: nock, draw, full draw, release,
-    lower, rest), 32x32, facing east. In battle he is the king again, so
+    odysseus_bow_shoot_e.png (8 frames: nock, draw back
+    to full, hold, release, lower), 32x32, facing east. In battle he is the king again, so
     these use his armoured LPC look, not the beggar's rags."""
     east = lpc.LPC_ROWS["right"]
     BOW_DIR.mkdir(parents=True, exist_ok=True)

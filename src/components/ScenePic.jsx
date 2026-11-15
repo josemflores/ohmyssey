@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 
 const FPS = 8;
 export const ANIMS = {
-  bow_brought: [16, 8],
+  bow_brought: [8, 8],
   axes: [32, 8],
   suitors_fail: [0, 8],
   hearth: [0, 8],

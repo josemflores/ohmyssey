@@ -260,7 +260,7 @@ def suitor(name: str) -> Image.Image:
 W2, H2, WALL = 240, 135, 46
 LOOP = 8
 ANIMS = {
-    "bow_brought": (16, LOOP),
+    "bow_brought": (8, LOOP),
     "axes": (32, LOOP),
     "suitors_fail": (0, LOOP),
     "hearth": (0, LOOP),
@@ -316,7 +316,6 @@ def build_contest() -> None:
     amphinomus = suitor("suitor_lpc/suitor_c_4.png")
     extras = [suitor(f"suitor_lpc/suitor_{k}.png") for k in ("b_3", "c_1", "a_2", "c_3", "a_4", "b_1")]
     penelope = load("sprites/npcs/penelope/penelope_sheet.png")
-    penelope_walk = load("sprites/npcs/penelope/penelope_walk_32.png")
     # The LPC beggar: idle_animation has 2 breathing frames per facing, in
     # the order s se e ne n nw w sw, so east is columns 4-5.
     beggar = load("sprites/odysseus_beggar/idle_animation.png")
@@ -346,20 +345,16 @@ def build_contest() -> None:
         # Holding the bow at his side, breathing: LPC shoot frames 12 and 11.
         return cell(no_arrow, 12 if (t // 4) % 2 == 0 else 11, 0)
 
-    # 1. Penelope walks down from her throne with the great bow.
-    #    The suitors at the tables turn to watch her.
+    # 1. Penelope stands before her throne and holds out the great bow in
+    #    both hands (LPC shoot frames: level at her waist, then lifted out
+    #    toward the suitors). The suitors at the tables turn to watch her.
+    penelope_bow = load("sprites/npcs/penelope/penelope_bow_s.png")
+
     def bow_brought(t: int) -> Image.Image:
         img = scene(t)
         put(img, throne, 120, 82)
-        intro = ANIMS["bow_brought"][0]
-        if t < intro:
-            bottom = 86 + round(18 * t / (intro - 1))
-            her = cell(penelope_walk, t % 8, S)
-        else:
-            bottom = 104
-            her = idle(penelope, S, t)
-        put(img, her, 120, bottom)
-        carried_bow(img, 131, bottom - 28, bottom - 6)
+        lifted = t >= ANIMS["bow_brought"][0] // 2
+        put(img, cell(penelope_bow, 1 if lifted else 0, 0), 120, 104)
         for i, (x, sheet, row) in enumerate(((50, antinous, E), (74, extras[0], E), (168, eurymachus, W), (194, extras[1], W))):
             put(img, idle(sheet, row, t, i), x, 120)
         put(img, banquet, 28, 74)
