@@ -4,6 +4,7 @@ import { createTroyGame } from '../game/createTroyGame.js';
 import { hatchQuestionAfter } from '../game/hatchQuestions.js';
 import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
 import './TroyWorld.css';
+import '../game/gameOver.css';
 import {
   ChoiceLabel,
   KeysHint,
@@ -23,7 +24,8 @@ const MOVE_KEYS = new Set([
 // Mounts the Phaser city. The hint fades after a few seconds, or on the first step.
 // A spot in the city can also open a small box. That box is a placeholder until
 // the real puzzle and encounter screens plug in.
-export default function TroyWorld({ onSail }) {
+// onHome and onRestart come from App: they power the game over screen.
+export default function TroyWorld({ onSail, onHome, onRestart }) {
   const host = useRef(null);
   const gameRef = useRef(null);
   const [hint, setHint] = useState(true);
@@ -32,6 +34,8 @@ export default function TroyWorld({ onSail }) {
   const [fight, setFight] = useState(null);
   const [questDone, setQuestDone] = useState(false);
   const [complete, setComplete] = useState(false);
+  // Odysseus ran out of HP. Shows "The Odyssey has fallen".
+  const [gameOver, setGameOver] = useState(false);
   const [gateAsk, setGateAsk] = useState(null);
   const [runHint, setRunHint] = useState(false);
   const sailed = useRef(false);
@@ -142,6 +146,10 @@ export default function TroyWorld({ onSail }) {
     });
     game.events.on('notice', (text) => setBanner(text || ''));
     game.events.on('levelComplete', () => setComplete(true));
+    game.events.on('gameOver', () => {
+      setFight(null);
+      setGameOver(true);
+    });
     game.events.on('objective', (next) => {
       if (next && next.title) setObjective(next);
     });
@@ -164,6 +172,7 @@ export default function TroyWorld({ onSail }) {
       game.events.off('questDone');
       game.events.off('notice');
       game.events.off('levelComplete');
+      game.events.off('gameOver');
       game.events.off('objective');
       game.events.off('gateQuestion');
       game.events.off('gateWrong');
@@ -504,6 +513,25 @@ export default function TroyWorld({ onSail }) {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {gameOver && (
+        <div className="game-over" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
+          <div className="game-over-card q-card">
+            <p className="q-eyebrow">Ω · Troy</p>
+            <h2 id="game-over-title" className="game-over-title">The Odyssey has fallen</h2>
+            <div className="q-rule" aria-hidden="true" />
+            <div className="game-over-actions">
+              {/* Back to the sign-in screen, like Home in the Esc menu. */}
+              <button type="button" className="q-action game-over-btn is-quiet" onClick={() => onHome?.()}>
+                Return to Menu
+              </button>
+              {/* Start Level 1 over from the beginning. */}
+              <button type="button" className="q-action game-over-btn" onClick={() => onRestart?.()} autoFocus>
+                Restart
+              </button>
+            </div>
           </div>
         </div>
       )}

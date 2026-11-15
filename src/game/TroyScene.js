@@ -59,12 +59,15 @@ const HERO_SCALE = 1;
 const TROJAN_HP = 8;
 const ENEMY_SWING = 2;
 
-// Off the road, on open paving, clear of houses. Checked against the map.
+// The three Trojan groups to beat stand in front of (south of) the wooden
+// horse, guarding it, on open paving clear of houses and trees.
 const CITY_GROUPS = [
-  { id: 'north', x: 620, y: 160, count: 4 },
-  { id: 'east', x: 800, y: 280, count: 2 },
-  { id: 'center', x: 500, y: 360, count: 3 },
+  { id: 'west', x: 360, y: 312, count: 4 },
+  { id: 'center', x: 480, y: 340, count: 3 },
+  { id: 'east', x: 600, y: 312, count: 2 },
 ];
+// Space between the men of one group, in pixels.
+const GROUP_SPACING = 30;
 
 // Wet sand at the end of the beach road, hull overlapping the sea.
 const SHIP = { x: 480, y: 786 };
@@ -670,10 +673,6 @@ export class TroyScene extends Phaser.Scene {
     this.heroHp = Math.max(0, this.heroHp - ENEMY_SWING);
     const down = this.heroHp <= 0;
     const shown = this.heroHp;
-    if (down) {
-      this.heroHp = HERO_MAX;
-      this.heroHpStay();
-    }
     const note = `A Trojan strikes for ${ENEMY_SWING}.`;
     fight.note = note;
     this.game.events.emit('fightBlow', {
@@ -690,7 +689,10 @@ export class TroyScene extends Phaser.Scene {
     this.time.delayedCall(BLOW_MS.counter, () => {
       if (!this.fighting) return;
       if (down) {
-        this.endFight(false, 'You fall back. The Trojans recover.');
+        // Game over. Odysseus stops where he is; React shows the
+        // "The Odyssey has fallen" screen with Return to Menu and Restart.
+        this.inputLocked = true;
+        this.game.events.emit('gameOver');
         return;
       }
       this.counterAt(step + 1);
@@ -867,9 +869,9 @@ export class TroyScene extends Phaser.Scene {
     if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
     for (const spot of CITY_GROUPS) {
       const members = [];
-      const start = -((spot.count - 1) * 22) / 2;
+      const start = -((spot.count - 1) * GROUP_SPACING) / 2;
       for (let i = 0; i < spot.count; i += 1) {
-        const x = spot.x + start + i * 22;
+        const x = spot.x + start + i * GROUP_SPACING;
         const y = spot.y;
         const shadow = this.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.55);
         const sprite = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1);
