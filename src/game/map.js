@@ -71,15 +71,24 @@ export const SPAWN = { x: 480, y: 694 };
 export const PROPS = [
   { id: 'temple', x: 480, baseY: 148, bodyW: 88, bodyH: 52, insetBottom: 8 },
 
-  { id: 'house', x: 120, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
-  { id: 'houseAlt', x: 214, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
-  { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
-  { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
+  house(120, 156),
+  house('houseAlt', 214, 250),
+  house(840, 156),
+  house('houseAlt', 746, 250),
 
-  // Three fences across the plaza. Each one leaves a gap on the zigzag.
-  ...fence(392, 11, 19),
-  ...fence(488, 41, 49),
-  ...fence(552, 25, 35),
+  // Houses sit beside the diagonal, not on it. The box matches the picture
+  // so his feet cannot stand on a roof.
+  house(560, 340),
+  house(480, 420),
+  house(400, 300),
+  house('houseAlt', 200, 400),
+  house(320, 460),
+  house('houseAlt', 640, 430),
+  house(760, 500),
+  house('houseAlt', 520, 520),
+  house(280, 500),
+  house(600, 360),
+  house('houseAlt', 160, 340),
 
   // Columns stand by the temple, north of the horse.
   { id: 'column', x: 400, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
@@ -107,16 +116,24 @@ export const PROPS = [
   { id: 'cypress', x: 140, baseY: 724, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 840, baseY: 729, bodyW: 10, bodyH: 8, insetBottom: 0 },
 
-  // Trees along the bends, set just off the stones so the lane stays open.
-  { id: 'cypress', x: 160, baseY: 330, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 320, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 176, baseY: 400, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 640, baseY: 450, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 800, baseY: 470, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 390, baseY: 530, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 590, baseY: 540, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 860, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  // Trees beside the diagonal, clear of the stones.
+  { id: 'cypress', x: 360, baseY: 280, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 500, baseY: 300, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 180, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 300, baseY: 430, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 700, baseY: 470, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 560, baseY: 560, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 400, baseY: 540, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 840, baseY: 420, bodyW: 10, bodyH: 8, insetBottom: 0 },
 ];
+
+// The picture is 60×64. The box covers that, or he walks onto the roof.
+function house(id, x, baseY) {
+  const name = typeof id === 'number' ? 'house' : id;
+  const px = typeof id === 'number' ? id : x;
+  const py = typeof id === 'number' ? x : baseY;
+  return { id: name, x: px, baseY: py, bodyW: 58, bodyH: 60, insetBottom: 2 };
+}
 
 // Pictures with no collision of their own. They stand on tiles that are
 // already solid (the wall).
@@ -155,8 +172,7 @@ export const INTERACTABLES = [
     type: 'place',
   },
   // Just south of the horse wheels (the horse prop is x 480, baseY 228).
-  // Press E here to climb into the belly. The hatch inside asks a question
-  // before onTrapDoor() in HorseScene.js lets him back out.
+  // He can climb in only before the hatch has let him out.
   {
     id: 'horse_hatch',
     x: 480,
@@ -170,44 +186,12 @@ export const INTERACTABLES = [
 // Every entry is a real standing lamp. The glow is drawn on its flame.
 // The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [
-  // On the west bend, then the east bend.
-  { x: 240, y: 370 },
-  { x: 720, y: 500 },
+  // On the two bends of the diagonal.
+  { x: 300, y: 360 },
+  { x: 620, y: 500 },
   // On the paving beside the temple colonnade, not on the horse.
   { x: 390, y: 150 },
 ];
-
-// A row of houses across the plaza. gapTileLeft/Right is the opening, in tiles.
-function fence(baseY, gapTileLeft, gapTileRight) {
-  const row = [];
-  let n = 0;
-  // 62px apart, each house blocks 56 of that. The 6px crack is too narrow to walk.
-  for (let x = 40; x <= 920; x += 62) {
-    const centerTile = x / TILE;
-    if (centerTile > gapTileLeft && centerTile < gapTileRight) continue;
-    row.push({
-      id: n % 2 === 0 ? 'house' : 'houseAlt',
-      x,
-      baseY,
-      bodyW: 56,
-      bodyH: 36,
-      insetBottom: 8,
-    });
-    // A tree behind every other roof, so the row is not one flat wall.
-    if (n % 2 === 0) {
-      row.push({
-        id: 'cypress',
-        x: x - 10,
-        baseY: baseY - 30,
-        bodyW: 10,
-        bodyH: 8,
-        insetBottom: 0,
-      });
-    }
-    n += 1;
-  }
-  return row;
-}
 
 function earthKind(x, y) {
   const n = (x * 5 + y * 3) % 11;
@@ -249,15 +233,11 @@ export function buildMap() {
     }
   }
 
-  // The road leaves the horse, bends west, crosses to the east, then
-  // comes back to the gate. The beach beyond the wall stays straight.
-  roadRect(grid, 24, 15, 12, 5);
-  roadRect(grid, 12, 18, 24, 4);
-  roadRect(grid, 12, 18, 6, 8);
-  roadRect(grid, 12, 25, 36, 4);
-  roadRect(grid, 42, 25, 6, 8);
-  roadRect(grid, 26, 31, 22, 4);
-  roadRect(grid, 26, 31, 8, 6);
+  // A short diagonal: southwest from the horse, southeast, then back
+  // into the gate. The beach beyond the wall stays straight.
+  roadLine(grid, 30, 16, 15, 25, 5);
+  roadLine(grid, 15, 25, 40, 33, 5);
+  roadLine(grid, 40, 33, 30, 36, 5);
   for (let y = WALL.bottom + 1; y <= WALL.bottom + 7; y += 1) {
     for (let x = GATE.left; x <= GATE.right; x += 1) grid[y][x] = T.road;
   }
@@ -287,6 +267,16 @@ export function buildMap() {
   for (const [x, y] of rocks) grid[y][x] = T.rock;
 
   return grid;
+}
+
+function roadLine(grid, x0, y0, x1, y1, thick) {
+  const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+  const half = Math.floor(thick / 2);
+  for (let i = 0; i <= steps; i += 1) {
+    const x = Math.round(x0 + ((x1 - x0) * i) / steps);
+    const y = Math.round(y0 + ((y1 - y0) * i) / steps);
+    roadRect(grid, x - half, y - half, thick, thick);
+  }
 }
 
 function roadRect(grid, x, y, w, h) {

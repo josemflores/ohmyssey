@@ -98,8 +98,12 @@ export default function TroyWorld() {
   function pickAnswer(index) {
     if (!quiz || quiz.status !== 'open') return;
     const right = index === quiz.question.answer;
-    if (right) gameRef.current?.events.emit('unlockHatch');
-    setQuiz({ ...quiz, picked: index, status: right ? 'right' : 'wrong' });
+    if (right) {
+      setQuiz(null);
+      gameRef.current?.events.emit('unlockHatch');
+      return;
+    }
+    setQuiz({ ...quiz, picked: index, status: 'wrong' });
   }
 
   function anotherQuestion() {

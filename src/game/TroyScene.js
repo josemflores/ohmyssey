@@ -143,6 +143,7 @@ export class TroyScene extends Phaser.Scene {
 
     // Feet are the body. The picture is drawn separately, from the ankles up.
     const start = this.arrive || SPAWN;
+    if (this.arrive) this.game.registry.set('leftHorse', true);
     this.feet = this.physics.add.image(start.x, start.y, 'feet');
     this.feet.setVisible(false);
     this.feet.setCollideWorldBounds(true);
@@ -249,6 +250,8 @@ export class TroyScene extends Phaser.Scene {
   interact(target) {
     if (!target || this.inputLocked) return;
     if (target.id === 'horse_hatch') {
+      // Once the hatch has let him out, it does not open again.
+      if (this.game.registry.get('leftHorse')) return;
       this.scene.start('horse');
       return;
     }
@@ -338,7 +341,7 @@ export class TroyScene extends Phaser.Scene {
     this.hero.setDepth(sort);
 
     // The closest spot he is standing inside, or null.
-    this.nearest = locked ? null : nearestInteractable(this.feet.x, this.feet.y);
+    this.nearest = locked ? null : nearestInteractable(this.feet.x, this.feet.y, this);
     if (this.nearest) {
       this.prompt.setVisible(true);
       this.prompt.setPosition(Math.round(this.feet.x), Math.round(groundY) - 48);
@@ -521,8 +524,8 @@ function makePrompt(scene) {
     fontFamily: 'monospace',
     fontSize: '15px',
     color: '#f6ead2',
-    backgroundColor: '#121820',
-    padding: { left: 6, right: 6, top: 3, bottom: 3 },
+    stroke: '#000000',
+    strokeThickness: 4,
   });
   label.setScale(1 / 3);
   label.setOrigin(0.5, 1);
@@ -531,10 +534,11 @@ function makePrompt(scene) {
 }
 
 // The spot whose circle contains his feet, picking the closest if two overlap.
-function nearestInteractable(x, y) {
+function nearestInteractable(x, y, scene) {
   let best = null;
   let bestDist = Infinity;
   for (const spot of INTERACTABLES) {
+    if (spot.id === 'horse_hatch' && scene.game.registry.get('leftHorse')) continue;
     const radius = spot.radius ?? INTERACT_RADIUS;
     const dist = Math.hypot(spot.x - x, spot.y - y);
     if (dist <= radius && dist < bestDist) {

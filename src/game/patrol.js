@@ -26,8 +26,8 @@ const SCATTER_TIME = 3.2;
 // On the bends: west lane, east lane, then the last stretch to the gate.
 const SENTRIES = [
   { id: 'sentry-1', x: 400, y: 320 },
-  { id: 'sentry-2', x: 240, y: 420 },
-  { id: 'sentry-3', x: 720, y: 460 },
+  { id: 'sentry-2', x: 260, y: 410 },
+  { id: 'sentry-3', x: 560, y: 490 },
   { id: 'sentry-4', x: 480, y: 570 },
 ];
 
