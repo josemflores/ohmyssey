@@ -335,7 +335,7 @@ export default function LoginScreen({ onEnter }) {
 
           <p className="login-sr" role="status">{pending === 'sign-in' ? 'Signing in' : ''}</p>
           <p className="login-note">
-            The account stays in this browser. A forgotten password emails you a reset link.
+            The account stays in this browser. Forgot password emails a reset link when the mail host accepts it.
           </p>
         </form>
       </main>
