@@ -1028,7 +1028,9 @@ function aimArrow(scene) {
     host.appendChild(arrow);
   }
   const aimShip = scene.shoreReady && scene.shoreReady() && !scene.sailing;
-  if ((scene.questDone && !aimShip) || scene.nearest?.id === 'gate' || scene.sailing) {
+  // No arrow until he has climbed out of the Trojan horse.
+  const outOfHorse = !!scene.game.registry.get('leftHorse');
+  if (!outOfHorse || (scene.questDone && !aimShip) || scene.nearest?.id === 'gate' || scene.sailing) {
     arrow.style.display = 'none';
     return;
   }
