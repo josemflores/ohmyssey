@@ -12,7 +12,7 @@ import { RUN_SPEED, WALK_SPEED } from '../patrol.js';
 import { buildWorldTextures } from '../textures.js';
 import { buildLevel2Textures, propTexture } from './art.js';
 import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, clearSuitors, preloadHall } from './hall.js';
-import { HALL, HALL_SPAWN, HALL_SPOTS, SOUTH_WALL, TILE } from './hallMap.js';
+import { HALL, HALL_PEOPLE, HALL_SPAWN, HALL_SPOTS, SOUTH_WALL, TILE } from './hallMap.js';
 import { hideObjectiveArrow, updateObjectiveArrow } from '../objectiveArrow.js';
 import {
   DECOR,
@@ -169,6 +169,7 @@ export class Level2Scene extends Phaser.Scene {
     // The great hall, built east of the island (hall.js). He walks in
     // through its doors once he answers the question at them.
     this.hall = buildHall(this, this.blockers);
+    this.addTalkMarks();
     this.area = ISLAND;
 
     this.glints = createGlints(this);
@@ -628,6 +629,52 @@ export class Level2Scene extends Phaser.Scene {
     });
   }
 
+  // A gold "!" over each person he can talk to, until he has talked to
+  // them: Eumaeus (until the hut scene), the three named suitors in the
+  // hall (until the hall is won), and Penelope (once the hall is won).
+  addTalkMarks() {
+    this.talkedTo = new Set();
+    const mark = (x, y) => {
+      const text = this.add.text(x, y, '!', {
+        fontFamily: 'Georgia, serif',
+        fontSize: '22px',
+        fontStyle: 'bold',
+        color: '#f0d48a',
+        stroke: '#1a1208',
+        strokeThickness: 5,
+      }).setOrigin(0.5, 1).setDepth(9500).setScale(0.5).setVisible(false);
+      this.tweens.add({
+        targets: text,
+        y: y - 4,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      return text;
+    };
+    // About a head above each sprite (people are 32 px drawn at 4/3).
+    const above = 50;
+    this.talkMarks = [
+      { spot: 'hut', mark: mark(EUMAEUS_AT.x, EUMAEUS_AT.y - above),
+        show: () => !this.hutDone && !this.inHut },
+      { spot: 'penelope', mark: mark(PENELOPE.x, PENELOPE.y - above),
+        show: () => this.hallWon && !this.inHall },
+      ...HALL_PEOPLE.filter((p) => SUITOR_SPOTS.has(p.id)).map((p) => ({
+        spot: p.id,
+        mark: mark(p.x, p.y - above),
+        show: () => this.inHall && !this.hallWon,
+      })),
+    ];
+  }
+
+  updateTalkMarks(locked) {
+    if (!this.talkMarks) return;
+    for (const t of this.talkMarks) {
+      t.mark.setVisible(!locked && !this.talkedTo.has(t.spot) && t.show());
+    }
+  }
+
   // Where the objective arrow points: Eumaeus, then the hall doors, then
   // (inside the hall) the great bow. Hidden once he is standing there, or
   // when the goal is in the other area (the hall is a separate room).
@@ -710,7 +757,10 @@ export class Level2Scene extends Phaser.Scene {
       this.nearId = nearId;
       this.game.events.emit('near', this.nearest);
     }
+    this.updateTalkMarks(locked);
     if (!locked && this.nearest && Phaser.Input.Keyboard.JustDown(k.keyE)) {
+      // Once he has talked to someone, their "!" goes away.
+      this.talkedTo.add(this.nearest.id);
       this.inputLocked = true;
       this.feet.setVelocity(0, 0);
       if (this.nearest.id === 'hall-door') {

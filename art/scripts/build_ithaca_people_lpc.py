@@ -24,6 +24,7 @@ code reads them the same way). Each row is the LPC idle breath: frames
   eumaeus/eumaeus_32.png
   telemachus/telemachus_32.png
   telemachus/telemachus_walk_32.png  (8 steps x 8 facings, same row order)
+  penelope/penelope_sheet.png
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
 
 Run from the repo root (needs Pillow):
@@ -125,6 +126,29 @@ def telemachus() -> list[dict]:
         {"id": "wraps", "path": "arms/wrists/lace/male/idle.png", "ramp": WRAP_LEATHER},
         {"id": "head", "path": "head/heads/human/male/idle.png", "head": True},
         {"id": "hair", "path": "hair/curly_short/adult/idle.png", "ramp": HAIR_DARK, "head": True},
+    ]
+
+
+# Penelope, queen of Ithaca: a long white gown (peplos), a purple sash, a
+# deep blue mantle over her shoulders, long dark hair, a gold circlet,
+# and sandals.
+QUEEN_WHITE = ramp("#5a5246", "#8a8070", "#b4aa96", "#d8cfbc", "#efe8d8", "#fbf8f0")
+QUEEN_SASH = ramp("#1e0a26", "#3a1446", "#5a2068", "#7a3288", "#9a4ea6")
+QUEEN_MANTLE = ramp("#0a0c22", "#121a40", "#1c2a5e", "#2a3e7e", "#3e569c", "#5a74b8")
+CIRCLET_GOLD = ramp("#4a3008", "#7a5410", "#b08020", "#dcae40", "#f6d888")
+
+
+def penelope() -> list[dict]:
+    return [
+        {"id": "mantle-bg", "path": "cape/solid/bg/idle.png", "ramp": QUEEN_MANTLE},
+        {"id": "body", "path": "body/bodies/female/idle.png"},
+        {"id": "sandals", "path": "feet/sandals/thin/idle.png", "ramp": LEATHER},
+        {"id": "gown", "path": "dress/slit/female/idle/white.png", "ramp": QUEEN_WHITE},
+        {"id": "sash", "path": "torso/waist/obi/thin/idle.png", "ramp": QUEEN_SASH},
+        {"id": "mantle-fg", "path": "cape/solid/fg/idle.png", "ramp": QUEEN_MANTLE},
+        {"id": "head", "path": "head/heads/human/female/idle.png", "head": True},
+        {"id": "hair", "path": "hair/long/adult/idle.png", "ramp": HAIR_DARK, "head": True},
+        {"id": "circlet", "path": "hat/formal/tiara/adult/idle/gold.png", "ramp": CIRCLET_GOLD, "head": True},
     ]
 
 
@@ -267,6 +291,10 @@ def main() -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     built["telemachus"].save(path)
     print(f"wrote {path.relative_to(lpc.ROOT)}")
+    built["penelope"] = build_sheet(penelope())
+    pen_path = NPCS / "penelope" / "penelope_sheet.png"
+    built["penelope"].save(pen_path)
+    print(f"wrote {pen_path.relative_to(lpc.ROOT)}")
     # He walks in to the hut, so he also gets a walk cycle.
     walk_path = NPCS / "telemachus" / "telemachus_walk_32.png"
     build_walk_sheet(telemachus()).save(walk_path)
