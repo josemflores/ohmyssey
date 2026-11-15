@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { attachGameAudio } from './gameAudio.js';
 import { HorseScene } from './HorseScene.js';
 import { TroyScene } from './TroyScene.js';
 import './odysseusBattle.css';
@@ -12,7 +13,7 @@ export function createTroyGame(parent) {
   const height = parent.clientHeight || window.innerHeight;
   const debug = new URLSearchParams(window.location.search).has('hitboxes');
 
-  return new Phaser.Game({
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     width,
@@ -37,4 +38,6 @@ export function createTroyGame(parent) {
     scene: [HorseScene, TroyScene],
     audio: { noAudio: true },
   });
+  attachGameAudio(game, { world: 'world-ruins', level: 'troy' });
+  return game;
 }

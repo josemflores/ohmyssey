@@ -456,6 +456,7 @@ export class TroyScene extends Phaser.Scene {
     }
 
     const moving = this.feet.body.speed > 8;
+    this.game.events.emit('audioStep', time, moving, this.feet.body.speed > (WALK_SPEED + RUN_SPEED) / 2);
     const groundY = this.feet.y + this.feet.body.halfHeight;
     const bob = poseHero(this.hero, this.facing, moving, time);
     const hx = Math.round(this.feet.x);
@@ -907,6 +908,7 @@ export class TroyScene extends Phaser.Scene {
 
   sail() {
     if (this.sailing) return;
+    this.game.events.emit('audioTransition');
     this.sailing = true;
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);

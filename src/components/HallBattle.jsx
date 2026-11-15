@@ -78,7 +78,7 @@ function freshFight(wave, heroHp) {
   };
 }
 
-export default function HallBattle({ onWon }) {
+export default function HallBattle({ onWon, onBlow, onLost, onRetry }) {
   const deck = useRef(null);
   if (!deck.current) deck.current = makeHallDeck();
   const [fight, setFight] = useState(() => freshFight(0, HERO_MAX));
@@ -134,7 +134,9 @@ export default function HallBattle({ onWon }) {
   function answer(index) {
     if (fight.phase !== 'question' || !fight.question) return;
     const { move, question } = fight;
-    if (index !== question.answer) {
+    const correct = index === question.answer;
+    onBlow?.({ damage: correct ? move.damage : 0, heavy: move.all });
+    if (!correct) {
       setFight((f) => ({
         ...f,
         phase: 'anim',
@@ -204,6 +206,7 @@ export default function HallBattle({ onWon }) {
     const living = fight.foes.map((foe, i) => i).filter((i) => fight.foes[i].hp > 0);
     const striker = living[Math.floor(Math.random() * living.length)];
     const heroHp = Math.max(0, fight.heroHp - SUITOR_SWING);
+    onBlow?.({ damage: SUITOR_SWING });
     setFight((f) => ({
       ...f,
       phase: 'anim',
@@ -218,6 +221,7 @@ export default function HallBattle({ onWon }) {
     later(ANIM_MS.counter, () => {
       if (heroHp <= 0) {
         setLost(true);
+        onLost?.();
         return;
       }
       setFight((f) => ({ ...f, phase: 'menu', anim: '', targets: [], float: null }));
@@ -228,6 +232,7 @@ export default function HallBattle({ onWon }) {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setLost(false);
+    onRetry?.();
     setFight(freshFight(0, HERO_MAX));
   }
 
