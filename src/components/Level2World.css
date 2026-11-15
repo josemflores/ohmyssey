@@ -127,3 +127,31 @@
 }
 .l2-talk-line { margin: 0 0 0.8rem; }
 .l2-talk .btn { width: 100%; }
+
+/* The question at the hall doors: the same parchment card as Troy's. */
+.l2-quiz-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(4, 8, 16, 0.45);
+}
+.l2-quiz.q-card {
+  width: min(560px, 100%);
+  max-height: calc(100% - 16px);
+  overflow: auto;
+  padding: 1.1rem 1.4rem 1rem;
+}
+.l2-quiz-leave {
+  display: block;
+  margin: 0.55rem auto 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
