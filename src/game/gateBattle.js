@@ -406,6 +406,124 @@ export function placeWaitingArmy(scene) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// The men from the horse. Three Greeks hid in the belly with Odysseus
+// (HorseScene SQUAD). When he climbs out, they drop out of the hatch too and
+// spread through the back half of Troy, north of the plaza, and wait there.
+// When the gate falls, two of them light torches and burn houses back there,
+// and the third meets a Trojan who runs at him from the city.
+// ---------------------------------------------------------------------------
+
+// Under the horse's belly, where the hatch lets them down (HorseScene OUTSIDE
+// is just south of this).
+const HORSE_HATCH = { x: 480, y: 238 };
+// Where each one waits (the nearest open spot to `near`), which way he looks
+// out, and what he does once the gate is open.
+const HORSE_SQUAD = [
+  { near: { x: 262, y: 292 }, face: 'w', burn: { x: 214, baseY: 250 } },
+  { near: { x: 700, y: 292 }, face: 'e', burn: { x: 746, baseY: 250 } },
+  { near: { x: 420, y: 170 }, face: 'n', fight: true },
+];
+
+// The open spot nearest `p` where a man's feet touch nothing solid.
+function clearSpotNear(boxes, p) {
+  for (let r = 0; r <= 64; r += 8) {
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      const x = p.x + dx * r;
+      const y = p.y + dy * r;
+      const a = feetBox(x, y);
+      if (!boxes.some((b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y)) return { x, y };
+      if (r === 0) break;
+    }
+  }
+  return p;
+}
+
+// climbOut: he has just come out of the horse, so they drop from the hatch
+// one by one and run to their places. Otherwise (the scene restarted) they
+// are simply standing there already.
+export function spawnHorseSquad(scene, climbOut) {
+  const boxes = solidBoxes(scene);
+  scene.horseSquad = HORSE_SQUAD.map((plan, index) => {
+    const post = clearSpotNear(boxes, plan.near);
+    const from = climbOut ? { x: HORSE_HATCH.x + (index - 1) * 12, y: HORSE_HATCH.y } : post;
+    const man = addSoldier(scene, 'greek', from.x, from.y, 'greek-hoplite');
+    const member = { man, plan, post };
+    const settle = () => {
+      man.facing = plan.face;
+      playIdle(man);
+      standSolid(scene, man);
+    };
+    if (!climbOut) {
+      man.sprite.setAlpha(1);
+      man.shadow.setAlpha(0.5);
+      settle();
+      return member;
+    }
+    // Down from the hatch: he drops in from just above, then runs to his post.
+    man.sprite.y -= 14;
+    scene.tweens.add({
+      targets: man.sprite,
+      y: from.y,
+      delay: 250 + index * 380,
+      duration: 260,
+      ease: 'Quad.easeIn',
+      onUpdate: () => follow(man),
+    });
+    const route = routePath(boxes, from, post) || [post];
+    runPath(scene, man, route, 600 + index * 380, settle);
+    return member;
+  });
+}
+
+// When the gate falls: the burners go to their doors, the fighter gets his
+// Trojan. They join the gate battle's lists, so the victory (endGateBattle)
+// sends them to the ship with everyone else.
+function sendHorseSquad(scene, avoid, pairs) {
+  for (const { man, plan, post } of scene.horseSquad || []) {
+    if (!man.sprite.active) continue;
+    if (plan.burn) {
+      const prop = PROPS.find((p) => p.x === plan.burn.x && p.baseY === plan.burn.baseY);
+      if (!prop) continue;
+      dropSolid(man);
+      man.torch = addTorch(scene, man);
+      const door = { x: prop.x + (DOOR_OFFSET[prop.id] || 0), y: prop.baseY + 12 };
+      const route = routePath(avoid, { x: man.sprite.x, y: man.sprite.y }, door) || [door];
+      runPath(scene, man, route, 300, () => {
+        man.facing = 'n';
+        playIdle(man);
+        standSolid(scene, man);
+        scene.time.delayedCall(450, () => {
+          if (man.torch) man.torch.drop();
+          man.torch = null;
+          igniteHouse(scene, prop);
+          man.facing = 's';
+          playIdle(man);
+        });
+      });
+      scene.torchBearers.push(man);
+    } else if (plan.fight) {
+      // His Trojan runs down from the city and stands on his east side
+      // (or west, if that is blocked).
+      let tSpot = clearSpotNear(avoid, { x: post.x + 2 * HALF_GAP, y: post.y });
+      let facing = 'e';
+      if (Math.abs(tSpot.y - post.y) > 4 || tSpot.x < post.x) {
+        tSpot = clearSpotNear(avoid, { x: post.x - 2 * HALF_GAP, y: post.y });
+        facing = 'w';
+      }
+      const tFrom = trojanStart(avoid, tSpot, Infinity);
+      const trojan = addSoldier(scene, 'trojan', tFrom.x, tFrom.y, 'trojan-soldier');
+      const pair = { greek: man, trojan, ready: 0 };
+      man.facing = facing;
+      playIdle(man);
+      pair.ready = 1; // he is already in place
+      runPath(scene, trojan, [tSpot], 200, () => arrive(scene, pair, trojan, facing === 'e' ? 'w' : 'e'));
+      pairs.push(pair);
+    }
+  }
+  scene.horseSquad = null;
+}
+
 // Call once, when the gate falls. Returns the pairs so the scene can find them.
 // scene.gateBattleMs is how long until the last man reaches his spot.
 export function startGateBattle(scene) {
@@ -484,6 +602,8 @@ export function startGateBattle(scene) {
     x: spot.x + dx - 11, y: spot.y - 14, w: 22, h: 16,
   })));
   sendTorchBearers(scene, westX, eastX, [...boxes, ...duelBoxes]);
+  // The men from the horse, up in the back half of the city.
+  sendHorseSquad(scene, [...boxes, ...duelBoxes], pairs);
   scene.gateBattle = pairs;
   scene.gateBattleMs = lastMs;
   scene.waitingGreeks = null;

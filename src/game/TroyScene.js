@@ -10,7 +10,7 @@
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
 import { loadSoldierActions, createSoldierActions, createSoldierWalks, playSoldierIdle } from './soldierAnimations.js';
-import { GATE_VIEW_Y, boardShip, endGateBattle, placeWaitingArmy, startGateBattle } from './gateBattle.js';
+import { GATE_VIEW_Y, boardShip, endGateBattle, placeWaitingArmy, spawnHorseSquad, startGateBattle } from './gateBattle.js';
 import { shipTexture } from './level2/art.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
@@ -350,6 +350,9 @@ export class TroyScene extends Phaser.Scene {
 
     // The Greek army waits outside the shut gate until he opens it.
     if (!this.questDone) placeWaitingArmy(this);
+    // His men from the horse climb out after him and spread through the
+    // back half of the city (gateBattle.js spawnHorseSquad).
+    if (!this.questDone && this.game.registry.get('leftHorse')) spawnHorseSquad(this, !!this.arrive);
 
     publishDebug(this);
     this.publishObjective();
@@ -1253,7 +1256,7 @@ function addShip(scene) {
   });
 }
 
-// The doors swing open quietly on their hinges, and the Greeks come in.
+// The Greeks burst the doors open on their hinges and come in.
 // The player stays in the city afterwards.
 function playGateFall(scene, onDone) {
   const cam = scene.cameras.main;
@@ -1289,7 +1292,7 @@ function openGateDoors(scene) {
   const y = src ? src.y : 652;
   if (src) src.setVisible(false);
   if (door.blocker) door.blocker.destroy();
-  // The closed doors cast a shadow on the road. Once they swing open there
+  // The closed doors cast a shadow on the road. Once they burst open there
   // is nothing left to cast it, so it fades out with them.
   if (door.shadow) {
     scene.tweens.add({
@@ -1300,34 +1303,88 @@ function openGateDoors(scene) {
       onComplete: () => door.shadow.destroy(),
     });
   }
-  // The Greeks open the gate quietly; nothing is broken. One picture holds
-  // the two stone jambs and the two wooden leaves (128 px wide: jamb 0-8,
-  // leaves 8-64 and 64-120, jamb 120-128). Each leaf slides sideways into
-  // a pocket in the wall: it moves outward while the part that has passed
-  // the jamb is cropped away, so it disappears behind the stone. The jambs
-  // are drawn on top to cover the seam. Flat 2D, nothing tips toward us.
-  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420).setTint(NIGHT_TINT);
-  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420).setTint(NIGHT_TINT);
+  // The army bursts the gate open. One picture holds the two stone jambs
+  // and the two wooden leaves (128 px wide: jamb 0-8, leaves 8-64 and
+  // 64-120, jamb 120-128). Each leaf stays on its hinge at the jamb and
+  // swings in: seen from the front it narrows toward the hinge until it is
+  // nearly edge-on against the wall. It slams open fast, bounces off the
+  // wall, and settles. The jambs are drawn on top to cover the hinges.
+  const LEAF = 56;
+  const tex = scene.textures.get('gate-door');
+  if (!tex.has('leaf-left')) {
+    tex.add('leaf-left', 0, 8, 0, LEAF, 72);
+    tex.add('leaf-right', 0, 64, 0, LEAF, 72);
+  }
+  // Origins on the hinge side, so scaling X swings each leaf on its hinge.
+  const left = scene.add.image(x - LEAF, y, 'gate-door', 'leaf-left')
+    .setOrigin(0, 1).setDepth(7420).setTint(NIGHT_TINT);
+  const right = scene.add.image(x + LEAF, y, 'gate-door', 'leaf-right')
+    .setOrigin(1, 1).setDepth(7420).setTint(NIGHT_TINT);
   for (const [cropX, cropW] of [[0, 8], [120, 8]]) {
     scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7421).setCrop(cropX, 0, cropW, 72)
       .setTint(NIGHT_TINT);
   }
-  const LEAF = 56;
-  // Leave a thin edge of each leaf showing in the opening, like a door
-  // standing in its pocket.
-  const SLIDE = LEAF - 4;
-  const place = (d) => {
-    left.setX(x - d).setCrop(8 + d, 0, LEAF - d, 72);
-    right.setX(x + d).setCrop(64, 0, LEAF - d, 72);
+  // Darker as a leaf turns away from the moonlight.
+  const shade = (k) => {
+    const c = Phaser.Display.Color.Interpolate.ColorWithColor(
+      Phaser.Display.Color.ValueToColor(NIGHT_TINT),
+      Phaser.Display.Color.ValueToColor(0x3a3a48),
+      100,
+      Math.round((1 - k) * 100),
+    );
+    return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
   };
-  place(0);
+  const OPEN = 0.12; // how much of a leaf still shows once it is wide open
+  const swing = (k) => {
+    for (const leaf of [left, right]) leaf.setScale(k, 1).setTint(shade(k));
+  };
+  swing(1);
+  // A shudder as the ram hits, then the doors fly open.
   scene.tweens.addCounter({
     from: 0,
-    to: SLIDE,
-    duration: 1300,
-    ease: 'Sine.easeInOut',
-    onUpdate: (tween) => place(Math.round(tween.getValue())),
+    to: 1,
+    duration: 160,
+    yoyo: true,
+    onUpdate: (tween) => swing(1 - 0.04 * tween.getValue()),
+    onComplete: () => {
+      scene.cameras.main.shake(260, 0.006);
+      gateDust(scene, x, y);
+      scene.tweens.chain({
+        tweens: [
+          // Slam open against the wall...
+          { targets: { k: 1 }, k: OPEN - 0.04, duration: 230, ease: 'Cubic.easeIn', onUpdate: (t, o) => swing(o.k) },
+          // ...bounce off it...
+          { targets: { k: OPEN - 0.04 }, k: OPEN + 0.14, duration: 180, ease: 'Quad.easeOut', onUpdate: (t, o) => swing(o.k) },
+          // ...and come to rest, open.
+          { targets: { k: OPEN + 0.14 }, k: OPEN, duration: 320, ease: 'Bounce.easeOut', onUpdate: (t, o) => swing(o.k) },
+        ],
+      });
+    },
   });
+}
+
+// Dust and splinters thrown up where the doors burst open.
+function gateDust(scene, x, y) {
+  for (let i = 0; i < 14; i += 1) {
+    const side = i % 2 ? 1 : -1;
+    const px = x + side * Phaser.Math.Between(4, 52);
+    const splinter = i % 4 === 0;
+    const bit = splinter
+      ? scene.add.rectangle(px, y - Phaser.Math.Between(10, 50), 3, 1, 0x6e4a2a)
+      : scene.add.circle(px, y - 2, Phaser.Math.Between(3, 6), 0xb8a888, 0.55);
+    bit.setDepth(7430);
+    scene.tweens.add({
+      targets: bit,
+      x: px + side * Phaser.Math.Between(6, 26),
+      y: bit.y - Phaser.Math.Between(splinter ? -14 : 4, splinter ? 6 : 16),
+      angle: splinter ? Phaser.Math.Between(-180, 180) : 0,
+      scale: splinter ? 1 : 1.8,
+      alpha: 0,
+      duration: Phaser.Math.Between(450, 800),
+      ease: 'Quad.easeOut',
+      onComplete: () => bit.destroy(),
+    });
+  }
 }
 
 function addSolidProp(scene, group, prop) {
