@@ -66,6 +66,7 @@ function asGateQuestion(question) {
     choices: question.choices.slice(),
     answer,
     hint: question.explanation || question.hint || 'Try I = V / R.',
+    ...(question.circuit ? { circuit: question.circuit } : {}),
   };
 }
 
@@ -108,6 +109,7 @@ function pack(question) {
     answer,
     difficulty: classifyQuestion(question),
     hint: question.explanation || question.hint || '',
+    ...(question.circuit ? { circuit: question.circuit } : {}),
   };
 }
 
@@ -150,6 +152,14 @@ const LED_ROWS = [
   { battery: 12, led: 3, ohms: 900, ma: 10 },
 ];
 
+// Share of hard series, parallel and LED questions drawn as a circuit.
+const DIAGRAM_SHARE = 0.6;
+const resistor = (label) => ({ kind: 'resistor', label });
+const led = (label) => ({ kind: 'led', label });
+function series(source, parts, ask, current) {
+  return { layout: 'series', source, parts, ask, ...(current ? { current } : {}) };
+}
+
 function tenth(n) {
   return Math.round(n * 10) / 10;
 }
@@ -182,9 +192,13 @@ function generateHardOhmsQuestion(rng) {
       `${voltage * total} mA`,
       `${tenth(voltage / r2)} mA`,
     ], 'mA');
+    const drawn = rng() < DIAGRAM_SHARE;
     return {
       id: `ohm-hard-series-${stamp}`,
-      prompt: `${lead(voltage)} V battery drives a ${r1} kΩ and a ${r2} kΩ resistor in series. What current flows?`,
+      prompt: drawn
+        ? 'The two resistors are in series. Find the current I.'
+        : `${lead(voltage)} V battery drives a ${r1} kΩ and a ${r2} kΩ resistor in series. What current flows?`,
+      ...(drawn ? { circuit: series(`${voltage} V`, [resistor(`${r1} kΩ`), resistor(`${r2} kΩ`)], { type: 'current' }) } : {}),
       ...made,
       hint: `Series resistances add: ${total} kΩ. I = ${voltage} ÷ ${total} = ${current} mA.`,
       difficulty: 'hard',
@@ -201,9 +215,13 @@ function generateHardOhmsQuestion(rng) {
       `${Math.round((voltage / (branch * 2)) * 10) / 10} mA`,
       `${each * 4} mA`,
     ], 'mA');
+    const drawn = rng() < DIAGRAM_SHARE;
     return {
       id: `ohm-hard-parallel-${stamp}`,
-      prompt: `${lead(voltage)} V battery feeds two ${branch} kΩ resistors in parallel. What current leaves the battery?`,
+      prompt: drawn
+        ? 'Find the current I that leaves the battery.'
+        : `${lead(voltage)} V battery feeds two ${branch} kΩ resistors in parallel. What current leaves the battery?`,
+      ...(drawn ? { circuit: { layout: 'parallel', source: `${voltage} V`, parts: [resistor(`${branch} kΩ`), resistor(`${branch} kΩ`)], ask: { type: 'current' } } } : {}),
       ...made,
       hint: `Each branch gets all ${voltage} V: ${voltage} ÷ ${branch} = ${each} mA, and two branches make ${each * 2} mA.`,
       difficulty: 'hard',
@@ -240,9 +258,13 @@ function generateHardOhmsQuestion(rng) {
       per(row.led),
       per(row.battery + row.led),
     ], 'mA');
+    const drawn = rng() < DIAGRAM_SHARE;
     return {
       id: `ohm-hard-led-current-${stamp}`,
-      prompt: `${lead(row.battery)} V battery, ${ledName(row.led)}, and a ${ohmsLabel(row.ohms)} resistor are in series. What current flows?`,
+      prompt: drawn
+        ? `The ${row.led === 2 ? 'red' : 'blue'} LED keeps ${row.led} V. Find the current I.`
+        : `${lead(row.battery)} V battery, ${ledName(row.led)}, and a ${ohmsLabel(row.ohms)} resistor are in series. What current flows?`,
+      ...(drawn ? { circuit: series(`${row.battery} V`, [resistor(ohmsLabel(row.ohms)), led(`${row.led} V`)], { type: 'current' }) } : {}),
       ...made,
       hint: `The resistor gets ${row.battery} − ${row.led} = ${left} V. I = ${left} V ÷ ${ohmsLabel(row.ohms)} = ${row.ma} mA.`,
       difficulty: 'hard',
@@ -257,9 +279,13 @@ function generateHardOhmsQuestion(rng) {
     per(row.led),
     per(row.battery + row.led),
   ], 'Ω');
+  const drawn = rng() < DIAGRAM_SHARE;
   return {
     id: `ohm-hard-led-pick-${stamp}`,
-    prompt: `You want ${row.ma} mA through ${ledName(row.led)} from a ${row.battery} V battery. Which resistor?`,
+    prompt: drawn
+      ? `The LED keeps ${row.led} V. Which resistor R gives ${row.ma} mA?`
+      : `You want ${row.ma} mA through ${ledName(row.led)} from a ${row.battery} V battery. Which resistor?`,
+    ...(drawn ? { circuit: series(`${row.battery} V`, [resistor(''), led(`${row.led} V`)], { type: 'resistance', part: 0 }, `${row.ma} mA`) } : {}),
     ...made,
     hint: `The resistor gets ${row.battery} − ${row.led} = ${left} V. R = ${left} V ÷ ${row.ma} mA = ${ohmsLabel(row.ohms)}.`,
     difficulty: 'hard',
@@ -281,6 +307,7 @@ function take(deck, cursor, refill) {
     answer: question.answer,
     difficulty: question.difficulty,
     hint: question.hint,
+    ...(question.circuit ? { circuit: question.circuit } : {}),
   });
 }
 

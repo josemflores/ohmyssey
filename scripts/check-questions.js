@@ -39,6 +39,71 @@ try {
     return m ? Number(m[1]) * (m[2] ? 1000 : 1) : NaN;
   };
 
+  // ---- Circuits: shape, and the answer solved from the drawing alone ----
+  const si = (label) => {
+    const m = String(label).match(/(-?[\d.]+)\s*(k|m)?\s*(Ω|V|A)/);
+    if (!m) return NaN;
+    return Number(m[1]) * (m[2] === 'k' ? 1000 : m[2] === 'm' ? 0.001 : 1);
+  };
+  function checkCircuitShape(c, where) {
+    assert.ok(c.layout === 'series' || c.layout === 'parallel', `${where}: layout`);
+    assert.ok(Array.isArray(c.parts) && c.parts.length >= 1 && c.parts.length <= 3, `${where}: 1-3 parts`);
+    if (c.layout === 'parallel') assert.equal(c.parts.length, 2, `${where}: parallel has two branches`);
+    for (const part of c.parts) {
+      assert.ok(['resistor', 'diode', 'led'].includes(part.kind), `${where}: only resistors, diodes and LEDs (${part.kind})`);
+      if (c.layout === 'parallel') assert.equal(part.kind, 'resistor', `${where}: parallel branches are resistors`);
+    }
+    if (c.ask) {
+      assert.ok(['current', 'voltage', 'resistance'].includes(c.ask.type), `${where}: ask type`);
+      if (c.ask.type !== 'current') {
+        const part = c.parts[c.ask.part];
+        assert.ok(part, `${where}: ask points at a real part`);
+        assert.equal(part.kind, 'resistor', `${where}: unknown V or R is on a resistor`);
+      }
+    }
+  }
+  // Solve the drawn circuit for whatever is marked unknown. SI units.
+  function solve(c) {
+    const V = si(c.source);
+    if (c.layout === 'parallel') {
+      const rs = c.parts.map((part) => si(part.label));
+      if (c.ask.branch != null) return V / rs[c.ask.branch];
+      return rs.reduce((sum, r) => sum + V / r, 0);
+    }
+    const drops = c.parts.filter((part) => part.kind !== 'resistor');
+    if (drops.some((part) => part.reversed)) return 0;
+    const drop = drops.reduce((sum, part) => sum + si(part.label), 0);
+    // Labeled resistors other than the asked one; an unlabeled one counts as unknown.
+    const others = c.parts
+      .map((part, i) => (part.kind === 'resistor' && i !== c.ask.part ? si(part.label) : 0))
+      .map((r) => (Number.isFinite(r) ? r : 0));
+    const otherR = others.reduce((a, b) => a + b, 0);
+    const asked = c.ask.part != null ? si(c.parts[c.ask.part].label) : NaN;
+    const known = c.current ? si(c.current) : NaN;
+    const totalR = otherR + (Number.isFinite(asked) ? asked : 0);
+    const current = Number.isFinite(known) ? known : (V - drop) / totalR;
+    if (c.ask.type === 'current') return current;
+    if (c.ask.type === 'voltage') {
+      if (Number.isFinite(asked)) return current * asked;
+      // The only unknown is this resistor: it takes what the rest leaves.
+      return V - drop - (otherR ? otherR * current : 0);
+    }
+    return (V - drop - otherR * current) / current;
+  }
+  let circuitsSolved = 0;
+  function checkCircuit(q, where) {
+    if (!q.circuit) return;
+    checkCircuitShape(q.circuit, `${where} ${q.id}`);
+    if (!q.circuit.ask) return;
+    const want = solve(q.circuit);
+    const got = si(q.choices[answerOf(q)]);
+    assert.ok(Number.isFinite(want) && Number.isFinite(got), `${where} ${q.id}: cannot read ${q.choices[answerOf(q)]} or solve the drawing`);
+    assert.ok(Math.abs(got - want) <= Math.max(1e-9, Math.abs(want) * 0.02), `${where} ${q.id}: drawing solves to ${want}, marked answer is ${got} (${q.prompt})`);
+    // A drawn question keeps its prompt short; the drawing carries the numbers.
+    assert.ok(q.prompt.length <= 90, `${where} ${q.id}: prompt should be short with a drawing`);
+    circuitsSolved += 1;
+  }
+
   // ---- Authored bank ----
   const level1 = bank.questionsForLevel(1);
   assert.ok(level1.length >= 40, `Level 1 bank has ${level1.length} questions`);
@@ -54,6 +119,9 @@ try {
     const longestWrong = Math.max(...q.choices.filter((c) => c !== right).map((c) => c.length));
     assert.ok(right.length <= longestWrong * 1.5, `${q.id}: the right answer is much longer than the rest`);
   }
+  for (const q of level1) checkCircuit(q, 'bank');
+  const drawnBank = level1.filter((q) => q.circuit).length;
+  assert.ok(drawnBank >= 8 && drawnBank <= level1.length / 2, `some, not all, written questions have a drawing (${drawnBank}/${level1.length})`);
   const hardCount = level1.filter((q) => q.difficulty === 'hard').length;
   assert.ok(hardCount >= 12, `only ${hardCount} hard authored questions`);
 
@@ -71,6 +139,7 @@ try {
   let h = hatch.firstHatchQuestion();
   for (let i = 0; i < 60; i += 1) {
     wellFormed(h, 'hatch');
+    checkCircuit(h, 'hatch');
     hatchSlots.add(answerOf(h));
     h = hatch.hatchQuestionAfter(h.id);
   }
@@ -78,9 +147,15 @@ try {
 
   // ---- Easy generator: recompute from the prompt ----
   let notSmallest = 0;
+  let easyDrawn = 0;
   for (let i = 0; i < 3000; i += 1) {
     const q = bank.generateOhmsQuestion(rng, 1);
     wellFormed(q, 'easy generator');
+    if (q.circuit) {
+      easyDrawn += 1;
+      checkCircuit(q, 'easy generator');
+      continue;
+    }
     const nums = q.prompt.match(/\d+(\.\d+)?/g).map(Number);
     // Units match the prompt (V with kΩ and mA, or V with Ω and A), so compare bare numbers.
     const bare = (label) => parseFloat(label);
@@ -91,7 +166,8 @@ try {
     const all = q.choices.map(bare);
     if (right !== Math.min(...all)) notSmallest += 1;
   }
-  assert.ok(notSmallest > 900, `easy answers are nearly always the smallest choice (${notSmallest}/3000 not)`);
+  assert.ok(notSmallest > 450, `easy answers are nearly always the smallest choice (${notSmallest} text-only not)`);
+  assert.ok(easyDrawn > 900 && easyDrawn < 2100, `about half the easy rolls are drawn (${easyDrawn}/3000)`);
 
   // ---- Battle decks, including the hard generator ----
   const decks = battle.createBattleQuestions(rng);
@@ -100,6 +176,10 @@ try {
     const q = decks.next(i % 2 ? 'hard' : 'easy');
     wellFormed(q, 'battle');
     if (i % 2) hardSlots[answerOf(q)] += 1;
+    if (q.circuit) {
+      checkCircuit(q, 'battle');
+      continue;
+    }
     const right = q.choices[answerOf(q)];
     const n = q.prompt.match(/\d+(\.\d+)?/g)?.map(Number) || [];
     if (q.id.startsWith('ohm-hard-series')) assert.equal(value(right), n[0] / (n[1] + n[2]), q.prompt);
@@ -122,11 +202,12 @@ try {
   for (let i = 0; i < 80; i += 1) {
     const q = battle.nextGateQuestion(rng);
     wellFormed(q, 'gate');
+    checkCircuit(q, 'gate');
     gateSlots.add(q.answer);
   }
   assert.equal(gateSlots.size, 4, 'gate answers do not move');
 
-  console.log(`Question checks passed: ${level1.length} authored (${hardCount} hard), generators verified on 6,000 rolls.`);
+  console.log(`Question checks passed: ${level1.length} authored (${hardCount} hard, ${drawnBank} drawn), generators verified on 6,000 rolls, ${circuitsSolved} drawings solved.`);
 } finally {
   await vite.close();
 }

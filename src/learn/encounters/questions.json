@@ -213,7 +213,7 @@
     "id": "troy-led-backwards",
     "level": 1,
     "difficulty": "easy",
-    "prompt": "The LED is put in backwards. What happens?",
+    "prompt": "The LED is in backwards. What happens?",
     "choices": [
       "It lights dimly, since some current leaks back",
       "It stays dark, since an LED conducts only one way",
@@ -221,7 +221,22 @@
       "It shorts the battery, since it now has no resistance"
     ],
     "answerIndex": 1,
-    "explanation": "An LED is a diode. Current passes from the anode (+) to the cathode (−). Reversed, it blocks the current and the loop goes dark."
+    "explanation": "An LED is a diode. Current passes from the anode (+) to the cathode (−). Reversed, it blocks the current and the loop goes dark.",
+    "circuit": {
+      "layout": "series",
+      "source": "9 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "330 Ω"
+        },
+        {
+          "kind": "led",
+          "label": "2 V",
+          "reversed": true
+        }
+      ]
+    }
   },
   {
     "id": "troy-led-anode",
@@ -297,7 +312,7 @@
     "id": "troy-calc-9-1k",
     "level": 1,
     "difficulty": "easy",
-    "prompt": "9 V across a 1 kΩ resistor. What current flows?",
+    "prompt": "Find the current I.",
     "choices": [
       "9 mA",
       "90 mA",
@@ -305,13 +320,26 @@
       "9 A"
     ],
     "answerIndex": 0,
-    "explanation": "I = 9 V ÷ 1,000 Ω = 0.009 A = 9 mA. Volts ÷ kΩ gives mA directly."
+    "explanation": "I = 9 V ÷ 1,000 Ω = 0.009 A = 9 mA. Volts ÷ kΩ gives mA directly.",
+    "circuit": {
+      "layout": "series",
+      "source": "9 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "1 kΩ"
+        }
+      ],
+      "ask": {
+        "type": "current"
+      }
+    }
   },
   {
     "id": "troy-calc-6-2k",
     "level": 1,
     "difficulty": "easy",
-    "prompt": "6 V across a 2 kΩ resistor. What current flows?",
+    "prompt": "Find the current I.",
     "choices": [
       "3 mA",
       "12 mA",
@@ -319,13 +347,26 @@
       "0.3 mA"
     ],
     "answerIndex": 0,
-    "explanation": "I = 6 V ÷ 2 kΩ = 3 mA. Multiplying 6 × 2 is the most common slip."
+    "explanation": "I = 6 V ÷ 2 kΩ = 3 mA. Multiplying 6 × 2 is the most common slip.",
+    "circuit": {
+      "layout": "series",
+      "source": "6 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "2 kΩ"
+        }
+      ],
+      "ask": {
+        "type": "current"
+      }
+    }
   },
   {
     "id": "troy-find-r",
     "level": 1,
     "difficulty": "easy",
-    "prompt": "You want 2 A from a 10 V battery. What resistance does that take?",
+    "prompt": "What resistance R lets 2 A flow?",
     "choices": [
       "5 Ω",
       "8 Ω",
@@ -333,13 +374,28 @@
       "20 Ω"
     ],
     "answerIndex": 0,
-    "explanation": "R = V / I = 10 ÷ 2 = 5 Ω. The wrong answers multiply, add, or subtract instead of dividing."
+    "explanation": "R = V / I = 10 ÷ 2 = 5 Ω. The wrong answers multiply, add, or subtract instead of dividing.",
+    "circuit": {
+      "layout": "series",
+      "source": "10 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": ""
+        }
+      ],
+      "current": "2 A",
+      "ask": {
+        "type": "resistance",
+        "part": 0
+      }
+    }
   },
   {
     "id": "troy-find-v",
     "level": 1,
     "difficulty": "easy",
-    "prompt": "10 mA flows through a 1 kΩ resistor. What is the voltage across it?",
+    "prompt": "Find the voltage V across the resistor.",
     "choices": [
       "100 V",
       "1 V",
@@ -347,7 +403,22 @@
       "10 V"
     ],
     "answerIndex": 3,
-    "explanation": "V = I × R = 0.010 A × 1,000 Ω = 10 V. Or: mA × kΩ = volts."
+    "explanation": "V = I × R = 0.010 A × 1,000 Ω = 10 V. Or: mA × kΩ = volts.",
+    "circuit": {
+      "layout": "series",
+      "source": "",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "1 kΩ"
+        }
+      ],
+      "current": "10 mA",
+      "ask": {
+        "type": "voltage",
+        "part": 0
+      }
+    }
   },
   {
     "id": "troy-series-add",
@@ -423,7 +494,7 @@
     "id": "troy-led-current",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "9 V battery, a red LED that keeps 2 V, and a 1 kΩ resistor in series. What current flows?",
+    "prompt": "The red LED keeps 2 V. Find the current I.",
     "choices": [
       "2 mA",
       "7 mA",
@@ -431,13 +502,30 @@
       "11 mA"
     ],
     "answerIndex": 1,
-    "explanation": "The LED keeps 2 V, so the resistor gets 9 − 2 = 7 V. I = 7 V ÷ 1 kΩ = 7 mA. Forgetting the LED gives 9 mA."
+    "explanation": "The LED keeps 2 V, so the resistor gets 9 − 2 = 7 V. I = 7 V ÷ 1 kΩ = 7 mA. Forgetting the LED gives 9 mA.",
+    "circuit": {
+      "layout": "series",
+      "source": "9 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "1 kΩ"
+        },
+        {
+          "kind": "led",
+          "label": "2 V"
+        }
+      ],
+      "ask": {
+        "type": "current"
+      }
+    }
   },
   {
     "id": "troy-resistor-volts",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "In the beach lamp (9 V battery, red LED that keeps 2 V, one resistor), how many volts are across the resistor?",
+    "prompt": "The LED keeps 2 V. How many volts are across the resistor?",
     "choices": [
       "9 V",
       "11 V",
@@ -445,13 +533,31 @@
       "2 V"
     ],
     "answerIndex": 2,
-    "explanation": "Around a loop the drops add up to the battery: 2 V for the LED leaves 7 V for the resistor."
+    "explanation": "Around a loop the drops add up to the battery: 2 V for the LED leaves 7 V for the resistor.",
+    "circuit": {
+      "layout": "series",
+      "source": "9 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": ""
+        },
+        {
+          "kind": "led",
+          "label": "2 V"
+        }
+      ],
+      "ask": {
+        "type": "voltage",
+        "part": 0
+      }
+    }
   },
   {
     "id": "troy-led-pick-r",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "You want 20 mA through a red LED (2 V) from a 6 V battery. Which resistor?",
+    "prompt": "Which resistor R gives the LED 20 mA?",
     "choices": [
       "300 Ω",
       "200 Ω",
@@ -459,13 +565,32 @@
       "400 Ω"
     ],
     "answerIndex": 1,
-    "explanation": "The resistor gets 6 − 2 = 4 V. R = 4 V ÷ 0.020 A = 200 Ω. 300 Ω forgets the LED; 100 Ω uses only the LED's 2 V."
+    "explanation": "The resistor gets 6 − 2 = 4 V. R = 4 V ÷ 0.020 A = 200 Ω. 300 Ω forgets the LED; 100 Ω uses only the LED's 2 V.",
+    "circuit": {
+      "layout": "series",
+      "source": "6 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": ""
+        },
+        {
+          "kind": "led",
+          "label": "2 V"
+        }
+      ],
+      "current": "20 mA",
+      "ask": {
+        "type": "resistance",
+        "part": 0
+      }
+    }
   },
   {
     "id": "troy-led-pick-r-9",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "9 V battery, red LED (2 V). Which resistor gives about 18 mA?",
+    "prompt": "Which resistor R gives the LED about 18 mA?",
     "choices": [
       "390 Ω",
       "39 Ω",
@@ -473,13 +598,32 @@
       "110 Ω"
     ],
     "answerIndex": 0,
-    "explanation": "R = (9 − 2) V ÷ 0.018 A ≈ 389 Ω, and 390 Ω is the standard value. 39 Ω would let about 180 mA through and burn the LED."
+    "explanation": "R = (9 − 2) V ÷ 0.018 A ≈ 389 Ω, and 390 Ω is the standard value. 39 Ω would let about 180 mA through and burn the LED.",
+    "circuit": {
+      "layout": "series",
+      "source": "9 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": ""
+        },
+        {
+          "kind": "led",
+          "label": "2 V"
+        }
+      ],
+      "current": "18 mA",
+      "ask": {
+        "type": "resistance",
+        "part": 0
+      }
+    }
   },
   {
     "id": "troy-led-burn",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "A red LED (2 V) is wired to a 9 V battery through a 47 Ω resistor. What happens?",
+    "prompt": "A red LED (2 V) runs from 9 V through only 47 Ω. What happens?",
     "choices": [
       "About 150 mA flows, far past what the LED can take, so it burns out",
       "No current flows; 47 Ω is too small to conduct",
@@ -487,7 +631,21 @@
       "The LED limits itself, so nothing bad happens"
     ],
     "answerIndex": 0,
-    "explanation": "I = (9 − 2) V ÷ 47 Ω ≈ 149 mA. A small LED wants under about 25 mA, so it overheats and dies."
+    "explanation": "I = (9 − 2) V ÷ 47 Ω ≈ 149 mA. A small LED wants under about 25 mA, so it overheats and dies.",
+    "circuit": {
+      "layout": "series",
+      "source": "9 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "47 Ω"
+        },
+        {
+          "kind": "led",
+          "label": "2 V"
+        }
+      ]
+    }
   },
   {
     "id": "troy-brightest-safe",
@@ -507,7 +665,7 @@
     "id": "troy-series-current-calc",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "A 12 V battery drives a 1 kΩ and a 2 kΩ resistor in series. What current flows?",
+    "prompt": "Find the current I.",
     "choices": [
       "12 mA",
       "18 mA",
@@ -515,13 +673,30 @@
       "4 mA"
     ],
     "answerIndex": 3,
-    "explanation": "In series the resistances add: 3 kΩ. I = 12 V ÷ 3 kΩ = 4 mA. 18 mA would be the parallel answer."
+    "explanation": "In series the resistances add: 3 kΩ. I = 12 V ÷ 3 kΩ = 4 mA. 18 mA would be the parallel answer.",
+    "circuit": {
+      "layout": "series",
+      "source": "12 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "1 kΩ"
+        },
+        {
+          "kind": "resistor",
+          "label": "2 kΩ"
+        }
+      ],
+      "ask": {
+        "type": "current"
+      }
+    }
   },
   {
     "id": "troy-series-voltage",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "A 12 V battery drives a 1 kΩ and a 2 kΩ resistor in series. How many volts are across the 2 kΩ?",
+    "prompt": "Find the voltage V across the 2 kΩ resistor.",
     "choices": [
       "8 V",
       "4 V",
@@ -529,7 +704,25 @@
       "6 V"
     ],
     "answerIndex": 0,
-    "explanation": "The current is 12 ÷ 3 kΩ = 4 mA. V = 4 mA × 2 kΩ = 8 V. The bigger resistor takes the bigger share, not half."
+    "explanation": "The current is 12 ÷ 3 kΩ = 4 mA. V = 4 mA × 2 kΩ = 8 V. The bigger resistor takes the bigger share, not half.",
+    "circuit": {
+      "layout": "series",
+      "source": "12 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "1 kΩ"
+        },
+        {
+          "kind": "resistor",
+          "label": "2 kΩ"
+        }
+      ],
+      "ask": {
+        "type": "voltage",
+        "part": 1
+      }
+    }
   },
   {
     "id": "troy-parallel-total",
@@ -549,7 +742,7 @@
     "id": "troy-parallel-current",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "A 6 V battery feeds two 3 kΩ resistors in parallel. What current leaves the battery?",
+    "prompt": "Find the current I leaving the battery.",
     "choices": [
       "4 mA",
       "2 mA",
@@ -557,7 +750,24 @@
       "12 mA"
     ],
     "answerIndex": 0,
-    "explanation": "Each branch gets the full 6 V: 6 ÷ 3 kΩ = 2 mA each, so 4 mA in total. 1 mA would be the two in series."
+    "explanation": "Each branch gets the full 6 V: 6 ÷ 3 kΩ = 2 mA each, so 4 mA in total. 1 mA would be the two in series.",
+    "circuit": {
+      "layout": "parallel",
+      "source": "6 V",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "3 kΩ"
+        },
+        {
+          "kind": "resistor",
+          "label": "3 kΩ"
+        }
+      ],
+      "ask": {
+        "type": "current"
+      }
+    }
   },
   {
     "id": "troy-power",
@@ -591,7 +801,7 @@
     "id": "troy-find-v-470",
     "level": 1,
     "difficulty": "hard",
-    "prompt": "A 470 Ω resistor carries 10 mA. What is the voltage across it?",
+    "prompt": "Find the voltage V across the resistor.",
     "choices": [
       "4.7 V",
       "47 V",
@@ -599,7 +809,22 @@
       "0.47 V"
     ],
     "answerIndex": 0,
-    "explanation": "V = I × R = 0.010 A × 470 Ω = 4.7 V. Convert mA to A first."
+    "explanation": "V = I × R = 0.010 A × 470 Ω = 4.7 V. Convert mA to A first.",
+    "circuit": {
+      "layout": "series",
+      "source": "",
+      "parts": [
+        {
+          "kind": "resistor",
+          "label": "470 Ω"
+        }
+      ],
+      "current": "10 mA",
+      "ask": {
+        "type": "voltage",
+        "part": 0
+      }
+    }
   },
   {
     "id": "troy-troubleshoot-dark",

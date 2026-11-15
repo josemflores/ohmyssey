@@ -8,7 +8,13 @@ import { shuffleChoices } from '../learn/encounters/questions.js';
 export const HATCH_QUESTIONS = [
   {
     id: 'lamp-current',
-    prompt: 'The beach lamp uses a 9 V battery and a red LED that keeps 2 V. A 1 kΩ resistor gets the other 7 V. What is the current?',
+    prompt: 'The beach lamp: the red LED keeps 2 V. Find the current I.',
+    circuit: {
+      layout: 'series',
+      source: '9 V',
+      parts: [{ kind: 'resistor', label: '1 kΩ' }, { kind: 'led', label: '2 V' }],
+      ask: { type: 'current' },
+    },
     choices: ['7 mA', '9 mA', '2 mA', '7 A'],
     answer: 0,
     hint: 'Only the resistor\'s 7 V counts: 7 V ÷ 1 kΩ = 7 mA. Using all 9 V forgets the LED.',
@@ -57,5 +63,6 @@ function copyQuestion(question) {
     choices: question.choices.slice(),
     answer: question.answer,
     hint: question.hint,
+    ...(question.circuit ? { circuit: question.circuit } : {}),
   });
 }
