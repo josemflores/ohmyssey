@@ -151,6 +151,13 @@ function stepGreek(man, dt) {
     return;
   }
   man.left -= dt;
+  const blocked = man.body.body && man.body.body.blocked;
+  // A wall or a house ends the run. Holding the velocity pins him in the sprite.
+  if (blocked && (blocked.left || blocked.right || blocked.up || blocked.down)) {
+    man.left = 0;
+    man.body.setVelocity(0, 0);
+    return;
+  }
   man.body.setVelocity(man.vx, man.vy);
   man.facing = facingFromVector(man.vx, man.vy);
 }
