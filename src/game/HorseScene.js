@@ -74,6 +74,7 @@ const OUTSIDE = { x: 480, y: 260 };
 export function onTrapDoor(scene) {
   if (scene.inputLocked) return;
   if (scene.hatchUnlocked) {
+    scene.game.events.emit('audioDoorOpen');
     scene.scene.start('troy', OUTSIDE);
     return;
   }
@@ -253,6 +254,7 @@ export class HorseScene extends Phaser.Scene {
     const unlockHatch = () => {
   this.hatchUnlocked = true;
   this.game.registry.set('leftHorse', true);
+  this.game.events.emit('audioDoorOpen');
   this.scene.start('troy', OUTSIDE);
 };
     this.game.events.on('lockInput', lockInput);

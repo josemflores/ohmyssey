@@ -1257,6 +1257,7 @@ function playGateFall(scene, onDone) {
   cam.stopFollow();
   cam.pan(480, GATE_VIEW_Y, 420, 'Sine.easeOut');
   openGateDoors(scene);
+  scene.game.events.emit('audioDoorOpen');
   // He steps back from the doors so the column has the road.
   scene.scriptedMove = {
     x: Phaser.Math.Clamp(scene.feet.x, 470, 490),
