@@ -202,6 +202,29 @@
 }
 .login-google:hover:not(:disabled) { background: #fff; }
 .login-google-mark { width: 18px; height: 18px; flex: none; }
+.login-google-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  margin-top: 0.4rem;
+}
+.login-google-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--line);
+}
+.login-google-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+.login-google-email {
+  margin: 0 0 0.8rem;
+  color: var(--ink-soft);
+}
+.login-google-card .login-submit { width: 100%; }
 .login-switch { margin: 0.7rem 0 0; }
 .login-actions:not(:has(.login-skip)) { grid-template-columns: 1fr; }
 

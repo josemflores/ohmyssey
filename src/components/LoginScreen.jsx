@@ -5,10 +5,16 @@ import {
   createAccount,
   deliverResetLink,
   finishPasswordReset,
+  googleRedirectUri,
+  googleSignInUrl,
+  profileFromIdToken,
+  readGoogleReturn,
   readResetTokenFromLocation,
+  rememberGoogleState,
   resetLink,
   signInWithGoogleProfile,
   signInWithPassword,
+  takeGoogleState,
 } from '../learn/auth.js';
 import { GUEST_NAME, rememberPlayer } from '../learn/player.js';
 import NightBackdrop from './NightBackdrop.jsx';
@@ -19,8 +25,8 @@ const SIGN_IN_MS = 700;
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 // Gate into the story. Email and password stay in this browser.
-// Google uses the Identity Services button when a client id is set.
-// Forgot password mails a link that opens the new-password form.
+// Google leaves this page for Google's account chooser, then comes back
+// with the name, email, and photo. Forgot password mails a reset link.
 export default function LoginScreen({ onEnter }) {
   const resetToken = useRef(readResetTokenFromLocation());
   const [mode, setMode] = useState(resetToken.current ? 'reset' : 'login');
@@ -31,6 +37,7 @@ export default function LoginScreen({ onEnter }) {
   const [notice, setNotice] = useState('');
   const [resetHref, setResetHref] = useState('');
   const [pending, setPending] = useState('');
+  const [googleAccount, setGoogleAccount] = useState(null);
   const emailRef = useRef(null);
   const lock = useRef(false);
   const timer = useRef(null);
@@ -38,6 +45,30 @@ export default function LoginScreen({ onEnter }) {
   useEffect(() => {
     emailRef.current?.focus();
     return () => clearTimeout(timer.current);
+  }, []);
+
+  useEffect(() => {
+    const returned = readGoogleReturn();
+    if (!returned) return;
+    const expected = takeGoogleState();
+    window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+    if (returned.error) {
+      setFormError('Google sign-in was cancelled.');
+      return;
+    }
+    if (!returned.idToken || !expected || returned.state !== expected) return;
+    try {
+      const profile = profileFromIdToken(returned.idToken);
+      const result = signInWithGoogleProfile(profile);
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+      setGoogleAccount(result.profile);
+      setMode('google');
+    } catch {
+      setFormError('Google did not return a usable account.');
+    }
   }, []);
 
   function enterWorld(name) {
@@ -139,7 +170,7 @@ export default function LoginScreen({ onEnter }) {
     setConfirm('');
   }
 
-  async function onGoogle() {
+  function onGoogle() {
     if (lock.current) return;
     setFormError('');
     setNotice('');
@@ -147,38 +178,22 @@ export default function LoginScreen({ onEnter }) {
       setFormError('Google sign-in is not configured for this gate.');
       return;
     }
+    const state = `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+    const nonce = `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+    rememberGoogleState(state);
+    window.location.assign(googleSignInUrl({
+      clientId: GOOGLE_CLIENT_ID,
+      redirectUri: googleRedirectUri(),
+      state,
+      nonce,
+    }));
+  }
+
+  function continueWithGoogle() {
+    if (!googleAccount || lock.current) return;
     lock.current = true;
-    setPending('google');
-    try {
-      await loadGoogleIdentity();
-      const identity = window.google?.accounts?.id;
-      if (!identity) {
-        fail('Google sign-in could not be reached.');
-        return;
-      }
-      identity.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response) => {
-          try {
-            const profile = profileFromGoogleCredential(response?.credential);
-            const result = signInWithGoogleProfile(profile);
-            if (!result.ok) {
-              fail(result.error);
-              return;
-            }
-            setPending('sign-in');
-            enterWorld(result.name);
-          } catch {
-            fail('Google did not return a usable account.');
-          }
-        },
-      });
-      identity.prompt();
-      lock.current = false;
-      setPending('');
-    } catch {
-      fail('Google sign-in could not be reached.');
-    }
+    setPending('sign-in');
+    enterWorld(googleAccount.name);
   }
 
   const busy = Boolean(pending);
@@ -202,8 +217,23 @@ export default function LoginScreen({ onEnter }) {
         </h1>
         <div className="meander-rule" aria-hidden="true" />
         <p className="login-lede">The night the wooden horse came through the gates.</p>
-        <p className="login-mode">{title}</p>
+        <p className="login-mode">{mode === 'google' ? 'Google account' : title}</p>
 
+        {mode === 'google' && googleAccount && (
+          <section className="login-google-card" aria-label="Google account">
+            {googleAccount.picture && (
+              <img className="login-google-photo" src={googleAccount.picture} alt="" referrerPolicy="no-referrer" />
+            )}
+            <p className="login-hint">Continue as</p>
+            <p className="login-google-name">{googleAccount.name}</p>
+            <p className="login-google-email">{googleAccount.email}</p>
+            <button className="btn login-submit" type="button" onClick={continueWithGoogle} disabled={busy}>
+              {pending === 'sign-in' ? 'Signing in…' : 'Continue'}
+            </button>
+          </section>
+        )}
+
+        {mode !== 'google' && (
         <form onSubmit={onSubmit} noValidate autoComplete="on" aria-busy={busy}>
           {mode !== 'reset' && (
             <div className="login-field">
@@ -338,6 +368,7 @@ export default function LoginScreen({ onEnter }) {
             The account stays in this browser. Forgot password emails a reset link when the mail host accepts it.
           </p>
         </form>
+        )}
       </main>
     </NightBackdrop>
   );
@@ -352,34 +383,6 @@ function submitLabel(mode, pending) {
   if (mode === 'forgot') return 'Send reset link';
   if (mode === 'reset') return 'Save password';
   return 'Log in';
-}
-
-function profileFromGoogleCredential(credential) {
-  if (!credential || typeof credential !== 'string') return { email: '', name: '' };
-  const payload = credential.split('.')[1] || '';
-  const padded = payload.replace(/-/g, '+').replace(/_/g, '/');
-  const json = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4));
-  const data = JSON.parse(json);
-  return { email: data.email || '', name: data.name || data.given_name || '' };
-}
-
-function loadGoogleIdentity() {
-  if (window.google?.accounts?.id) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const found = document.querySelector('script[data-google-identity]');
-    if (found) {
-      found.addEventListener('load', () => resolve(), { once: true });
-      found.addEventListener('error', () => reject(new Error('google')), { once: true });
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.dataset.googleIdentity = '1';
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('google'));
-    document.head.appendChild(script);
-  });
 }
 
 function Torch() {

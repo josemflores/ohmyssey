@@ -8,6 +8,8 @@ import { normalizePlayerName, playerNameError, rememberPlayer } from './player.j
 
 const ACCOUNTS_KEY = 'ohmyssey.accounts';
 const RESET_KEY = 'ohmyssey.reset';
+const GOOGLE_PROFILE_KEY = 'ohmyssey.google.profile';
+const GOOGLE_STATE_KEY = 'ohmyssey.google.state';
 const RESET_MS = 30 * 60 * 1000;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,7 +78,7 @@ export async function signInWithPassword({ email, password }) {
   return { ok: true, name };
 }
 
-export function signInWithGoogleProfile({ email, name }) {
+export function signInWithGoogleProfile({ email, name, picture }) {
   const emailProblem = emailError(email);
   if (emailProblem) return { ok: false, error: 'Google did not share an email.' };
   const address = normalizeEmail(email);
@@ -86,11 +88,113 @@ export function signInWithGoogleProfile({ email, name }) {
     accounts.push({ email: address, salt: '', hash: '', google: true });
     writeAccounts(accounts);
   }
-  const display = name && !playerNameError(normalizePlayerName(name))
-    ? normalizePlayerName(name)
-    : nameFromEmail(address);
+  const display = displayName(name, address);
   rememberPlayer(display);
-  return { ok: true, name: display };
+  const profile = {
+    email: address,
+    name: display,
+    picture: typeof picture === 'string' ? picture : '',
+  };
+  try {
+    sessionStorage.setItem(GOOGLE_PROFILE_KEY, JSON.stringify(profile));
+  } catch {
+    // The name is still stored. The portrait is only for this visit.
+  }
+  return { ok: true, name: display, profile };
+}
+
+export function googleProfile() {
+  try {
+    const raw = sessionStorage.getItem(GOOGLE_PROFILE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.email !== 'string') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+// Full-page handoff to Google's account chooser. The browser leaves this
+// site and comes back with an access token in the hash.
+export function googleSignInUrl({ clientId, redirectUri, state, nonce }) {
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'id_token token',
+    scope: 'openid email profile',
+    include_granted_scopes: 'true',
+    prompt: 'select_account',
+    nonce,
+    state,
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+export function googleRedirectUri() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+export function readGoogleReturn(hash = window.location.hash) {
+  const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (!raw || (!raw.includes('id_token') && !raw.includes('access_token') && !raw.includes('error='))) return null;
+  const params = new URLSearchParams(raw);
+  return {
+    accessToken: params.get('access_token') || '',
+    idToken: params.get('id_token') || '',
+    state: params.get('state') || '',
+    error: params.get('error') || '',
+  };
+}
+
+// The id token already carries the name, email, and photo. Reading it here
+// avoids a second request that the browser would block.
+export function profileFromIdToken(idToken) {
+  const payload = String(idToken || '').split('.')[1] || '';
+  if (!payload) return { email: '', name: '', picture: '' };
+  const padded = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const json = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4));
+  const data = JSON.parse(json);
+  return {
+    email: data.email || '',
+    name: data.name || data.given_name || '',
+    picture: data.picture || '',
+  };
+}
+
+export function takeGoogleState() {
+  try {
+    const state = sessionStorage.getItem(GOOGLE_STATE_KEY) || '';
+    sessionStorage.removeItem(GOOGLE_STATE_KEY);
+    return state;
+  } catch {
+    return '';
+  }
+}
+
+export function rememberGoogleState(state) {
+  sessionStorage.setItem(GOOGLE_STATE_KEY, state);
+}
+
+export async function fetchGoogleProfile(accessToken) {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) throw new Error('Google profile was not returned.');
+  const data = await response.json();
+  return {
+    email: data.email || '',
+    name: data.name || data.given_name || '',
+    picture: data.picture || '',
+  };
+}
+
+function displayName(name, email) {
+  const clean = normalizePlayerName(name);
+  if (clean && !playerNameError(clean)) return clean;
+  const clipped = clean.slice(0, 20).trim();
+  if (clipped && !playerNameError(clipped)) return clipped;
+  return nameFromEmail(email);
 }
 
 // Starts a reset only when the email has a password account.

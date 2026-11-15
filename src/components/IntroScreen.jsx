@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { googleProfile } from '../learn/auth.js';
 import { getPlayerName } from '../learn/player.js';
 import NightBackdrop from './NightBackdrop.jsx';
 import './NightBackdrop.css';
@@ -43,6 +44,7 @@ const CARDS = [
 export default function IntroScreen({ onBegin }) {
   const [index, setIndex] = useState(0);
   const name = getPlayerName();
+  const google = googleProfile();
   const welcomeRef = useRef(null);
   const indexRef = useRef(0);
   const onBeginRef = useRef(onBegin);
@@ -118,6 +120,7 @@ export default function IntroScreen({ onBegin }) {
       <main className="intro" data-screen="intro" style={{ '--card-ms': `${CARD_MS}ms` }}>
         <article className="card intro-card">
           <p ref={welcomeRef} className="intro-welcome" tabIndex={-1}>Welcome, {name}.</p>
+          {google?.email && <p className="intro-signed-in">{google.email}</p>}
           <p className="intro-sr" role="status">{card.title}. {card.text}</p>
           <div
             key={card.title}
