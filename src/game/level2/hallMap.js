@@ -94,10 +94,28 @@ export const HALL_BRAZIERS = [
 ];
 
 // The suitors feasting, and their hound. Sheet rows: S, SW, W, NW, N, NE, E, SE.
+// Twelve suitors: outfits a, b, c (chiton and cloak, long robe, sleeveless
+// with a cloak) in four colors each (crimson, royal blue, purple, sea green).
+// The three named ones keep their old spots and Press E lines (HALL_SPOTS).
+// The rest crowd the far side of each banquet table, facing the room.
 export const HALL_PEOPLE = [
-  { id: 'antinous', key: 'suitor-antinous', x: wx(118), y: wy(170), row: 6 },
-  { id: 'eurymachus', key: 'suitor-eurymachus', x: wx(362), y: wy(170), row: 2 },
-  { id: 'amphinomus', key: 'suitor-amphinomus', x: wx(362), y: wy(282), row: 2 },
+  { id: 'antinous', key: 'suitor-a-1', x: wx(118), y: wy(170), row: 6 },
+  { id: 'eurymachus', key: 'suitor-b-2', x: wx(362), y: wy(170), row: 2 },
+  { id: 'amphinomus', key: 'suitor-c-4', x: wx(362), y: wy(282), row: 2 },
+  // Behind the north-west table.
+  { id: 'suitor-1', key: 'suitor-b-3', x: wx(56), y: wy(124), row: 0 },
+  { id: 'suitor-2', key: 'suitor-c-1', x: wx(90), y: wy(122), row: 1 },
+  // Behind the north-east table.
+  { id: 'suitor-3', key: 'suitor-a-2', x: wx(390), y: wy(122), row: 7 },
+  { id: 'suitor-4', key: 'suitor-c-3', x: wx(424), y: wy(124), row: 0 },
+  // Behind the south-west table.
+  { id: 'suitor-5', key: 'suitor-a-4', x: wx(56), y: wy(236), row: 7 },
+  { id: 'suitor-6', key: 'suitor-b-1', x: wx(90), y: wy(234), row: 0 },
+  // Behind the south-east table.
+  { id: 'suitor-7', key: 'suitor-c-2', x: wx(390), y: wy(234), row: 0 },
+  { id: 'suitor-8', key: 'suitor-b-4', x: wx(424), y: wy(236), row: 1 },
+  // At the outer end of the north-east table, by the wall.
+  { id: 'suitor-9', key: 'suitor-a-3', x: wx(450), y: wy(152), row: 2 },
   { id: 'hound', key: 'suitors-hound', x: wx(122), y: wy(290), row: 6 },
 ];
 

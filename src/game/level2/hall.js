@@ -38,9 +38,14 @@ const SHEETS = [
   ['palace-loom', '/assets/props/palace_loom.png', 32, 48],
   ['palace-brazier', '/assets/props/palace_brazier.png', 32, 32],
   ['palace-door', '/assets/props/palace_door.png', 48, 64],
-  ['suitor-antinous', '/assets/sprites/npcs/suitor_antinous/suitor_antinous_32.png', 32, 32],
-  ['suitor-eurymachus', '/assets/sprites/npcs/suitor_eurymachus/suitor_eurymachus_32.png', 32, 32],
-  ['suitor-amphinomus', '/assets/sprites/npcs/suitor_amphinomus/suitor_amphinomus_32.png', 32, 32],
+  // LPC suitors: three outfits (a, b, c) in four colors each
+  // (art/scripts/build_ithaca_people_lpc.py).
+  ...['a', 'b', 'c'].flatMap((outfit) => [1, 2, 3, 4].map((n) => [
+    `suitor-${outfit}-${n}`,
+    `/assets/sprites/npcs/suitor_lpc/suitor_${outfit}_${n}.png`,
+    32,
+    32,
+  ])),
   ['suitors-hound', '/assets/sprites/npcs/suitors_hound/suitors_hound_32.png', 32, 32],
 ];
 const IMAGES = [
@@ -163,7 +168,8 @@ export function buildHall(scene, blockers) {
 
   // The suitors and their hound, idling at the tables.
   for (const person of HALL_PEOPLE) {
-    scene.add.ellipse(person.x + 3, person.y + 1, 18, 6, 0x1a120c, 0.45).setDepth(5200);
+    // Under the feet: the sprite stands at y + 1 and LPC feet are 1 px up.
+    scene.add.ellipse(person.x + 1, person.y, 18, 6, 0x1a120c, 0.45).setDepth(5200);
     const sprite = scene.add.sprite(person.x, person.y + 1, person.key, person.row * 4)
       .setOrigin(0.5, 1)
       .setScale(PERSON_SCALE)
