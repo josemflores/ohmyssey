@@ -29,6 +29,7 @@ code reads them the same way). Each row is the LPC idle breath: frames
   penelope/penelope_bow_s.png        3 frames facing south, holding out the
                                      great bow in both hands (cutscenes)
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
+  suitor_lpc/suitors_dead.png        the 12 suitors lying dead (after the hall)
   athena/athena_32.png               Athena (4x8 idle sheet)
   athena/athena_head.png             her head at full size, for the chat icon
 
@@ -354,6 +355,34 @@ def build_penelope_bow() -> Image.Image:
     return out
 
 
+def build_suitors_dead() -> Image.Image:
+    """The suitors after the fight in the hall (Odyssey 22): each one lying
+    on the floor, the last frame of his LPC hurt animation. One 32 px frame
+    per suitor, in the order a_1..a_4, b_1..b_4, c_1..c_4."""
+    import urllib.error
+
+    import build_odysseus_beggar_lpc as any_sheet  # its fetch takes any sheet size
+
+    frames = []
+    for outfit in "abc":
+        for main_ramp, accent in COMBOS:
+            canvas = Image.new("RGBA", (SRC, SRC))
+            for layer in suitor(outfit, main_ramp, accent):
+                rel = layer["path"].replace("/idle.png", "/hurt.png").replace("/idle/", "/hurt/")
+                try:
+                    image = any_sheet.fetch(rel)
+                except urllib.error.HTTPError:
+                    continue  # this layer has no hurt animation (a cape trim)
+                if layer.get("ramp"):
+                    image = by_lightness(image, layer["ramp"])
+                canvas.alpha_composite(image.crop((5 * SRC, 0, 6 * SRC, SRC)))
+            frames.append(lpc.half_size(canvas))
+    out = Image.new("RGBA", (OUT * len(frames), OUT))
+    for i, f in enumerate(frames):
+        out.paste(f, (i * OUT, 0))
+    return out
+
+
 def main() -> None:
     built = {}
     path = NPCS / "eumaeus" / "eumaeus_32.png"
@@ -384,6 +413,9 @@ def main() -> None:
     built["athena"].save(path)
     athena_head().save(NPCS / "athena" / "athena_head.png")
     print(f"wrote {path.relative_to(lpc.ROOT)} and athena_head.png")
+    dead_path = NPCS / "suitor_lpc" / "suitors_dead.png"
+    build_suitors_dead().save(dead_path)
+    print(f"wrote {dead_path.relative_to(lpc.ROOT)}")
     bow_path = NPCS / "penelope" / "penelope_bow_s.png"
     build_penelope_bow().save(bow_path)
     print(f"wrote {bow_path.relative_to(lpc.ROOT)}")

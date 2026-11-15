@@ -11,7 +11,7 @@ import { ANIM_CONFIG, facingFromVector } from '../animConfig.js';
 import { RUN_SPEED, WALK_SPEED } from '../patrol.js';
 import { buildWorldTextures } from '../textures.js';
 import { buildLevel2Textures, propTexture } from './art.js';
-import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, clearSuitors, preloadHall } from './hall.js';
+import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, laySuitorsDead, preloadHall } from './hall.js';
 import { HALL, HALL_PEOPLE, HALL_SPAWN, HALL_SPOTS, SOUTH_WALL, TILE } from './hallMap.js';
 import { hideObjectiveArrow, updateObjectiveArrow } from '../objectiveArrow.js';
 import {
@@ -274,7 +274,7 @@ export class Level2Scene extends Phaser.Scene {
     const onHallWon = () => {
       this.hallWon = true;
       this.arrowFor = null;
-      clearSuitors(this, this.hall);
+      laySuitorsDead(this, this.hall);
       this.inputLocked = false;
       this.keys.keyE.reset();
     };

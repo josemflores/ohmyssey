@@ -48,6 +48,8 @@ const SHEETS = [
     32,
   ])),
   ['suitors-hound', '/assets/sprites/npcs/suitors_hound/suitors_hound_32.png', 32, 32],
+  // The suitors lying dead after the fight: one frame per suitor, a_1..c_4.
+  ['suitors-dead', '/assets/sprites/npcs/suitor_lpc/suitors_dead.png', 32, 32],
 ];
 const IMAGES = [
   ['palace-throne', '/assets/props/palace_throne.png'],
@@ -191,14 +193,30 @@ export function buildHall(scene, blockers) {
   return { people };
 }
 
-// The fight is over: the suitors are gone from the hall (the hound stays).
-export function clearSuitors(scene, hall) {
+// The fight is over (Odyssey 22): every suitor lies dead where he stood,
+// in the frame of him fallen (suitors_dead.png), with a dark stain under
+// him. The bodies are not solid, so Odysseus can walk out through the hall.
+// The hound stays as it was.
+export function laySuitorsDead(scene, hall) {
+  const outfits = ['a', 'b', 'c'];
   for (const person of hall.people) {
     if (person.id === 'hound') continue;
-    scene.tweens.killTweensOf(person.sprite);
-    person.sprite.destroy();
-    person.shadow.destroy();
+    const { sprite } = person;
+    scene.tweens.killTweensOf(sprite);
     person.block.destroy();
+    const [, outfit, n] = sprite.texture.key.split('-');
+    const frame = outfits.indexOf(outfit) * 4 + (Number(n) - 1);
+    if (!scene.textures.exists('suitors-dead') || frame < 0) {
+      sprite.destroy();
+      person.shadow.destroy();
+      continue;
+    }
+    sprite.setTexture('suitors-dead', frame)
+      .setScale(PERSON_SCALE)
+      .setFlipX(sprite.x % 2 === 0)
+      // On the floor: under anyone standing.
+      .setDepth(5300);
+    person.shadow.setFillStyle(0x3a0c0a, 0.55).setSize(22, 7).setDepth(5250);
   }
 }
 
