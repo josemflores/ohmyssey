@@ -161,7 +161,7 @@ export const INTERACTABLES = [
     x: GATE_X,
     y: GATE_Y,
     radius: INTERACT_RADIUS,
-    prompt: 'Press E to fight for the gate',
+    prompt: 'Press E to answer at the gate',
     type: 'gate',
   },
   {

@@ -42,6 +42,18 @@ export function attackById(id) {
   return ATTACKS[id] || ATTACKS.light;
 }
 
+// One medium step of Ohm's law for the shut gate. A new roll each time.
+export function nextGateQuestion(rng = Math.random) {
+  const question = generateOhmsQuestion(rng, 1);
+  return {
+    id: question.id,
+    prompt: question.prompt,
+    choices: question.choices.slice(),
+    answer: question.answerIndex,
+    hint: question.explanation,
+  };
+}
+
 export function classifyQuestion(question) {
   if (question.difficulty === 'easy' || question.difficulty === 'medium' || question.difficulty === 'hard') {
     return question.difficulty;

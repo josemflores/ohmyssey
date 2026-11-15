@@ -23,6 +23,7 @@ export default function TroyWorld() {
   const [fight, setFight] = useState(null);
   const [questDone, setQuestDone] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [gateAsk, setGateAsk] = useState(null);
   const [runHint, setRunHint] = useState(false);
   const [banner, setBanner] = useState('');
   const [place, setPlace] = useState('horse');
@@ -62,22 +63,24 @@ export default function TroyWorld() {
         if (!current) return current;
         const miss = payload.anim === 'whiff';
         const onHero = payload.anim === 'counter';
-        const showFloat = payload.anim !== 'defeat';
         return {
           ...current,
           heroHp: payload.heroHp,
-          foeHp: payload.foeHp,
+          foes: payload.foes || current.foes,
           phase: 'anim',
           question: null,
           anim: payload.anim,
+          foeIndex: payload.foeIndex,
+          fallen: payload.fallen || [],
           shake: payload.anim === 'heavy' || payload.anim === 'counter',
           blow: (current.blow || 0) + 1,
+          side: payload.side || current.side,
           note: payload.note || '',
-          float: showFloat ? {
+          float: !payload.damage && !miss ? null : {
             text: miss ? 'Miss' : `-${payload.damage}`,
             side: onHero ? 'hero' : 'foe',
             miss,
-          } : null,
+          },
         };
       });
     }
@@ -85,11 +88,13 @@ export default function TroyWorld() {
       setFight((current) => current && {
         ...current,
         ...payload,
-        phase: payload.side === 'enemy' ? 'enemy' : 'menu',
+        phase: 'menu',
         question: null,
         anim: '',
+        foeIndex: -1,
         shake: false,
         float: null,
+        side: 'hero',
       });
     }
     function onFightEnd(payload) {
@@ -115,6 +120,11 @@ export default function TroyWorld() {
     });
     game.events.on('notice', (text) => setBanner(text || ''));
     game.events.on('levelComplete', () => setComplete(true));
+    game.events.on('gateQuestion', (question) => setGateAsk({ ...question, wrong: false, hint: '' }));
+    game.events.on('gateWrong', (payload) => {
+      setGateAsk((current) => current && { ...current, wrong: true, hint: payload.hint });
+    });
+    game.events.on('gateClosed', () => setGateAsk(null));
     game.events.on('runHint', () => setRunHint(true));
     return () => {
       game.events.off('interact', onInteract);
@@ -129,6 +139,9 @@ export default function TroyWorld() {
       game.events.off('questDone');
       game.events.off('notice');
       game.events.off('levelComplete');
+      game.events.off('gateQuestion');
+      game.events.off('gateWrong');
+      game.events.off('gateClosed');
       game.events.off('runHint');
       game.destroy(true);
       gameRef.current = null;
@@ -178,6 +191,16 @@ export default function TroyWorld() {
       attack: move.label,
     });
     gameRef.current?.events.emit('fightAttack', { kind: move.id });
+  }
+
+  function pickGate(index) {
+    if (!gateAsk || gateAsk.wrong) return;
+    gameRef.current?.events.emit('gatePick', { index });
+  }
+
+  function dismissGate() {
+    setGateAsk(null);
+    gameRef.current?.events.emit('gateDismiss');
   }
 
   function flee() {
@@ -249,14 +272,21 @@ export default function TroyWorld() {
       {place !== 'horse' && (
         <p className={questDone ? 'troy-quest is-done' : 'troy-quest'}>
           <span>Quest</span>
-          {questDone ? 'The army is inside' : 'Fight the sentries holding the gate'}
+          {questDone ? 'Clear the Trojan groups' : 'Answer at the gate'}
         </p>
       )}
-      {place !== 'horse' && !questDone && !fight && !talk && (
+      {place !== 'horse' && !questDone && !fight && !gateAsk && !talk && (
         <div className="troy-objective" role="status">
           <p className="troy-objective-kicker">Objective</p>
-          <p className="troy-objective-title">Fight for the gate</p>
-          <p className="troy-objective-note">Follow the arrow. Press E to challenge the captain.</p>
+          <p className="troy-objective-title">Open the gate</p>
+          <p className="troy-objective-note">Follow the arrow. Press E and answer.</p>
+        </div>
+      )}
+      {place !== 'horse' && questDone && !complete && !fight && !talk && (
+        <div className="troy-objective" role="status">
+          <p className="troy-objective-kicker">Objective</p>
+          <p className="troy-objective-title">Clear the city</p>
+          <p className="troy-objective-note">Walk into a Trojan group, or press E.</p>
         </div>
       )}
       <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
@@ -341,18 +371,25 @@ export default function TroyWorld() {
               </div>
             </div>
             <div className="battle-side is-foe">
-              <p className="battle-name">{fight.name}</p>
-              <p className="battle-hp-num">{fmtHp(fight.foeHp)} / {fight.foeMax}</p>
-              <div className="battle-hp-track">
-                <span style={{ width: `${Math.max(0, fight.foeHp / fight.foeMax) * 100}%` }} />
-              </div>
-              <div className="battle-fighter" key={`foe-${fight.blow || 0}`}>
-                {fight.gate && <div className="battle-sprite battle-foe battle-rear" />}
-                <div className={`battle-sprite battle-foe${fight.anim === 'defeat' ? ' is-down' : ''}`} />
-                <span className="battle-flash" />
-                {fight.float && fight.float.side === 'foe' && (
-                  <b className={`battle-float${fight.float.miss ? ' is-miss' : ''}`}>{fight.float.text}</b>
-                )}
+              <div className="battle-foes">
+                {(fight.foes || []).map((foe, index) => {
+                  const down = foe.hp <= 0;
+                  const target = fight.foeIndex === index;
+                  const splash = fight.anim === 'heavy' && !down && Math.abs(index - fight.foeIndex) === 1;
+                  return (
+                    <div key={foe.id} className={`battle-member${down ? ' is-down' : ''}${target ? ' is-target' : ''}${splash ? ' is-splash' : ''}`}>
+                      <p className="battle-name">{foe.name}</p>
+                      <p className="battle-hp-num">{fmtHp(foe.hp)} / {foe.max}</p>
+                      <div className="battle-hp-track">
+                        <span style={{ width: `${Math.max(0, foe.hp / foe.max) * 100}%` }} />
+                      </div>
+                      <div className="battle-sprite battle-trojan" />
+                      {fight.float && fight.float.side === 'foe' && target && (
+                        <b className={`battle-float${fight.float.miss ? ' is-miss' : ''}`}>{fight.float.text}</b>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -393,12 +430,41 @@ export default function TroyWorld() {
           </div>
         </div>
       )}
+      {gateAsk && (
+        <div className="gate-ask" role="dialog" aria-label="The gate">
+          <div className="battle-question">
+            <p className="battle-ask">The gate</p>
+            <p>{gateAsk.prompt}</p>
+            <div className="battle-choices">
+              {gateAsk.choices.map((choice, index) => (
+                <button
+                  key={choice}
+                  type="button"
+                  className="battle-choice"
+                  disabled={gateAsk.wrong}
+                  onClick={() => pickGate(index)}
+                >
+                  {choice}
+                </button>
+              ))}
+            </div>
+            {gateAsk.wrong && (
+              <>
+                <p className="battle-note">{gateAsk.hint} The gate stays shut.</p>
+                <button type="button" className="battle-continue" onClick={dismissGate}>
+                  Again
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {complete && (
         <div className="level-complete" role="dialog" aria-label="Level 1 complete">
           <div className="card level-complete-card">
             <p className="eyebrow">Level 1</p>
             <h2>Complete</h2>
-            <p>The gate has fallen. The sentries are down, and the Greek army is through.</p>
+            <p>The Trojan groups have fallen. The city is yours.</p>
           </div>
         </div>
       )}
