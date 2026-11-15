@@ -179,6 +179,7 @@ export class TroyScene extends Phaser.Scene {
     this.scatter = createScatter(this, {
       ground,
       blockers: this.blockers,
+      heroBody: this.feet,
       fromHorse: this.arrive,
     });
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
@@ -695,8 +696,19 @@ function addBeachArmy(scene) {
       const sort = 7000 + y;
       shadow.setDepth(sort - 2);
       sprite.setDepth(sort);
+      // The picture is the solid. He slides along the rank instead of
+      // walking through a soldier.
+      addPersonBlock(scene, scene.blockers, x, y);
     }
   }
+}
+
+function addPersonBlock(scene, group, x, y) {
+  const blocker = group.create(x, y - 14, 'blank');
+  blocker.setDisplaySize(20, 28);
+  blocker.refreshBody();
+  blocker.setVisible(false);
+  return blocker;
 }
 
 function addSolidProp(scene, group, prop) {

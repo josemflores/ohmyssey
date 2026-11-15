@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { createAthenaReply } from './api/athenaLogic.js';
+import { sendResetMail } from './api/passwordResetLogic.js';
 
 /**
  * Vite only bundles the React app. This plugin adds POST /api/athena while
@@ -79,6 +80,33 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function passwordResetDevPlugin() {
+  return {
+    name: 'ohmyssey-password-reset',
+    configureServer(server) {
+      server.middlewares.use('/api/password-reset', (req, res) => {
+        if (req.method !== 'POST') {
+          sendJson(res, 405, { ok: false });
+          return;
+        }
+        const chunks = [];
+        req.on('data', (chunk) => chunks.push(chunk));
+        req.on('end', async () => {
+          let body = {};
+          try {
+            const raw = Buffer.concat(chunks).toString('utf8');
+            body = raw ? JSON.parse(raw) : {};
+          } catch {
+            body = {};
+          }
+          const result = await sendResetMail({ email: body.email, link: body.link });
+          sendJson(res, 200, result);
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // The empty prefix loads GEMINI_API_KEY from .env into this Node process.
   // Only names that start with VITE_ are exposed to React.
@@ -91,6 +119,7 @@ export default defineConfig(({ mode }) => {
         apiKey: env.GEMINI_API_KEY || '',
         model: env.GEMINI_MODEL || '',
       }),
+      passwordResetDevPlugin(),
     ],
   };
 });

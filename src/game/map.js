@@ -62,7 +62,8 @@ export const GATE = { left: 26, right: 33 };
 export const WALL = { top: 37, bottom: 40 };
 
 // Beach, on the road, just south of the gate. The voyage starts in the horse.
-export const SPAWN = { x: 480, y: 694 };
+// South of the two ranks, so he is not born inside a soldier.
+export const SPAWN = { x: 480, y: 746 };
 
 // id must match a picture in textures.js.
 // baseY is the bottom of the picture (the ground contact).

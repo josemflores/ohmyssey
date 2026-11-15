@@ -44,7 +44,7 @@ export function createQuestions() {
   };
 }
 
-export function createScatter(scene, { ground, blockers, fromHorse }) {
+export function createScatter(scene, { ground, blockers, heroBody, fromHorse }) {
   const greeks = [];
   if (!fromHorse || scene.game.registry.get('greeksScattered')) {
     return {
@@ -75,6 +75,7 @@ export function createScatter(scene, { ground, blockers, fromHorse }) {
     );
     scene.physics.add.collider(man.body, ground);
     scene.physics.add.collider(man.body, blockers);
+    if (heroBody) scene.physics.add.collider(heroBody, man.body);
     greeks.push(man);
   });
 
@@ -149,7 +150,13 @@ function makeSoldier(scene, key, x, y, facing, extra) {
   const body = scene.physics.add.image(x, y, 'feet-small');
   body.setVisible(false);
   body.setCollideWorldBounds(true);
+  body.setBounce(0);
+  body.setFriction(0, 0);
   body.body.setAllowGravity(false);
+  // Cover the standing picture, not just the soles, so Odysseus
+  // goes around the man instead of through his chest.
+  body.body.setSize(20, 28, false);
+  body.body.setOffset((12 - 20) / 2, 8 - 28);
   const sprite = scene.add.sprite(x, y, key, WARRIOR_CONFIG.facingFrames[facing] ?? 0);
   sprite.setOrigin(0.5, 1);
   const rim = scene.add.sprite(x, y, key, 0).setOrigin(0.5, 1);
