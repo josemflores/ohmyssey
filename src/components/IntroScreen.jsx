@@ -44,16 +44,16 @@ export default function IntroScreen({ onBegin }) {
   const [index, setIndex] = useState(0);
   const name = getPlayerName();
   const welcomeRef = useRef(null);
-  const armed = useRef(false);
+  const indexRef = useRef(0);
+  const onBeginRef = useRef(onBegin);
+  const lastAdvance = useRef(0);
   const last = index === CARDS.length - 1;
   const card = CARDS[index];
+  indexRef.current = index;
+  onBeginRef.current = onBegin;
 
   useEffect(() => {
     welcomeRef.current?.focus({ preventScroll: true });
-    const timer = setTimeout(() => {
-      armed.current = true;
-    }, 600);
-    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -63,23 +63,39 @@ export default function IntroScreen({ onBegin }) {
     return () => clearTimeout(timer);
   }, [index, last]);
 
+  // Mouse, touch, Enter, and Space all take the next card. A press on the
+  // last card enters Troy. The guard only drops a second event from the
+  // same tap (pointerdown plus a click), not the next real press.
+  function pressOn(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const now = performance.now();
+    // A mouse click and a touch tap can both arrive a moment apart. One
+    // press still moves one card. The next real press is well after this.
+    if (now - lastAdvance.current < 400) return;
+    lastAdvance.current = now;
+    if (indexRef.current >= CARDS.length - 1) onBeginRef.current();
+    else setIndex(indexRef.current + 1);
+  }
+
+  const pressRef = useRef(pressOn);
+  pressRef.current = pressOn;
+
   useEffect(() => {
     function onKey(event) {
-      if (!armed.current || event.repeat || event.key !== 'Enter') return;
+      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+      const isEnter = event.key === 'Enter';
+      const isSpace = event.key === ' ' || event.code === 'Space';
+      if (!isEnter && !isSpace) return;
       const tag = event.target?.tagName;
-      if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
-      event.preventDefault();
-      if (last) onBegin();
-      else setIndex((n) => n + 1);
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      pressRef.current(event);
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [last, onBegin]);
-
-  function next() {
-    if (last) onBegin();
-    else setIndex((n) => n + 1);
-  }
+  }, []);
 
   function onTabKey(event) {
     if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
@@ -144,9 +160,9 @@ export default function IntroScreen({ onBegin }) {
             <button
               className={last ? 'btn intro-next is-begin' : 'btn btn-primary intro-next'}
               type="button"
-              onClick={next}
+              onPointerDown={pressOn}
             >
-              {last ? 'Begin' : 'Next'}
+              Press on
             </button>
           </div>
         </article>

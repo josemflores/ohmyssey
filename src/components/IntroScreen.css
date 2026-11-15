@@ -94,7 +94,7 @@
   align-items: center;
   gap: 0.75rem;
 }
-.intro-actions .btn { min-height: 44px; }
+.intro-actions .btn { min-height: 44px; touch-action: manipulation; }
 .intro-next.is-begin {
   background: linear-gradient(#f3dd9a, #c4963c);
   color: #2a1c0c;

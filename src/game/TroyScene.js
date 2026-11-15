@@ -11,6 +11,7 @@ import Phaser from 'phaser';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
+  FEET,
   GATE_MARK,
   INTERACT_RADIUS,
   INTERACTABLES,
@@ -19,8 +20,8 @@ import {
   MAP_W,
   PROPS,
   SPAWN,
-  WALKABLE,
   buildMap,
+  solidRects,
 } from './map.js';
 import {
   createQuestions,
@@ -111,15 +112,12 @@ export class TroyScene extends Phaser.Scene {
     const ground = map.createLayer(0, tiles, 0, 0);
     ground.setDepth(0);
     this.ground = ground;
-    // Everything not in WALKABLE is a wall, including the sea and the map edge.
-    const solidIndexes = [];
-    const maxIndex = Math.max(...grid.flat());
-    for (let i = 0; i <= maxIndex; i += 1) {
-      if (!WALKABLE.has(i)) solidIndexes.push(i);
-    }
-    ground.setCollision(solidIndexes);
-
+    // Walls, sea, and the map edge are rectangles, not a colliding tile each.
+    // Per-tile faces were catching his feet and sticking him in open lanes.
     this.blockers = this.physics.add.staticGroup();
+    for (const rect of solidRects(grid)) {
+      addRect(this, this.blockers, rect.x, rect.y, rect.w, rect.h);
+    }
     for (const prop of PROPS) addSolidProp(this, this.blockers, prop);
     for (const decor of DECOR) {
       this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(7000 + decor.baseY);
@@ -149,13 +147,20 @@ export class TroyScene extends Phaser.Scene {
     if (this.arrive) this.game.registry.set('leftHorse', true);
     this.feet = this.physics.add.image(start.x, start.y, 'feet');
     this.feet.setVisible(false);
+    this.feet.body.setSize(FEET.w, FEET.h, true);
     this.feet.setCollideWorldBounds(true);
     this.feet.body.setAllowGravity(false);
+    this.feet.setBounce(0);
+    this.feet.setFriction(0, 0);
+    this.feet.setDrag(0);
     // Warriors bounce off him. He does not get pushed, so a crowd cannot pin him.
     this.feet.body.pushable = false;
     this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
-    // A smaller bias so the short feet-box does not get shoved off thin gaps.
-    this.physics.world.TILE_BIAS = 4;
+    // Larger than the feet. A 4px bias ignored any deeper overlap, so he
+    // sank into a wall and stayed there. The overlap bias does the same
+    // job for the long wall rectangles: a slow frame must not tunnel.
+    this.physics.world.TILE_BIAS = 32;
+    this.physics.world.OVERLAP_BIAS = 24;
 
     this.heroRim = this.add.sprite(start.x, start.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.heroRim.setOrigin(0.5, 1);
@@ -166,7 +171,6 @@ export class TroyScene extends Phaser.Scene {
     this.hero.setScale(HERO_SCALE);
     this.heroShadow = this.add.ellipse(start.x, start.y, 24, 7, 0x0c1424, 0.55);
 
-    this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
 
     addBeachArmy(this);
@@ -305,6 +309,7 @@ export class TroyScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    clampToMap(this.feet);
     // While a box is open he stands still. Keys do nothing until it closes.
     const locked = this.inputLocked;
     const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);
@@ -655,6 +660,24 @@ function poseHero(hero, facing, moving, time) {
   const hop = Math.abs(Math.sin(time / 110));
   hero.setScale(1 + hop * 0.04, 1 - hop * 0.07);
   return -hop * 1.7;
+}
+
+function clampToMap(feet) {
+  const body = feet.body;
+  if (!body) return;
+  const x = Math.min(MAP_W - body.halfWidth, Math.max(body.halfWidth, feet.x));
+  const y = Math.min(MAP_H - body.halfHeight, Math.max(body.halfHeight, feet.y));
+  if (x === feet.x && y === feet.y) return;
+  feet.setPosition(x, y);
+  body.reset(x, y);
+}
+
+function addRect(scene, group, x, y, w, h) {
+  const blocker = group.create(x + w / 2, y + h / 2, 'blank');
+  blocker.setDisplaySize(w, h);
+  blocker.refreshBody();
+  blocker.setVisible(false);
+  return blocker;
 }
 
 function addBeachArmy(scene) {

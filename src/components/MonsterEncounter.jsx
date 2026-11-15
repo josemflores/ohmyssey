@@ -113,7 +113,9 @@ export default function MonsterEncounter({
         dispatch({ type: 'answer', index });
         return;
       }
-      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const isEnter = event.key === 'Enter';
+      const isSpace = event.key === ' ' || event.code === 'Space';
+      if (!isEnter && !isSpace) return;
       event.preventDefault();
       event.stopPropagation();
       if (phase === 'win') finish(onWin);
@@ -142,7 +144,7 @@ export default function MonsterEncounter({
           <p>This shore has no foe to question. The road stays open.</p>
           <div className="encounter-actions">
             <span className="encounter-keys">Enter or Esc closes this</span>
-            <button className="btn btn-primary" type="button" onClick={() => finish(onFlee)}>
+            <button className="btn btn-primary" type="button" onPointerDown={(event) => { event.preventDefault(); finish(onFlee); }}>
               Walk on
             </button>
           </div>
@@ -266,22 +268,22 @@ export default function MonsterEncounter({
               </button>
             )}
             {(asking || resolving) && (
-              <button className="btn btn-quiet" type="button" onClick={() => finish(onFlee)}>
+              <button className="btn btn-quiet" type="button" onPointerDown={(event) => { event.preventDefault(); finish(onFlee); }}>
                 Slip away
               </button>
             )}
             {resolving && (
-              <button className="btn btn-primary" type="button" onClick={advance}>
+              <button className="btn btn-primary" type="button" onPointerDown={(event) => { event.preventDefault(); advance(); }}>
                 Next question
               </button>
             )}
             {phase === 'win' && (
-              <button className="btn btn-primary btn-large" type="button" onClick={() => finish(onWin)}>
+              <button className="btn btn-primary btn-large" type="button" onPointerDown={(event) => { event.preventDefault(); finish(onWin); }}>
                 {preview ? 'Fight again' : 'Press on'}
               </button>
             )}
             {phase === 'lose' && (
-              <button className="btn btn-primary" type="button" onClick={() => finish(onLose)}>
+              <button className="btn btn-primary" type="button" onPointerDown={(event) => { event.preventDefault(); finish(onLose); }}>
                 {preview ? 'Fight again' : 'Fall back'}
               </button>
             )}

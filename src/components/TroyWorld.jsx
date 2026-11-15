@@ -105,6 +105,7 @@ export default function TroyWorld() {
     if (right) {
       setQuiz(null);
       gameRef.current?.events.emit('unlockHatch');
+      gameRef.current?.events.emit('unlockInput');
       return;
     }
     setQuiz({ ...quiz, picked: index, status: 'wrong' });

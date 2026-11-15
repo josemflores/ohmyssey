@@ -295,3 +295,36 @@ function fillRect(grid, x0, y0, w, h, pick) {
     for (let x = x0; x < x0 + w; x += 1) grid[y][x] = pick(x, y);
   }
 }
+
+// Solid tiles joined into rectangles. One long wall, not a tile per step,
+// so walking along it does not snag on the cracks between tiles.
+export function solidRects(grid = buildMap()) {
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const used = Array.from({ length: rows }, () => new Uint8Array(cols));
+  const rects = [];
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      if (used[y][x] || WALKABLE.has(grid[y][x])) continue;
+      let w = 1;
+      while (x + w < cols && !used[y][x + w] && !WALKABLE.has(grid[y][x + w])) w += 1;
+      let h = 1;
+      while (y + h < rows) {
+        let rowOk = true;
+        for (let i = 0; i < w; i += 1) {
+          if (used[y + h][x + i] || WALKABLE.has(grid[y + h][x + i])) {
+            rowOk = false;
+            break;
+          }
+        }
+        if (!rowOk) break;
+        h += 1;
+      }
+      for (let yy = y; yy < y + h; yy += 1) {
+        for (let xx = x; xx < x + w; xx += 1) used[yy][xx] = 1;
+      }
+      rects.push({ x: x * TILE, y: y * TILE, w: w * TILE, h: h * TILE });
+    }
+  }
+  return rects;
+}

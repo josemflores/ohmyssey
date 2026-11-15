@@ -34,6 +34,7 @@
   height: 68px;
   border-radius: 50%;
   z-index: 0;
+  pointer-events: none;
   background: radial-gradient(circle at 35% 35%, #fff8e4, #f0d48a 58%, #d7b15e);
   box-shadow: 0 0 46px 14px rgba(240, 212, 138, 0.28);
 }
@@ -92,8 +93,10 @@
   right: 0;
   bottom: 0;
   height: 168px;
+  z-index: 1;
   pointer-events: none;
 }
+.wave, .wave svg { pointer-events: none; }
 .wave {
   position: absolute;
   left: 0;
@@ -147,7 +150,7 @@
 
 .night-content {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   min-height: 100vh;
   display: grid;
   place-items: center;
