@@ -218,7 +218,8 @@
 }
 .troy-banner { bottom: 112px; }
 .battle-screen {
-  --sp: 256px;
+  --sp: 200px;
+  --foe: 112px;
   position: absolute;
   inset: 0;
   z-index: 6;
@@ -271,7 +272,7 @@
   pointer-events: none;
 }
 .battle-side { width: min(340px, 40vw); }
-.battle-side.is-foe { text-align: right; }
+.battle-side.is-foe { text-align: right; width: auto; max-width: 64vw; }
 .battle-fighter {
   position: relative;
   width: calc(var(--sp) + 28px);
@@ -280,6 +281,60 @@
 }
 .battle-side:not(.is-foe) .battle-fighter { margin-left: auto; }
 .battle-side.is-foe .battle-fighter { margin-right: auto; margin-left: 0; }
+.battle-foes {
+  display: flex;
+  gap: 0.35rem;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+.battle-member {
+  position: relative;
+  width: 124px;
+}
+.battle-member .battle-name { font-size: 0.72rem; }
+.battle-member .battle-hp-track { width: 100%; margin-left: 0; }
+.battle-sprite.battle-trojan {
+  width: var(--foe);
+  height: var(--foe);
+  margin: 8px auto 0;
+  background-image: url('/assets/sprites/npcs/trojan_soldier/trojan_soldier_32.png');
+  background-size: calc(var(--foe) * 4) calc(var(--foe) * 8);
+  background-position: 0 calc(var(--foe) * -2);
+}
+.battle-member.is-down .battle-trojan {
+  animation: foe-defeat 0.85s ease-in forwards;
+}
+.is-counter .battle-member.is-target .battle-trojan {
+  animation: foe-counter 0.64s ease-in-out;
+}
+.is-jab .battle-member.is-target .battle-trojan,
+.is-heavy .battle-member.is-target .battle-trojan,
+.is-heavy .battle-member.is-splash .battle-trojan {
+  animation: foe-hit 0.55s ease-out;
+}
+.is-jab .battle-member.is-down .battle-trojan,
+.is-heavy .battle-member.is-down .battle-trojan,
+.battle-member.is-down .battle-trojan {
+  animation: foe-defeat 0.85s ease-in forwards;
+}
+.gate-ask {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 0 6vw 8vh;
+  background: rgba(4, 8, 16, 0.5);
+}
+.gate-ask .battle-question {
+  align-self: end;
+  width: min(680px, 92vw);
+  height: auto;
+  padding: 1rem 1.1rem 1.1rem;
+  background: rgba(8, 14, 24, 0.94);
+  border: 1px solid rgba(240, 212, 138, 0.85);
+}
 .battle-sprite {
   position: relative;
   z-index: 1;
