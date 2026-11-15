@@ -57,7 +57,6 @@ const HERO_SCALE = 1;
 
 // How long each battle picture plays before the turn strip moves on.
 const TROJAN_HP = 8;
-const SPLASH = 4;
 const ENEMY_SWING = 2;
 
 // Off the road, on open paving, clear of houses. Checked against the map.
@@ -595,8 +594,9 @@ export class TroyScene extends Phaser.Scene {
     return this.fight.foes.every((foe) => foe.hp <= 0);
   }
 
-  // A right answer hits the front living Trojan. Heavy also spills onto
-  // the neighbours. A wrong answer misses, then each living Trojan strikes.
+  // A right answer hits the front living Trojan. Heavy (allEnemies) hits
+  // every living Trojan instead. A wrong answer misses, then each living
+  // Trojan strikes.
   resolveStrike(payload) {
     const fight = this.fight;
     if (!fight || !this.fighting || !fight.question) return;
@@ -608,17 +608,16 @@ export class TroyScene extends Phaser.Scene {
     let damage = 0;
     if (correct && index >= 0) {
       damage = attack.damage;
-      this.hurtFoe(index, damage, fallen);
-      if (attack.id === 'heavy') {
-        for (const side of [index - 1, index + 1]) {
-          if (side < 0 || side >= fight.foes.length || fight.foes[side].hp <= 0) continue;
-          this.hurtFoe(side, SPLASH, fallen);
-        }
+      if (attack.allEnemies) {
+        // Every Trojan still standing takes the same hit.
+        fight.foes.forEach((foe, i) => this.hurtFoe(i, damage, fallen));
+      } else {
+        this.hurtFoe(index, damage, fallen);
       }
     }
     const note = correct
-      ? (attack.id === 'heavy'
-        ? `${attack.label} lands for ${damage}, and ${SPLASH} spills onto the next Trojan.`
+      ? (attack.allEnemies
+        ? `${attack.label} sweeps every Trojan for ${damage}.`
         : `${attack.label} lands for ${damage}.`)
       : 'The blow misses.';
     this.game.events.emit('fightBlow', {
@@ -632,7 +631,7 @@ export class TroyScene extends Phaser.Scene {
       note,
       // Structured copy of the note, for the battle log plaque.
       log: correct
-        ? { who: 'greek', name: 'Odysseus', action: attack.label, damage, splash: attack.id === 'heavy' ? SPLASH : 0 }
+        ? { who: 'greek', name: 'Odysseus', action: attack.allEnemies ? `${attack.label} · all` : attack.label, damage, splash: 0 }
         : { who: 'greek', name: 'Odysseus', action: 'misses', damage: 0 },
       side: 'hero',
     });

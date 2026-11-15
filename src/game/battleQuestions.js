@@ -26,7 +26,9 @@ export const ATTACKS = {
   heavy: {
     id: 'heavy',
     label: 'Heavy Attack',
-    damage: 10,
+    // A sweeping blow: a smaller hit, but on every Trojan still standing.
+    damage: 5,
+    allEnemies: true,
     difficulty: 'hard',
     anim: 'heavy',
     hint: 'Hard',

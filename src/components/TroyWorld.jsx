@@ -414,7 +414,8 @@ export default function TroyWorld({ onSail }) {
                 {(fight.foes || []).map((foe, index) => {
                   const down = foe.hp <= 0;
                   const target = fight.foeIndex === index;
-                  const splash = fight.anim === 'heavy' && !down && Math.abs(index - fight.foeIndex) === 1;
+                  // Heavy Attack hits every Trojan, so all of them flinch.
+                  const splash = fight.anim === 'heavy' && !down && !target;
                   return (
                     <div key={foe.id} className={`battle-member${down ? ' is-down' : ''}${target ? ' is-target' : ''}${splash ? ' is-splash' : ''}`}>
                       <p className="battle-name">{foe.name}</p>
@@ -460,7 +461,7 @@ export default function TroyWorld({ onSail }) {
                     <span className="q-command-key" aria-hidden="true">{index + 1}</span>
                     <span className="q-command-text">
                       <span className="q-command-label">{move.label}</span>
-                      <small>{move.hint} question · {move.damage} damage</small>
+                      <small>{move.hint} question · {move.damage} damage{move.allEnemies ? ' to all enemies' : ''}</small>
                     </span>
                   </button>
                 ))}
