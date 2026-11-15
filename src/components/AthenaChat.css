@@ -5,18 +5,11 @@
   color: var(--ink);
 }
 .athena-chat-head { display: flex; gap: 0.7rem; align-items: center; }
-/* Athena's pixel face (27 px, shown at exactly 2x) in a gold frame. */
+/* Athena's pixel face, shown at exactly 2x, on the panel's own background. */
 .athena-chat-head .athena-face {
   flex: none;
-  width: 58px;
-  height: 58px;
-  padding: 0;
-  box-sizing: border-box;
-  border: 2px solid #c8963c;
-  border-radius: 12px;
-  background: #1f3d4d;
-  object-fit: contain;
-  object-position: center bottom;
+  width: 64px;
+  height: auto;
   image-rendering: pixelated;
 }
 .athena-chat-head h2 { margin: 0; font-size: 1.6rem; }

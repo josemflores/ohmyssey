@@ -158,10 +158,12 @@ def penelope() -> list[dict]:
 
 
 # Athena, goddess of wisdom, as she appears to Odysseus on Ithaca: a bronze
-# helmet with a tall blue crest, a gold breastplate (the aegis) over a white
-# peplos, a storm-gray mantle, long dark hair, sandals.
+# helmet with a tall flame-orange crest, long curly chestnut hair spilling
+# out from under it, a gold breastplate (the aegis) over a white peplos, a
+# storm-gray mantle, sandals.
 ATHENA_BRONZE = ramp("#3a2408", "#6a4612", "#9a6c1e", "#c49434", "#e2bc5a", "#f8e098")
-ATHENA_CREST = ramp("#060c1e", "#0e1a3a", "#1a2c58", "#284276", "#3c5c96")
+ATHENA_CREST = ramp("#4a1004", "#86240a", "#c04412", "#e8661e", "#fa9440")
+ATHENA_HAIR = ramp("#1e0c06", "#3a1a0c", "#5a2a14", "#7a3c1e", "#9a522a", "#b46a3a")
 ATHENA_MANTLE = ramp("#10141c", "#1e2430", "#2e3646", "#424a5c", "#5a6476", "#7a8494")
 
 
@@ -174,7 +176,7 @@ def athena() -> list[dict]:
         {"id": "aegis", "path": "torso/armour/plate/female/idle.png", "ramp": ATHENA_BRONZE},
         {"id": "mantle-fg", "path": "cape/solid/fg/idle.png", "ramp": ATHENA_MANTLE},
         {"id": "head", "path": "head/heads/human/female/idle.png", "head": True},
-        {"id": "hair", "path": "hair/long/adult/idle.png", "ramp": HAIR_DARK, "head": True},
+        {"id": "hair", "path": "hair/curly_long/adult/idle.png", "ramp": ATHENA_HAIR, "head": True},
         {"id": "helmet", "path": "hat/helmet/legion/adult/idle.png", "ramp": ATHENA_BRONZE, "head": True},
         {"id": "crest", "path": "hat/accessory/crest/adult/idle.png", "ramp": ATHENA_CREST, "head": True},
     ]

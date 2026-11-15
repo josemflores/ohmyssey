@@ -161,7 +161,7 @@ export default function AthenaChat({ topic, place }) {
 }
 
 // Her face from the game sprite (art/scripts/build_ithaca_people_lpc.py):
-// bronze helmet, blue crest, at full LPC size, scaled up crisp.
+// bronze helmet, orange crest, curly chestnut hair, at full LPC size.
 function AthenaFace() {
   return (
     <img
