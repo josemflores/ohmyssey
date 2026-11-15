@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadLevelData } from '../learn/loadLevels.js';
 import { loadLearnProgress, recordWin } from '../learn/storage.js';
-import AthenaDialogue from './learn/AthenaDialogue.jsx';
+import AthenaChat from './AthenaChat.jsx';
 import LearnLevel from './learn/LearnLevel.jsx';
 import './TroyLearn.css';
 
@@ -94,14 +94,15 @@ export default function TroyLearn() {
     function onLessons() { openLessons(); }
     function onKey(event) {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
-      const tag = event.target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+      // Esc closes the panel even while the cursor is in the question box.
       if (event.code === 'Escape' && openRef.current) {
         event.preventDefault();
         if (lessonId) setLessonId(null);
         else closeAll();
         return;
       }
+      const tag = event.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
       if (document.querySelector('.battle-screen, .level-complete, .troy-quiz, .troy-talk')) return;
       if (event.code === 'KeyH') {
         event.preventDefault();
@@ -217,7 +218,7 @@ export default function TroyLearn() {
       {mode === 'athena' && (
         <div className="troy-learn-shade" role="dialog" aria-label="Ask Athena">
           <div className="troy-learn-sheet">
-            <div className="troy-learn-topics" role="group" aria-label="Which lesson to ask about">
+            <div className="troy-learn-topics" role="group" aria-label="Which lesson Athena should focus on">
               {MENU.map((item) => (
                 <button
                   key={item.id}
@@ -229,7 +230,7 @@ export default function TroyLearn() {
                 </button>
               ))}
             </div>
-            <AthenaDialogue key={topic.id} level={topic} result={null} misses={0} />
+            <AthenaChat topic={topic} place={MENU.find((item) => item.id === topic.id)?.scope} />
             <button type="button" className="btn btn-quiet troy-learn-close" onClick={closeAll}>
               Close
             </button>

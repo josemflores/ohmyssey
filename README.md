@@ -84,6 +84,8 @@ The project is a Vite app plus one serverless function, `api/athena.js`. Vercel 
 
 ## Athena
 
+Press **H** (or **Ask Athena**) anywhere in the world to talk with her. She introduces herself and then answers any question about the voyage or its circuits, keeping the last few lines of the conversation for context. On a puzzle she gives the idea, not the answer. The panel sends `mode: "chat"` to `POST /api/athena`. Without a key she answers from the island notes and the panel says she is offline.
+
 The **Ask Athena** button sends the level text and the parts in the slots to `POST /api/athena`. The function calls Google Gemini and asks for one short Socratic hint in character. She can see the board. The prompt tells her not to give the winning resistor value. The API key is read from `GEMINI_API_KEY` on the server. It is not shipped to the browser.
 
 If the key is missing, or Gemini does not answer, the panel shows the next line from that level's `hints` array. The game stays playable either way.

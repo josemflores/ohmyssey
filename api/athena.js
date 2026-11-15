@@ -2,16 +2,37 @@
  * Vercel serves this file at POST /api/athena.
  *
  * GEMINI_API_KEY is read here, on the server. The browser only sends the
- * level id, the public lesson text, and the parts currently in the slots.
+ * question, a few earlier lines of the chat, and public lesson text.
  * Local `npm run dev` does not execute this file. The Vite plugin in
  * vite.config.js calls api/athenaLogic.js with the same rules.
  */
 
 import { createAthenaReply } from './athenaLogic.js';
+import { checkRate, visitorId } from './rateLimit.js';
+
+const MAX_BODY_BYTES = 20_000;
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Use POST' });
+    return;
+  }
+
+  const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+  if (raw.length > MAX_BODY_BYTES) {
+    res.status(413).json({ error: 'Too long' });
+    return;
+  }
+
+  const rate = checkRate(visitorId(req));
+  if (!rate.ok) {
+    res.setHeader('Retry-After', String(rate.retryAfter));
+    res.status(429).json({
+      hint: 'Rest a moment, traveler. Even a goddess needs a breath between questions.',
+      source: 'canned',
+      reason: 'rate_limited',
+    });
     return;
   }
 
