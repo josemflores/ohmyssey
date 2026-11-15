@@ -30,7 +30,8 @@ export function createTroyGame(parent) {
       width,
       height,
     },
-    scene: [TroyScene, HorseScene],
+    // Begin starts inside the horse. Troy is waiting for the hatch to open.
+    scene: [HorseScene, TroyScene],
     audio: { noAudio: true },
   });
 }

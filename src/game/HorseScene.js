@@ -5,11 +5,13 @@
 // so the room feels tight.
 //
 // The trap door shows "Press E" when he stands on it.
-// That press climbs back out. The function is onTrapDoor(), at the top of this file.
+// A correct answer unlocks it. Then that press climbs back out.
 
 import Phaser from 'phaser';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
+import { firstHatchQuestion } from './hatchQuestions.js';
 import { buildWorldTextures } from './textures.js';
+import { WARRIOR_CONFIG } from './warriorConfig.js';
 
 // Same wood colors as public/assets/sprites/trojan_horse.png.
 const WOOD = {
@@ -46,15 +48,30 @@ const POSTS = [
   { x: 140, y: 86, w: 12, h: 12 },
 ];
 
+// His men, already waiting in the belly. No collision: the room is tight enough.
+const SQUAD = [
+  { x: 70, y: 50, facing: 'se' },
+  { x: 124, y: 52, facing: 'sw' },
+  { x: 58, y: 92, facing: 'e' },
+];
+
+// Where he stands once the hatch lets him out.
+const OUTSIDE = { x: 480, y: 260 };
+
 // ============================================================
 // Trap door button.
 //
-// This runs when he presses E while standing on the hatch.
-// `scene` is this room. The last line sends him back outside,
-// next to the horse. Put your own code above that line.
+// Locked: E asks the placeholder question (React shows it).
+// Unlocked: E climbs out beside the horse.
+// A correct answer emits 'unlockHatch' on game.events.
 // ============================================================
 export function onTrapDoor(scene) {
-  scene.scene.start('troy', { x: 480, y: 260 });
+  if (scene.inputLocked) return;
+  if (scene.hatchUnlocked) {
+    scene.scene.start('troy', OUTSIDE);
+    return;
+  }
+  scene.game.events.emit('hatchQuestion', firstHatchQuestion());
 }
 
 export class HorseScene extends Phaser.Scene {
@@ -64,17 +81,25 @@ export class HorseScene extends Phaser.Scene {
   }
 
   preload() {
-    // Troy already loaded him. Skip the load so we do not wipe that texture.
-    if (this.textures.exists(ANIM_CONFIG.textureKey)) return;
-    this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
-      frameWidth: ANIM_CONFIG.frameWidth,
-      frameHeight: ANIM_CONFIG.frameHeight,
-    });
+    // Skip a sheet that is already loaded so a later visit does not wipe it.
+    if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
+      this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
+        frameWidth: ANIM_CONFIG.frameWidth,
+        frameHeight: ANIM_CONFIG.frameHeight,
+      });
+    }
     const walk = ANIM_CONFIG.walk;
     if (walk && !this.textures.exists('odysseus-walk')) {
       this.load.spritesheet('odysseus-walk', walk.path, {
         frameWidth: walk.frameWidth,
         frameHeight: walk.frameHeight,
+      });
+    }
+    const greek = WARRIOR_CONFIG.teams.greek;
+    if (greek.path && !this.textures.exists(greek.key)) {
+      this.load.spritesheet(greek.key, greek.path, {
+        frameWidth: WARRIOR_CONFIG.frameWidth,
+        frameHeight: WARRIOR_CONFIG.frameHeight,
       });
     }
   }
@@ -121,6 +146,19 @@ export class HorseScene extends Phaser.Scene {
     const lamp = this.add.sprite(lampX, lampY, 'oil-lamp', 0).setOrigin(0.5, 1);
     lamp.setDepth(7000 + lampY);
     lamp.play('lamp-flicker');
+
+    const greek = WARRIOR_CONFIG.teams.greek;
+    const greekTex = this.textures.get(greek.key);
+    if (greekTex) greekTex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.squad = SQUAD.map((man) => {
+      const frame = WARRIOR_CONFIG.facingFrames[man.facing] ?? 0;
+      const sprite = this.add.sprite(man.x, man.y, greek.key, frame);
+      sprite.setOrigin(0.5, 1);
+      sprite.setDepth(7000 + man.y);
+      const shadow = this.add.ellipse(man.x + 3, man.y + 1, 16, 5, 0x1a0c08, 0.45);
+      shadow.setDepth(7000 + man.y - 2);
+      return sprite;
+    });
 
     this.feet = this.physics.add.image(SPAWN.x, SPAWN.y, 'feet');
     this.feet.setVisible(false);
@@ -174,14 +212,25 @@ export class HorseScene extends Phaser.Scene {
     this.input.keyboard.addCapture([
       'W', 'A', 'S', 'D', 'E', 'UP', 'DOWN', 'LEFT', 'RIGHT',
     ]);
-    // Esc is the way out while the trap-door button is still empty.
-    this.input.keyboard.on('keydown-ESC', () => {
-      this.scene.start('troy', { x: 480, y: 260 });
-    });
+    // The question box locks his feet. A right answer opens the hatch.
+    this.inputLocked = false;
+    this.hatchUnlocked = false;
+    const lockInput = () => {
+      this.inputLocked = true;
+      this.feet.setVelocity(0, 0);
+    };
+    const unlockInput = () => { this.inputLocked = false; };
+    const unlockHatch = () => { this.hatchUnlocked = true; };
+    this.game.events.on('lockInput', lockInput);
+    this.game.events.on('unlockInput', unlockInput);
+    this.game.events.on('unlockHatch', unlockHatch);
 
     this.game.events.emit('place', 'horse');
     publishDebug(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off('lockInput', lockInput);
+      this.game.events.off('unlockInput', unlockInput);
+      this.game.events.off('unlockHatch', unlockHatch);
       this.game.events.emit('place', 'troy');
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
@@ -204,10 +253,11 @@ export class HorseScene extends Phaser.Scene {
   }
 
   update(time) {
-    const left = this.keys.left.isDown || this.keys.arrowLeft.isDown;
-    const right = this.keys.right.isDown || this.keys.arrowRight.isDown;
-    const up = this.keys.up.isDown || this.keys.arrowUp.isDown;
-    const down = this.keys.down.isDown || this.keys.arrowDown.isDown;
+    const locked = this.inputLocked;
+    const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);
+    const right = !locked && (this.keys.right.isDown || this.keys.arrowRight.isDown);
+    const up = !locked && (this.keys.up.isDown || this.keys.arrowUp.isDown);
+    const down = !locked && (this.keys.down.isDown || this.keys.arrowDown.isDown);
 
     let vx = 0;
     let vy = 0;
@@ -243,8 +293,9 @@ export class HorseScene extends Phaser.Scene {
     this.hero.setDepth(sort);
 
     const dist = Math.hypot(TRAP.x - this.feet.x, TRAP.y - this.feet.y);
-    this.nearest = dist <= TRAP.radius ? TRAP : null;
+    this.nearest = !locked && dist <= TRAP.radius ? TRAP : null;
     if (this.nearest) {
+      this.prompt.setText(this.hatchUnlocked ? 'Climb out' : 'Press E');
       this.prompt.setVisible(true);
       this.prompt.setPosition(hx, hy - 36);
       // Above the black vignette, or the label sits in the dark and disappears.
@@ -268,6 +319,8 @@ function publishDebug(scene) {
     get x() { return feet.x; },
     get y() { return feet.y; },
     get interactable() { return scene.nearest; },
+    get hatchUnlocked() { return scene.hatchUnlocked; },
+    get soldiers() { return scene.squad.length; },
     teleport(x, y) {
       feet.setPosition(x, y);
       feet.body.reset(x, y);
@@ -378,9 +431,10 @@ function paintDark() {
   const ctx = canvas.getContext('2d');
   // The picture is stretched over the whole screen, so the bright hole
   // has to be a small part of this canvas or the room will not feel tight.
-  const g = ctx.createRadialGradient(128, 128, 6, 128, 128, 34);
+  // Wide enough that Odysseus, the three Greeks, and the hatch stay in the light.
+  const g = ctx.createRadialGradient(128, 128, 20, 128, 128, 96);
   g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(0.4, 'rgba(0,0,0,0.45)');
+  g.addColorStop(0.62, 'rgba(0,0,0,0.28)');
   g.addColorStop(1, 'rgba(0,0,0,1)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 256, 256);

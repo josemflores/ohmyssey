@@ -28,13 +28,13 @@ const CARDS = [
   {
     kicker: 'Tonight',
     title: 'Inside the walls',
-    text: 'Night has fallen on Troy. The city sleeps. The men hidden in the horse have slipped out and opened the gate.',
+    text: 'Night has fallen on Troy. The city sleeps. Odysseus and three men are still hidden in the horse.',
     art: 'night',
   },
   {
     kicker: 'The gate',
-    title: 'Through the gate',
-    text: 'Odysseus, lead your men inside. The city sleeps, and the gate stands open…',
+    title: 'The hatch',
+    text: 'Answer the question on the trap door, then lead your men out. The gate stands open…',
     art: 'gate',
   },
 ];
