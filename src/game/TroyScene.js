@@ -52,8 +52,10 @@ const CITY_GROUPS = [
   { id: 'north', x: 620, y: 160, count: 4 },
   { id: 'east', x: 800, y: 280, count: 2 },
   { id: 'center', x: 500, y: 360, count: 3 },
-  { id: 'south', x: 640, y: 450, count: 3 },
 ];
+
+// Wet sand at the end of the beach road, hull overlapping the sea.
+const SHIP = { x: 480, y: 786 };
 
 const BLOW_MS = {
   jab: 520,
@@ -212,7 +214,11 @@ export class TroyScene extends Phaser.Scene {
     this.questions = createBattleQuestions();
     this.relief = createRelief(this);
     this.cityGroups = [];
+    this.groupsSpawned = false;
     this.gateQuestion = null;
+    this.sailing = false;
+    this.boatWarned = false;
+    addShip(this);
     this.fightCooldown = 0;
     this.engagedFoe = null;
     this.gateFalling = false;
@@ -295,6 +301,7 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.on('gateDismiss', onGateDismiss);
 
     publishDebug(this);
+    this.publishObjective();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('lockInput', lockInput);
@@ -419,6 +426,8 @@ export class TroyScene extends Phaser.Scene {
     if (!this.fighting && !this.gateQuestion && Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
       if (locked) {
         if (!this.gateFalling) this.game.events.emit('closeInteract');
+      } else if (this.nearBoat(70)) {
+        this.touchBoat();
       } else {
         const group = this.nearestGroup(72);
         if (group) this.beginGroupFight(group);
@@ -434,6 +443,7 @@ export class TroyScene extends Phaser.Scene {
 
     this.relief.update(dt);
     this.updateWaitingGreeks(dt);
+    this.watchBoat();
     if (this.fightCooldown > 0) this.fightCooldown -= dt;
     this.maybeHintRun(moving);
     if (!this.fighting && !locked && this.questDone) this.maybeMeetGroup(moving);
@@ -712,9 +722,10 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.emit('fightEnd', { won, note });
     if (group) {
       if (won) this.removeGroup(group);
-      if (won && this.groupsLeft() === 0) {
-        this.game.events.emit('levelComplete');
-        this.game.events.emit('notice', 'The city is clear.');
+      this.publishObjective();
+      if (won && this.shoreReady()) {
+        this.game.events.emit('notice', 'The shore is open. The ship is waiting.');
+        if (this.shipMark) this.shipMark.setVisible(true);
       }
       return;
     }
@@ -739,6 +750,7 @@ export class TroyScene extends Phaser.Scene {
       this.gateFalling = false;
       this.inputLocked = false;
       this.spawnCityGroups();
+      this.publishObjective();
       this.game.events.emit('notice', 'The army is through. Clear the Trojan groups.');
     });
   }
@@ -768,6 +780,69 @@ export class TroyScene extends Phaser.Scene {
     return this.cityGroups.filter((group) => !group.gone).length;
   }
 
+  shoreReady() {
+    return this.groupsSpawned && this.groupsLeft() === 0;
+  }
+
+  publishObjective() {
+    const total = CITY_GROUPS.length;
+    const left = this.groupsSpawned ? this.groupsLeft() : total;
+    const cleared = total - left;
+    let title;
+    let note;
+    if (!this.questDone) {
+      title = 'Reach the gate';
+      note = 'Open the gate (E)';
+    } else if (!this.shoreReady()) {
+      title = `Defeat the Trojan groups (${cleared}/${total})`;
+      note = 'Walk into a group, or press E';
+    } else {
+      title = 'Leave through the gate';
+      note = 'Reach the ship at the shore';
+    }
+    this.game.events.emit('objective', { title, note, cleared, total });
+    if (this.shipMark) this.shipMark.setVisible(this.shoreReady() && !this.sailing);
+  }
+
+  nearBoat(radius) {
+    if (!this.ship) return false;
+    return Math.hypot(this.ship.x - this.feet.x, this.ship.y - this.feet.y) <= radius;
+  }
+
+  watchBoat() {
+    if (this.sailing || this.fighting || this.gateFalling) return;
+    if (!this.nearBoat(80)) {
+      this.boatWarned = false;
+      return;
+    }
+    if (this.nearBoat(36)) this.touchBoat();
+  }
+
+  touchBoat() {
+    if (this.sailing || this.fighting || this.gateFalling) return;
+    if (!this.shoreReady()) {
+      if (!this.boatWarned) {
+        this.boatWarned = true;
+        this.game.events.emit('notice', 'Clear the Trojans first.');
+      }
+      return;
+    }
+    this.sail();
+  }
+
+  sail() {
+    if (this.sailing) return;
+    this.sailing = true;
+    this.inputLocked = true;
+    this.feet.setVelocity(0, 0);
+    if (this.shipMark) this.shipMark.setVisible(false);
+    const cam = this.cameras.main;
+    cam.fadeOut(800, 0, 0, 0);
+    this.time.delayedCall(700, () => {
+      this.game.events.emit('levelComplete');
+    });
+  }
+
   removeGroup(group) {
     if (!group || group.gone) return;
     group.gone = true;
@@ -775,10 +850,12 @@ export class TroyScene extends Phaser.Scene {
       member.sprite.destroy();
       member.shadow.destroy();
     }
+    this.publishObjective();
   }
 
   spawnCityGroups() {
-    if (this.cityGroups.length) return;
+    if (this.groupsSpawned) return;
+    this.groupsSpawned = true;
     const key = 'trojan-soldier';
     const tex = this.textures.get(key);
     if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -851,11 +928,12 @@ function aimArrow(scene) {
     arrow.innerHTML = '<svg viewBox="0 0 64 64" width="84" height="84" aria-hidden="true"><polygon points="4,10 58,32 4,54 18,32" fill="#f0d48a" stroke="#1a1208" stroke-width="3" stroke-linejoin="round"/></svg>';
     host.appendChild(arrow);
   }
-  if (scene.questDone || scene.nearest?.id === 'gate') {
+  const aimShip = scene.shoreReady && scene.shoreReady() && !scene.sailing;
+  if ((scene.questDone && !aimShip) || scene.nearest?.id === 'gate' || scene.sailing) {
     arrow.style.display = 'none';
     return;
   }
-  const gate = GATE_MARK;
+  const gate = aimShip ? SHIP : GATE_MARK;
   const cam = scene.cameras.main;
   // Screen position of the door center. midPoint is where the camera is looking.
   const sx = cam.width * 0.5 + (gate.x - cam.midPoint.x) * cam.zoom;
@@ -1030,6 +1108,51 @@ function addRect(scene, group, x, y, w, h) {
   blocker.refreshBody();
   blocker.setVisible(false);
   return blocker;
+}
+
+function addShip(scene) {
+  if (!scene.textures.exists('ship')) {
+    const g = scene.make.graphics({ add: false });
+    g.fillStyle(0x2a180e, 1);
+    g.fillEllipse(24, 48, 36, 56);
+    g.fillStyle(0x6a4428, 1);
+    g.fillEllipse(24, 46, 28, 46);
+    g.fillStyle(0xc4a36a, 1);
+    g.fillRect(22, 14, 4, 34);
+    g.fillStyle(0xf6ead2, 1);
+    g.fillTriangle(26, 16, 44, 28, 26, 42);
+    g.fillStyle(0x8d5a32, 1);
+    g.fillRect(12, 42, 24, 4);
+    g.fillStyle(0x9ec8d8, 0.9);
+    g.fillEllipse(24, 66, 30, 8);
+    g.generateTexture('ship', 48, 72);
+    g.destroy();
+  }
+  const ship = scene.add.image(SHIP.x, SHIP.y, 'ship').setOrigin(0.5, 0.62);
+  const tex = scene.textures.get('ship');
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  ship.setDepth(7000 + SHIP.y);
+  scene.ship = ship;
+  const mark = scene.add.triangle(SHIP.x, SHIP.y - 52, 0, 14, 12, 14, 6, 0, 0xf0d48a);
+  mark.setDepth(9100);
+  mark.setVisible(false);
+  scene.shipMark = mark;
+  scene.tweens.add({
+    targets: ship,
+    y: SHIP.y + 3,
+    duration: 1600,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut',
+  });
+  scene.tweens.add({
+    targets: mark,
+    y: SHIP.y - 60,
+    duration: 700,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut',
+  });
 }
 
 function addGateSentries(scene) {

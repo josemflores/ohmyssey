@@ -15,7 +15,7 @@ const MOVE_KEYS = new Set([
 // Mounts the Phaser city. The hint fades after a few seconds, or on the first step.
 // A spot in the city can also open a small box. That box is a placeholder until
 // the real puzzle and encounter screens plug in.
-export default function TroyWorld() {
+export default function TroyWorld({ onSail }) {
   const host = useRef(null);
   const gameRef = useRef(null);
   const [hint, setHint] = useState(true);
@@ -26,8 +26,15 @@ export default function TroyWorld() {
   const [complete, setComplete] = useState(false);
   const [gateAsk, setGateAsk] = useState(null);
   const [runHint, setRunHint] = useState(false);
+  const sailed = useRef(false);
   const [banner, setBanner] = useState('');
   const [place, setPlace] = useState('horse');
+  const [objective, setObjective] = useState({
+    title: 'Reach the gate',
+    note: 'Open the gate (E)',
+  });
+  const onSailRef = useRef(onSail);
+  onSailRef.current = onSail;
   const fightRef = useRef(null);
   const quizRef = useRef(null);
   fightRef.current = fight;
@@ -126,6 +133,9 @@ export default function TroyWorld() {
     });
     game.events.on('notice', (text) => setBanner(text || ''));
     game.events.on('levelComplete', () => setComplete(true));
+    game.events.on('objective', (next) => {
+      if (next && next.title) setObjective(next);
+    });
     game.events.on('gateQuestion', (question) => setGateAsk({ ...question, wrong: false, hint: '' }));
     game.events.on('gateWrong', (payload) => {
       setGateAsk((current) => current && { ...current, wrong: true, hint: payload.hint });
@@ -145,6 +155,7 @@ export default function TroyWorld() {
       game.events.off('questDone');
       game.events.off('notice');
       game.events.off('levelComplete');
+      game.events.off('objective');
       game.events.off('gateQuestion');
       game.events.off('gateWrong');
       game.events.off('gateClosed');
@@ -254,6 +265,15 @@ export default function TroyWorld() {
   }, [runHint]);
 
   useEffect(() => {
+    if (!complete || sailed.current) return undefined;
+    const timer = setTimeout(() => {
+      sailed.current = true;
+      onSailRef.current?.();
+    }, 1700);
+    return () => clearTimeout(timer);
+  }, [complete]);
+
+  useEffect(() => {
     if (!talk && !quiz) return undefined;
     function onKey(event) {
       if (event.code !== 'Escape') return;
@@ -276,24 +296,11 @@ export default function TroyWorld() {
         {place === 'horse' ? 'The horse' : 'Troy'}
         <span>{place === 'horse' ? 'inside' : 'at night'}</span>
       </h1>
-      {place !== 'horse' && (
-        <p className={questDone ? 'troy-quest is-done' : 'troy-quest'}>
-          <span>Quest</span>
-          {questDone ? 'Clear the Trojan groups' : 'Answer at the gate'}
-        </p>
-      )}
-      {place !== 'horse' && !questDone && !fight && !gateAsk && !talk && (
-        <div className="troy-objective" role="status">
-          <p className="troy-objective-kicker">Objective</p>
-          <p className="troy-objective-title">Open the gate</p>
-          <p className="troy-objective-note">Follow the arrow. Press E and answer.</p>
-        </div>
-      )}
-      {place !== 'horse' && questDone && !complete && !fight && !talk && (
-        <div className="troy-objective" role="status">
-          <p className="troy-objective-kicker">Objective</p>
-          <p className="troy-objective-title">Clear the city</p>
-          <p className="troy-objective-note">Walk into a Trojan group, or press E.</p>
+      {place !== 'horse' && !complete && (
+        <div className="troy-tracker" role="status">
+          <span>Objective</span>
+          <strong>{objective.title}</strong>
+          <em>{objective.note}</em>
         </div>
       )}
       <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
@@ -473,7 +480,7 @@ export default function TroyWorld() {
           <div className="card level-complete-card">
             <p className="eyebrow">Level 1</p>
             <h2>Complete</h2>
-            <p>The Trojan groups have fallen. The city is yours.</p>
+            <p>The ship leaves Troy. Ithaca is next.</p>
           </div>
         </div>
       )}

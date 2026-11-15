@@ -41,7 +41,7 @@ export default function App() {
       {screen === 'intro' && <IntroScreen onBegin={() => setScreen('world')} />}
       {screen === 'world' && (
         <>
-          <TroyWorld key={run} />
+          <TroyWorld key={run} onSail={() => goto('level2')} />
           <TroyLearn />
         </>
       )}
