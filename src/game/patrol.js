@@ -39,6 +39,7 @@ export function createQuestions() {
         prompt: q.prompt,
         choices: q.choices.slice(),
         answer: q.answer,
+        ...(q.circuit ? { circuit: q.circuit } : {}),
       });
     },
   };

@@ -115,6 +115,23 @@ export function generateOhmsQuestion(rng = Math.random, level = 1) {
     explanation = `R = V / I = ${voltage} ÷ ${current} = ${resistance} ${R}.`;
   }
 
+  // Lamp-scale questions come with a circuit drawing and a short prompt;
+  // the drawing carries the numbers and marks the unknown.
+  let circuit = null;
+  if (lamp) {
+    const resistor = (label) => ({ kind: 'resistor', label });
+    if (form === 'current') {
+      circuit = { layout: 'series', source: `${voltage} V`, parts: [resistor(ohms)], ask: { type: 'current' } };
+      prompt = 'Find the current I.';
+    } else if (form === 'voltage') {
+      circuit = { layout: 'series', source: '', parts: [resistor(ohms)], current: `${current} ${I}`, ask: { type: 'voltage', part: 0 } };
+      prompt = 'Find the voltage V across the resistor.';
+    } else {
+      circuit = { layout: 'series', source: `${voltage} V`, parts: [resistor('')], current: `${current} ${I}`, ask: { type: 'resistance', part: 0 } };
+      prompt = 'Find the resistance R.';
+    }
+  }
+
   const right = choices[0];
   const labeled = shuffle(rng, choices);
   const stamp = Math.floor(rng() * 1e9).toString(36);
@@ -122,6 +139,7 @@ export function generateOhmsQuestion(rng = Math.random, level = 1) {
     id: `ohm-${place}-${form}-${voltage}v-${resistance}r-${stamp}`,
     level: place,
     prompt,
+    ...(circuit ? { circuit } : {}),
     choices: labeled,
     answerIndex: labeled.indexOf(right),
     explanation,

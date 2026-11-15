@@ -329,6 +329,7 @@ export class TroyScene extends Phaser.Scene {
         id: question.id,
         prompt: question.prompt,
         choices: question.choices,
+        circuit: question.circuit || null,
         attack: attack.label,
       });
     };
@@ -539,6 +540,7 @@ export class TroyScene extends Phaser.Scene {
       id: this.gateQuestion.id,
       prompt: this.gateQuestion.prompt,
       choices: this.gateQuestion.choices,
+      circuit: this.gateQuestion.circuit || null,
     });
   }
 

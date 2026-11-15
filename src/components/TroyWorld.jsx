@@ -13,6 +13,7 @@ import {
   useChoiceKeys,
 } from './QuestionCard.jsx';
 import BattleLog from './BattleLog.jsx';
+import CircuitDiagram from './CircuitDiagram.jsx';
 
 const MOVES = [ATTACKS.light, ATTACKS.heavy];
 
@@ -405,6 +406,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       {quiz && (
         <div className="troy-talk troy-quiz q-card" role="dialog" aria-label="Hatch question">
           <QuestionHeader eyebrow="Ω · Inside the horse" title="The Hatch" />
+          <CircuitDiagram circuit={quiz.question.circuit} />
           <p className="q-prompt">{quiz.question.prompt}</p>
           <div className={choicesClass(quiz.question.choices)}>
             {quiz.question.choices.map((choice, index) => {
@@ -507,6 +509,11 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
             {fight.phase === 'question' && fight.question && (
               <div className="battle-question q-card">
                 <QuestionHeader eyebrow="Ω · Battle at Troy" title={fight.attack || 'Strike'} />
+                {/* Above the fighters there is room for a drawing or for
+                    sentence-length answers, not both. Those prompts say it all. */}
+                {choicesClass(fight.question.choices) === 'q-choices' && (
+                  <CircuitDiagram circuit={fight.question.circuit} />
+                )}
                 <p className="q-prompt">{fight.question.prompt}</p>
                 <div className={`battle-choices ${choicesClass(fight.question.choices)}`}>
                   {fight.question.choices.map((choice, index) => (
@@ -551,6 +558,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
         <div className="gate-ask" role="dialog" aria-label="The gate">
           <div className="battle-question q-card">
             <QuestionHeader eyebrow="Ω · The walls of Troy" title="The Gate" />
+            <CircuitDiagram circuit={gateAsk.circuit} />
             <p className="q-prompt">{gateAsk.prompt || GATE_FALLBACK.prompt}</p>
             <div className={`battle-choices ${choicesClass(gateChoices)}`}>
               {gateChoices.map((choice, index) => (

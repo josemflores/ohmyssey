@@ -344,3 +344,38 @@ body:has(.q-card) .troy-learn-hud { display: none; }
   .battle-dock .q-command { min-height: 48px; }
   .q-command-label { font-size: 0.98rem; }
 }
+
+/* ---- Circuit diagrams on question cards (CircuitDiagram.jsx) ---- */
+.q-circuit {
+  margin: 0.1rem auto 0.6rem;
+  width: min(300px, 100%);
+  padding: 0.35rem 0.4rem 0.15rem;
+  border: 1px solid rgba(184, 148, 88, 0.55);
+  border-radius: 10px;
+  background:
+    linear-gradient(rgba(255, 250, 240, 0.85), rgba(246, 234, 210, 0.85)),
+    repeating-linear-gradient(0deg, transparent 0 11px, rgba(160, 120, 60, 0.08) 11px 12px),
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(160, 120, 60, 0.08) 11px 12px);
+}
+.q-circuit svg { display: block; width: 100%; height: auto; }
+.q-circuit-text {
+  font-family: var(--font-classic, Georgia, serif);
+  font-variant-numeric: lining-nums;
+  font-feature-settings: "lnum" 1;
+}
+@media (max-width: 560px) {
+  .q-circuit { width: min(250px, 100%); margin-bottom: 0.45rem; }
+}
+
+/* Battle cards share the screen with the fighters, so the drawing is
+   smaller there and the whole question fits without scrolling. */
+.troy .battle-screen .battle-question .q-circuit {
+  width: min(216px, 100%);
+  margin: 0 auto 0.15rem;
+  padding: 0.1rem 0.25rem 0;
+}
+/* Labels scale with the drawing, so bump them back up to a readable size. */
+.troy .battle-screen .battle-question .q-circuit-text { font-size: 17px; }
+@media (max-height: 640px) {
+  .troy .battle-screen .battle-question .q-circuit { width: min(180px, 100%); }
+}
