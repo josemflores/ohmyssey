@@ -1155,13 +1155,12 @@ function addShip(scene) {
   });
 }
 
-// Doors crash outward, the brace is thrown clear, and the Greeks surge in.
+// The doors swing open quietly on their hinges, and the Greeks come in.
 // The player stays in the city afterwards.
 function playGateFall(scene, onDone) {
   const cam = scene.cameras.main;
   cam.stopFollow();
   cam.pan(480, GATE_VIEW_Y, 420, 'Sine.easeOut');
-  cam.shake(260, 0.008);
   openGateDoors(scene);
   // He steps back from the doors so the column has the road.
   scene.scriptedMove = {
@@ -1171,21 +1170,6 @@ function playGateFall(scene, onDone) {
   };
   // The Greeks run in through the gate and pair off with Trojans (gateBattle.js).
   startGateBattle(scene);
-
-  const flash = scene.add.rectangle(0, 0, cam.width, cam.height, 0xfff6e0, 1)
-    .setOrigin(0, 0)
-    .setScrollFactor(0)
-    .setDepth(20000)
-    .setAlpha(0);
-  scene.tweens.add({
-    targets: flash,
-    delay: 660,
-    alpha: 0.42,
-    duration: 50,
-    yoyo: true,
-    hold: 30,
-    onComplete: () => flash.destroy(),
-  });
 
   // Control comes back once every duelist is at his spot.
   scene.time.delayedCall(Math.max(2400, (scene.gateBattleMs || 0) + 250), () => {
@@ -1218,53 +1202,45 @@ function openGateDoors(scene) {
       onComplete: () => door.shadow.destroy(),
     });
   }
-  // One picture holds both leaves. Crop each half, then swing them open.
-  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
-  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
-  left.setCrop(0, 0, 64, 72);
-  right.setCrop(64, 0, 64, 72);
-  scene.tweens.add({
-    targets: left,
-    x: x - 74,
-    y: y + 26,
-    angle: -84,
-    duration: 700,
-    ease: 'Cubic.easeIn',
-  });
-  scene.tweens.add({
-    targets: right,
-    x: x + 74,
-    y: y + 26,
-    angle: 84,
-    duration: 700,
-    ease: 'Cubic.easeIn',
-    onComplete: () => burstDust(scene, x, y + 6),
-  });
-  scene.cameras.main.shake(220, 0.006);
-}
-
-function burstDust(scene, x, y) {
-  for (let i = 0; i < 12; i += 1) {
-    const puff = scene.add.circle(
-      x + (Math.random() - 0.5) * 90,
-      y + (Math.random() - 0.5) * 14,
-      1.6 + Math.random() * 1.6,
-      i % 3 === 0 ? 0x8a7358 : 0xe6d3b0,
-      0.85,
-    );
-    puff.setDepth(8000);
-    scene.tweens.add({
-      targets: puff,
-      x: puff.x + (Math.random() - 0.5) * 40,
-      y: puff.y - 6 - Math.random() * 16,
-      alpha: 0,
-      scale: 1.6,
-      duration: 420 + Math.random() * 280,
-      onComplete: () => puff.destroy(),
-    });
+  // The Greeks open the gate quietly; nothing is broken. One picture holds
+  // the two stone jambs and the two wooden leaves (128 px wide: jamb 0-8,
+  // leaves 8-64 and 64-120, jamb 120-128). The jambs stay put. Each leaf
+  // turns on its hinge beside its jamb and folds back against the wall,
+  // which from above reads as it narrowing toward the hinge.
+  const frameLeft = x - 64;
+  for (const [cropX, cropW] of [[0, 8], [120, 8]]) {
+    scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420).setCrop(cropX, 0, cropW, 72);
   }
+  const left = scene.add.image(frameLeft + 8, y, 'gate-door')
+    .setOrigin(8 / 128, 1)
+    .setDepth(7421)
+    .setCrop(8, 0, 56, 72);
+  const right = scene.add.image(frameLeft + 120, y, 'gate-door')
+    .setOrigin(120 / 128, 1)
+    .setDepth(7421)
+    .setCrop(64, 0, 56, 72);
+  [left, right].forEach((leaf, index) => {
+    scene.tweens.add({
+      targets: leaf,
+      scaleX: 0.14,
+      delay: index * 90,
+      duration: 1100,
+      ease: 'Sine.easeInOut',
+    });
+    // The leaf darkens a little as it turns edge-on, away from the moon.
+    scene.tweens.addCounter({
+      from: 255,
+      to: 150,
+      delay: index * 90,
+      duration: 1100,
+      ease: 'Sine.easeInOut',
+      onUpdate: (tween) => {
+        const v = Math.round(tween.getValue());
+        leaf.setTint(Phaser.Display.Color.GetColor(v, v, v));
+      },
+    });
+  });
 }
-
 
 function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.
