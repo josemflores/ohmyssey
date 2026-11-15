@@ -62,7 +62,7 @@ export default function App() {
       {screen === 'voyage' && <VoyageScreen key={run} onArrive={() => goto('level2')} />}
       {screen === 'level2' && (
         <>
-          <Level2World key={run} />
+          <Level2World key={run} onHome={() => goto('login')} />
           <TroyLearn />
         </>
       )}

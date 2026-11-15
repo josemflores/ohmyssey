@@ -1,0 +1,161 @@
+/* The credits (Credits.jsx): a night sky, a slow roll in gold and parchment,
+   then the whole list, scrollable, with a button back to the title. */
+
+.credits {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  background: #05070f;
+  color: #efe3c8;
+  font-family: var(--font-classic, 'Cormorant Garamond', Georgia, serif);
+  text-align: center;
+}
+.credits[data-rolled='1'] { overflow-y: auto; }
+
+.credits-sky {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 98%, transparent),
+    radial-gradient(1px 1px at 28% 64%, #dfe6ff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 46% 32%, #fff 98%, transparent),
+    radial-gradient(1px 1px at 63% 78%, #dfe6ff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 81% 22%, #fff 98%, transparent),
+    radial-gradient(1px 1px at 92% 58%, #dfe6ff 98%, transparent),
+    radial-gradient(ellipse 80% 50% at 50% 115%, rgba(232, 136, 98, 0.35), transparent 70%),
+    linear-gradient(180deg, #05070f 0%, #0e1430 60%, #2a2040 100%);
+  background-size: 220px 240px, 260px 280px, 300px 260px, 240px 300px, 280px 320px, 320px 260px, 100% 100%, 100% 100%;
+  animation: credits-twinkle 6s ease-in-out infinite alternate;
+}
+@keyframes credits-twinkle {
+  from { opacity: 0.85; }
+  to { opacity: 1; }
+}
+
+.credits-roll {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(640px, calc(100vw - 32px));
+  padding-bottom: 2rem;
+  transform: translate(-50%, 100vh);
+  animation: credits-roll 40s linear forwards;
+}
+@keyframes credits-roll {
+  to { transform: translate(-50%, calc(-100% + 55vh)); }
+}
+/* Rolled (or skipped): the whole list, still and scrollable. */
+.credits-roll.is-done {
+  position: relative;
+  left: auto;
+  margin: 0 auto;
+  padding: 12vh 0 140px;
+  transform: none;
+  animation: credits-show 0.8s ease-out;
+}
+@keyframes credits-show {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.credits-the-end {
+  margin: 0 0 3rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #c8963c;
+}
+.credits-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  letter-spacing: 0.08em;
+  color: #f0d48a;
+  text-shadow: 0 0 24px rgba(240, 212, 138, 0.35);
+}
+.credits-sub {
+  margin: 0.4rem 0 0;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: #d9c9a6;
+}
+.credits-rule {
+  height: 14px;
+  margin: 2.4rem auto;
+  width: min(420px, 80%);
+  background: url('/assets/ui/meander.svg') center / auto 100% repeat-x;
+  opacity: 0.8;
+}
+.credits section { margin: 0 0 2.6rem; }
+.credits h2 {
+  margin: 0 0 0.8rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #c8963c;
+}
+.credits p { margin: 0.3rem 0; font-size: 1.2rem; line-height: 1.5; }
+.credits-person { display: grid; gap: 0.1rem; margin: 0 0 1rem !important; }
+.credits-person strong {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #f6ead2;
+}
+.credits-person span { font-size: 1.05rem; color: #cbbb98; font-style: italic; }
+.credits .credits-small { font-size: 1rem; color: #b8aa8a; }
+.credits-names { line-height: 1.8 !important; }
+.credits-thanks {
+  font-family: var(--font-display);
+  font-size: 1.4rem !important;
+  color: #f0d48a;
+}
+
+.credits-actions {
+  position: fixed;
+  right: 0;
+  bottom: 24px;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.credits-actions.is-shown {
+  bottom: 0;
+  padding: 40px 0 24px;
+  background: linear-gradient(180deg, rgba(5, 7, 15, 0), rgba(5, 7, 15, 0.92) 55%);
+}
+.credits-actions:not(.is-shown) { justify-content: flex-end; padding-right: 24px; }
+.credits-btn {
+  pointer-events: auto;
+  min-width: 120px;
+  min-height: 46px;
+  padding: 0.5rem 1.6rem;
+  border: 1px solid #8a6424;
+  border-radius: 999px;
+  background: linear-gradient(#f3dd9a, #c4963c);
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(240, 212, 138, 0.2), 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+.credits-btn.is-quiet {
+  background: rgba(14, 10, 8, 0.85);
+  color: #f0d48a;
+  border-color: rgba(230, 194, 122, 0.7);
+}
+.credits-btn:hover { filter: brightness(1.08); }
+.credits-btn:focus-visible { outline: 3px solid #f0d48a; outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .credits-sky { animation: none; }
+  .credits-roll { animation-duration: 0.01s; }
+}
