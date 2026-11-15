@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { HorseScene } from './HorseScene.js';
 import { TroyScene } from './TroyScene.js';
 
 // Builds the Phaser game into the div React gives us.
@@ -29,7 +30,8 @@ export function createTroyGame(parent) {
       width,
       height,
     },
-    scene: TroyScene,
+    // Begin starts inside the horse. Troy is waiting for the hatch to open.
+    scene: [HorseScene, TroyScene],
     audio: { noAudio: true },
   });
 }
