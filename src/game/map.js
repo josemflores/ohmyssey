@@ -76,19 +76,16 @@ export const PROPS = [
   house(840, 156),
   house('houseAlt', 746, 250),
 
-  // Houses sit beside the diagonal, not on it. The box matches the picture
+  // Beside the diagonal, clear of the stones. The box matches the picture
   // so his feet cannot stand on a roof.
-  house(560, 340),
-  house(480, 420),
-  house(400, 300),
-  house('houseAlt', 200, 400),
-  house(320, 460),
-  house('houseAlt', 640, 430),
-  house(760, 500),
-  house('houseAlt', 520, 520),
-  house(280, 500),
-  house(600, 360),
-  house('houseAlt', 160, 340),
+  house(640, 300),
+  house('houseAlt', 140, 340),
+  house(700, 400),
+  house('houseAlt', 120, 460),
+  house(800, 500),
+  house(200, 520),
+  house('houseAlt', 840, 560),
+  house(360, 250),
 
   // Columns stand by the temple, north of the horse.
   { id: 'column', x: 400, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
@@ -101,6 +98,9 @@ export const PROPS = [
   // PixelLab horse, south frame. The picture is 128px tall. The solid box
   // is only the platform and wheels, so feet can pass behind the head.
   { id: 'horse', x: 480, baseY: 228, bodyW: 66, bodyH: 30, insetBottom: 0 },
+
+  // Wooden doors in the wall opening. He opens them from the north side.
+  { id: 'gate-door', x: 480, baseY: 652, bodyW: 120, bodyH: 64, insetBottom: 0 },
 
   { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
   { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
@@ -117,14 +117,12 @@ export const PROPS = [
   { id: 'cypress', x: 840, baseY: 729, bodyW: 10, bodyH: 8, insetBottom: 0 },
 
   // Trees beside the diagonal, clear of the stones.
-  { id: 'cypress', x: 360, baseY: 280, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 500, baseY: 300, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 180, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 300, baseY: 430, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 700, baseY: 470, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 560, baseY: 560, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 400, baseY: 540, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 840, baseY: 420, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 560, baseY: 280, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 200, baseY: 320, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 120, baseY: 400, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 760, baseY: 440, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 600, baseY: 520, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 360, baseY: 560, bodyW: 10, bodyH: 8, insetBottom: 0 },
 ];
 
 // The picture is 60×64. The box covers that, or he walks onto the roof.
@@ -151,8 +149,13 @@ export const INTERACT_RADIUS = 28;
 // type tells React what to open later (a gate, a place, a hatch, ...).
 // Gate center: columns 26 through 33. (26 + 33 + 1) / 2 * 16 = 480.
 const GATE_X = ((GATE.left + GATE.right + 1) / 2) * TILE;
-// One tile south of the wall, on the road, so his feet can reach it.
-const GATE_Y = (WALL.bottom + 1) * TILE + 8;
+// He stands just north of the doors, inside the city.
+const GATE_Y = WALL.top * TILE - 12;
+// The doors themselves. The arrow points here.
+export const GATE_MARK = {
+  x: GATE_X,
+  y: ((WALL.top + WALL.bottom) / 2) * TILE + 8,
+};
 
 export const INTERACTABLES = [
   {
@@ -160,7 +163,7 @@ export const INTERACTABLES = [
     x: GATE_X,
     y: GATE_Y,
     radius: INTERACT_RADIUS,
-    prompt: 'Press E to look through the gate',
+    prompt: 'Press E to open the gate',
     type: 'gate',
   },
   {
@@ -186,9 +189,9 @@ export const INTERACTABLES = [
 // Every entry is a real standing lamp. The glow is drawn on its flame.
 // The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [
-  // On the two bends of the diagonal.
-  { x: 300, y: 360 },
-  { x: 620, y: 500 },
+  // Beside the diagonal, not on the stones.
+  { x: 200, y: 360 },
+  { x: 700, y: 480 },
   // On the paving beside the temple colonnade, not on the horse.
   { x: 390, y: 150 },
 ];

@@ -12,6 +12,7 @@ import { ENCOUNTER_RESULT_EVENT, requestEncounter } from '../learn/encounters/bu
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
+  GATE_MARK,
   INTERACT_RADIUS,
   INTERACTABLES,
   LAMPS,
@@ -171,6 +172,7 @@ export class TroyScene extends Phaser.Scene {
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
 
+    addBeachArmy(this);
     this.patrol = createPatrol(this, {
       ground,
       blockers: this.blockers,
@@ -279,9 +281,22 @@ export class TroyScene extends Phaser.Scene {
       return;
     }
     if (target.id === 'gate') {
+      if (this.questDone) return;
       this.questDone = true;
+      this.inputLocked = true;
+      this.feet.setVelocity(0, 0);
       this.game.registry.set('gateOpen', true);
       this.game.events.emit('questDone');
+      const cam = this.cameras.main;
+      const cover = this.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(30000)
+        .setAlpha(0);
+      cover.setDisplaySize(cam.width, cam.height);
+      this.tweens.add({ targets: cover, alpha: 1, duration: 900 });
+      cam.fadeOut(900, 0, 0, 0);
+      return;
     }
     this.game.events.emit('interact', {
       id: target.id,
@@ -527,7 +542,7 @@ function aimArrow(scene) {
     arrow.style.display = 'none';
     return;
   }
-  const gate = INTERACTABLES.find((spot) => spot.id === 'gate');
+  const gate = GATE_MARK;
   const cam = scene.cameras.main;
   const sx = (gate.x - cam.scrollX) * cam.zoom;
   const sy = (gate.y - cam.scrollY) * cam.zoom;
@@ -650,6 +665,24 @@ function poseHero(hero, facing, moving, time) {
   const hop = Math.abs(Math.sin(time / 110));
   hero.setScale(1 + hop * 0.04, 1 - hop * 0.07);
   return -hop * 1.7;
+}
+
+function addBeachArmy(scene) {
+  const key = WARRIOR_CONFIG.teams.greek.key;
+  const tex = scene.textures.get(key);
+  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  const frame = WARRIOR_CONFIG.facingFrames.n;
+  for (let row = 0; row < 2; row += 1) {
+    for (let col = 0; col < 6; col += 1) {
+      const x = 336 + col * 52;
+      const y = 730 + row * 40;
+      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
+      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
+      const sort = 7000 + y;
+      shadow.setDepth(sort - 2);
+      sprite.setDepth(sort);
+    }
+  }
 }
 
 function addSolidProp(scene, group, prop) {

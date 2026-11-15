@@ -7,6 +7,7 @@
 
 import { facingFromVector } from './animConfig.js';
 import { HATCH_QUESTIONS } from './hatchQuestions.js';
+import { MAP_W } from './map.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 
 export const WALK_SPEED = 80;
@@ -21,22 +22,23 @@ export const FOE_HIT = 4;
 const DETECT = 112;
 const CONTACT = 28;
 const HINT_RADIUS = 160;
-const SCATTER_TIME = 3.2;
 
 // On the bends: west lane, east lane, then the last stretch to the gate.
 const SENTRIES = [
-  { id: 'sentry-1', x: 400, y: 320 },
-  { id: 'sentry-2', x: 260, y: 410 },
-  { id: 'sentry-3', x: 560, y: 490 },
-  { id: 'sentry-4', x: 480, y: 570 },
+  { id: 'sentry-1', x: 420, y: 340 },
+  { id: 'sentry-2', x: 280, y: 430 },
+  { id: 'sentry-3', x: 520, y: 500 },
+  { id: 'sentry-4', x: 460, y: 560 },
 ];
 
 // Away from the hatch: west, east, and north into the streets.
 const SCATTER = [
-  { x: -1, y: 0.05, ox: -28, oy: 6 },
-  { x: 1, y: 0.08, ox: 28, oy: 8 },
-  { x: -0.55, y: -1, ox: -36, oy: 2 },
+  { ox: -28, oy: 8, goalX: -140, goalY: 200 },
+  { ox: 28, oy: 10, goalX: MAP_W + 140, goalY: 180 },
+  { ox: -8, oy: -6, goalX: 220, goalY: -140 },
 ];
+
+const CALM_SECONDS = 3.2;
 
 export function createPatrol(scene, { ground, blockers, fromHorse }) {
   const greekKey = WARRIOR_CONFIG.teams.greek.key;
@@ -62,7 +64,6 @@ export function createPatrol(scene, { ground, blockers, fromHorse }) {
   if (fromHorse && !scene.game.registry.get('greeksScattered')) {
     scene.game.registry.set('greeksScattered', true);
     SCATTER.forEach((dir) => {
-      const len = Math.hypot(dir.x, dir.y);
       const man = makeSoldier(
         scene,
         greekKey,
@@ -71,14 +72,17 @@ export function createPatrol(scene, { ground, blockers, fromHorse }) {
         'n',
         {
           kind: 'greek',
-          vx: (dir.x / len) * RUN_SPEED,
-          vy: (dir.y / len) * RUN_SPEED,
-          left: SCATTER_TIME,
+          goalX: dir.goalX,
+          goalY: dir.goalY,
+          side: 0,
+          age: 0,
         },
       );
       greeks.push(man);
     });
   }
+
+  let calm = fromHorse ? CALM_SECONDS : 0;
 
   for (const man of [...sentries, ...greeks]) {
     scene.physics.add.collider(man.body, ground);
@@ -101,10 +105,19 @@ export function createPatrol(scene, { ground, blockers, fromHorse }) {
       };
     },
     update(dt, heroX, heroY, frozen) {
-      for (const man of greeks) stepGreek(man, dt);
+      const hold = calm > 0;
+      if (calm > 0) calm -= dt;
+      for (let i = greeks.length - 1; i >= 0; i -= 1) {
+        const man = greeks[i];
+        stepGreek(man, scene, dt);
+        if (man.gone) {
+          retire(man);
+          greeks.splice(i, 1);
+        }
+      }
       for (const man of sentries) {
         if (man.dead) continue;
-        stepSentry(man, heroX, heroY, frozen, dt);
+        stepSentry(man, heroX, heroY, frozen || hold, dt);
       }
       for (const man of [...sentries, ...greeks]) pose(man);
     },
@@ -145,19 +158,43 @@ export function hintDistance() {
   return HINT_RADIUS;
 }
 
-function stepGreek(man, dt) {
-  if (man.left <= 0) {
-    man.body.setVelocity(0, 0);
-    return;
+function stepGreek(man, scene, dt) {
+  man.age += dt;
+  const dx = man.goalX - man.body.x;
+  const dy = man.goalY - man.body.y;
+  let ang = Math.atan2(dy, dx);
+  const blocked = man.body.body.blocked;
+  const hit = blocked.up || blocked.down || blocked.left || blocked.right;
+  if (hit) {
+    if (!man.side) man.side = Math.random() < 0.5 ? 1 : -1;
+    ang += man.side * 1.2;
+  } else {
+    man.side = 0;
   }
-  man.left -= dt;
-  man.body.setVelocity(man.vx, man.vy);
-  man.facing = facingFromVector(man.vx, man.vy);
+  const vx = Math.cos(ang);
+  const vy = Math.sin(ang);
+  man.body.setVelocity(vx * RUN_SPEED, vy * RUN_SPEED);
+  man.facing = facingFromVector(vx, vy);
+  if (man.age > 0.7 && isOffScreen(scene, man.body.x, man.body.y)) man.gone = true;
+}
+
+function isOffScreen(scene, x, y) {
+  const view = scene.cameras.main.worldView;
+  const pad = 40;
+  return x < view.x - pad || y < view.y - pad || x > view.right + pad || y > view.bottom + pad;
+}
+
+function retire(man) {
+  man.body.destroy();
+  man.sprite.destroy();
+  man.rim.destroy();
+  man.shadow.destroy();
 }
 
 function stepSentry(man, heroX, heroY, frozen, dt) {
   if (frozen) {
     man.body.setVelocity(0, 0);
+    man.touch = false;
     return;
   }
   const dx = heroX - man.body.x;
