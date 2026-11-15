@@ -23,12 +23,12 @@ const CONTACT = 28;
 const HINT_RADIUS = 160;
 const SCATTER_TIME = 3.2;
 
-// Beside the road, north of the wall, from the horse down to the gate.
+// On the bends: west lane, east lane, then the last stretch to the gate.
 const SENTRIES = [
-  { id: 'sentry-1', x: 400, y: 340 },
-  { id: 'sentry-2', x: 560, y: 450 },
-  { id: 'sentry-3', x: 390, y: 540 },
-  { id: 'sentry-4', x: 560, y: 575 },
+  { id: 'sentry-1', x: 400, y: 320 },
+  { id: 'sentry-2', x: 240, y: 420 },
+  { id: 'sentry-3', x: 720, y: 460 },
+  { id: 'sentry-4', x: 480, y: 570 },
 ];
 
 // Away from the hatch: west, east, and north into the streets.

@@ -3,6 +3,8 @@
 // y = 0 is the north edge. The sea is the bottom of the map.
 // The plaza between the horse and the gate is long on purpose, so the
 // walk south to the gate has a pace instead of a few steps.
+// That walk bends: west, then east, then back to the gate. Houses and
+// trees close the straight line, so the bend is the way through.
 
 export const TILE = 16;
 export const COLS = 60;
@@ -74,6 +76,11 @@ export const PROPS = [
   { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
   { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
 
+  // Three fences across the plaza. Each one leaves a gap on the zigzag.
+  ...fence(392, 11, 19),
+  ...fence(488, 41, 49),
+  ...fence(552, 25, 35),
+
   // Columns stand by the temple, north of the horse.
   { id: 'column', x: 400, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
   { id: 'column', x: 560, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
@@ -99,6 +106,16 @@ export const PROPS = [
   { id: 'cypress', x: 710, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 140, baseY: 724, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 840, baseY: 729, bodyW: 10, bodyH: 8, insetBottom: 0 },
+
+  // Trees along the bends, set just off the stones so the lane stays open.
+  { id: 'cypress', x: 160, baseY: 330, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 320, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 176, baseY: 400, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 640, baseY: 450, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 800, baseY: 470, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 390, baseY: 530, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 590, baseY: 540, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 860, baseY: 360, bodyW: 10, bodyH: 8, insetBottom: 0 },
 ];
 
 // Pictures with no collision of their own. They stand on tiles that are
@@ -153,12 +170,44 @@ export const INTERACTABLES = [
 // Every entry is a real standing lamp. The glow is drawn on its flame.
 // The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [
-  // Along the road from the horse down toward the gate.
-  { x: 292, y: 420 },
-  { x: 668, y: 560 },
+  // On the west bend, then the east bend.
+  { x: 240, y: 370 },
+  { x: 720, y: 500 },
   // On the paving beside the temple colonnade, not on the horse.
   { x: 390, y: 150 },
 ];
+
+// A row of houses across the plaza. gapTileLeft/Right is the opening, in tiles.
+function fence(baseY, gapTileLeft, gapTileRight) {
+  const row = [];
+  let n = 0;
+  // 62px apart, each house blocks 56 of that. The 6px crack is too narrow to walk.
+  for (let x = 40; x <= 920; x += 62) {
+    const centerTile = x / TILE;
+    if (centerTile > gapTileLeft && centerTile < gapTileRight) continue;
+    row.push({
+      id: n % 2 === 0 ? 'house' : 'houseAlt',
+      x,
+      baseY,
+      bodyW: 56,
+      bodyH: 36,
+      insetBottom: 8,
+    });
+    // A tree behind every other roof, so the row is not one flat wall.
+    if (n % 2 === 0) {
+      row.push({
+        id: 'cypress',
+        x: x - 10,
+        baseY: baseY - 30,
+        bodyW: 10,
+        bodyH: 8,
+        insetBottom: 0,
+      });
+    }
+    n += 1;
+  }
+  return row;
+}
 
 function earthKind(x, y) {
   const n = (x * 5 + y * 3) % 11;
@@ -200,14 +249,17 @@ export function buildMap() {
     }
   }
 
-  // One road, the same width as the gate, from the temple steps to the beach.
-  for (let y = 5; y <= WALL.bottom + 7; y += 1) {
-    if (y >= WALL.top && y <= WALL.bottom) continue;
+  // The road leaves the horse, bends west, crosses to the east, then
+  // comes back to the gate. The beach beyond the wall stays straight.
+  roadRect(grid, 24, 15, 12, 5);
+  roadRect(grid, 12, 18, 24, 4);
+  roadRect(grid, 12, 18, 6, 8);
+  roadRect(grid, 12, 25, 36, 4);
+  roadRect(grid, 42, 25, 6, 8);
+  roadRect(grid, 26, 31, 22, 4);
+  roadRect(grid, 26, 31, 8, 6);
+  for (let y = WALL.bottom + 1; y <= WALL.bottom + 7; y += 1) {
     for (let x = GATE.left; x <= GATE.right; x += 1) grid[y][x] = T.road;
-    // Sandy or dusty edge so the road does not meet the ground in a hard line.
-    for (const x of [GATE.left - 1, GATE.right + 1]) {
-      if (x > 0 && x < COLS && WALKABLE.has(grid[y][x])) grid[y][x] = T.roadSide;
-    }
   }
 
   // Dry weeds along the foot of the wall, and a few cracks in the paving.
@@ -235,6 +287,17 @@ export function buildMap() {
   for (const [x, y] of rocks) grid[y][x] = T.rock;
 
   return grid;
+}
+
+function roadRect(grid, x, y, w, h) {
+  for (let yy = y; yy < y + h; yy += 1) {
+    if (yy < 0 || yy >= ROWS) continue;
+    if (yy >= WALL.top && yy <= WALL.bottom) continue;
+    for (let xx = x; xx < x + w; xx += 1) {
+      if (xx < 1 || xx >= COLS - 1) continue;
+      grid[yy][xx] = T.road;
+    }
+  }
 }
 
 function fillRect(grid, x0, y0, w, h, pick) {
