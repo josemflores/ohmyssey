@@ -110,6 +110,7 @@ export class TroyScene extends Phaser.Scene {
     const tiles = map.addTilesetImage('tiles');
     const ground = map.createLayer(0, tiles, 0, 0);
     ground.setDepth(0);
+    this.ground = ground;
     // Everything not in WALKABLE is a wall, including the sea and the map edge.
     const solidIndexes = [];
     const maxIndex = Math.max(...grid.flat());
@@ -121,7 +122,7 @@ export class TroyScene extends Phaser.Scene {
     this.blockers = this.physics.add.staticGroup();
     for (const prop of PROPS) addSolidProp(this, this.blockers, prop);
     for (const decor of DECOR) {
-      this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(decor.baseY);
+      this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(7000 + decor.baseY);
     }
 
     this.glints = createGlints(this);
@@ -465,6 +466,44 @@ export class TroyScene extends Phaser.Scene {
     this.fight = null;
     this.game.events.emit('fightEnd', { won, note });
   }
+
+  // A straight knockback can land inside a house or past the map. Step back
+  // toward the sentry until the feet box is on open ground, and stay far
+  // enough that the same sentry does not grab him again on the next frame.
+  clearLanding(x, y, foeX, foeY, safeX, safeY) {
+    const dx = foeX - x;
+    const dy = foeY - y;
+    const len = Math.hypot(dx, dy) || 1;
+    const spots = [[x, y]];
+    for (let step = 16; step <= 160; step += 16) {
+      spots.push([x + (dx / len) * step, y + (dy / len) * step]);
+    }
+    for (const [px, py] of spots) {
+      if (Math.hypot(px - foeX, py - foeY) < 56) continue;
+      if (this.standsClear(px, py)) return { x: px, y: py };
+    }
+    if (this.standsClear(safeX, safeY)) return { x: safeX, y: safeY };
+    return { x: foeX, y: Math.min(MAP_H - 16, foeY + 64) };
+  }
+
+  standsClear(x, y) {
+    const hw = this.feet.body.halfWidth;
+    const hh = this.feet.body.halfHeight;
+    if (x - hw < 2 || y - hh < 2 || x + hw > MAP_W - 2 || y + hh > MAP_H - 2) return false;
+    const corners = [
+      [x - hw + 1, y - hh + 1],
+      [x + hw - 1, y - hh + 1],
+      [x - hw + 1, y + hh - 1],
+      [x + hw - 1, y + hh - 1],
+    ];
+    for (const [sx, sy] of corners) {
+      const tile = this.ground.getTileAtWorldXY(sx, sy);
+      if (tile && tile.collides) return false;
+    }
+    this.feet.setPosition(x, y);
+    this.feet.body.reset(x, y);
+    return !this.physics.overlap(this.feet, this.blockers);
+  }
 }
 
 // "Press E" floats over his head. The camera is zoomed 3×, so the letters
@@ -650,7 +689,8 @@ function addSolidProp(scene, group, prop) {
     horse.setOrigin(0.5, 122 / 128);
     horse.setDepth(7000 + prop.baseY);
   } else {
-    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(prop.baseY);
+    // Same band as the horse and the people, so a roof covers whoever is behind it.
+    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
   }
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');

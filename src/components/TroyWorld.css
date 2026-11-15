@@ -92,7 +92,11 @@
   color: #f6ead2;
   border-color: rgba(230, 194, 122, 0.75);
 }
-.troy-quiz { width: min(520px, calc(100% - 32px)); }
+.troy-quiz {
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100% - 48px);
+  overflow: auto;
+}
 .troy-quiz-choices {
   display: flex;
   flex-direction: column;
@@ -179,6 +183,7 @@
   z-index: 6;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  overflow: auto;
   background: radial-gradient(ellipse at center, #1a2433 0%, #070b12 72%);
   color: #f6ead2;
 }
@@ -253,6 +258,7 @@
   background: transparent;
   border: 1px solid rgba(230, 194, 122, 0.4);
   padding: 0.55rem 0.75rem;
+  min-height: 44px;
   cursor: pointer;
 }
 .battle-command + .battle-command { border-top: 0; }

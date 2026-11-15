@@ -203,7 +203,7 @@ export default function TroyWorld() {
           {questDone ? 'The gate is open' : 'Follow the arrow to the gate and open it'}
         </p>
       )}
-      {!faded && <p className={hint ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>}
+      {!faded && <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>}
       {!faded && runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
       {!faded && banner && <p className="troy-banner">{banner}</p>}
       {talk && (

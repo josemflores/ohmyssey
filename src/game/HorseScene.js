@@ -129,12 +129,15 @@ export class HorseScene extends Phaser.Scene {
     gloom.setDepth(2);
 
     this.posts = this.physics.add.staticGroup();
-    for (const post of POSTS) {
-      const block = this.posts.create(post.x, post.y, 'blank');
-      block.setDisplaySize(post.w, post.h);
+    for (const spec of POSTS) {
+      const block = this.posts.create(spec.x, spec.y, 'blank');
+      block.setDisplaySize(spec.w, spec.h);
       block.refreshBody();
       block.setVisible(false);
-      this.add.rectangle(post.x, post.y, post.w, post.h, 0x4a1d2a).setDepth(post.y);
+      // A short timber, not a flat dark square on the planks.
+      const depth = 7000 + spec.y;
+      this.add.rectangle(spec.x, spec.y, 6, 22, 0x6a3b2c).setOrigin(0.5, 0.85).setDepth(depth);
+      this.add.rectangle(spec.x, spec.y - 16, 10, 4, 0x8d5340).setOrigin(0.5, 0.5).setDepth(depth + 1);
     }
 
     // One lamp, like a man left it burning. The pool of light is small.
@@ -195,8 +198,17 @@ export class HorseScene extends Phaser.Scene {
     // instead of pinning the room to the corner of the screen.
     const pad = 240;
     cam.setBounds(-pad, -pad, ROOM_W + pad * 2, ROOM_H + pad * 2);
-    cam.setZoom(5);
     cam.roundPixels = true;
+    // Zoom 5 fills a laptop. A phone is narrower than the belly, so pull
+    // back until the planks fit or the soldiers are cut off the sides.
+    const fitCam = () => {
+      const zoom = Math.min(5, this.scale.width / ROOM_W);
+      cam.setZoom(Math.max(1.6, zoom));
+      // 15px letters at scale 1/3 read at zoom 5. Keep that size when zoom changes.
+      if (this.prompt) this.prompt.setScale((5 / 3) / cam.zoom);
+    };
+    fitCam();
+    this.scale.on('resize', fitCam);
     cam.startFollow(this.feet, true, 0.2, 0.2);
     cam.fadeIn(350, 7, 5, 4);
 
@@ -234,6 +246,8 @@ export class HorseScene extends Phaser.Scene {
     this.game.events.emit('place', 'horse');
     publishDebug(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', fitDark);
+      this.scale.off('resize', fitCam);
       this.game.events.off('lockInput', lockInput);
       this.game.events.off('unlockInput', unlockInput);
       this.game.events.off('unlockHatch', unlockHatch);
