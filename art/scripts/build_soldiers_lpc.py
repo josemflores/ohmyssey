@@ -9,8 +9,8 @@ Who looks like what:
             sword. He is the only one with a cape, a beard, or a sword.
   Greeks    the same legion helmet and plate cuirass as Odysseus, but in
             bronze, with a dull maroon crest, a spear, and a Spartan shield.
-  Trojans   one color only, head to toe, skin included: every pixel is
-            redrawn in a teal ramp by how light it is. A different helmet
+  Trojans   one tone only, head to toe, skin included: every pixel is
+            redrawn in a gray ramp (ASH) by how light it is. A different helmet
             (barbuta with a ridge crest), spear and shield.
 
 Output (all 32x32 frames, origin bottom-center, in public/assets/sprites/npcs):
@@ -120,8 +120,12 @@ def trojan_layers() -> list[dict]:
 
 TEAMS = {"greek": greek_layers, "trojan": trojan_layers}
 
+# Trojans in one neutral tone: plain grays, no hue at all, like a statue.
+# Lighter overall than Odysseus' near-black iron, so he still stands out.
+ASH = ["#1C1C1C", "#3A3A3A", "#5C5C5C", "#808080", "#A6A6A6", "#D0D0D0"]
+
 # Teams drawn in a single color. The ramp runs darkest to lightest.
-MONOCHROME = {"trojan": TEAL}
+MONOCHROME = {"trojan": ASH}
 
 
 def monochrome(image: Image.Image, ramp_colors: list[str]) -> Image.Image:
