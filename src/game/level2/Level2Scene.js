@@ -295,7 +295,11 @@ export class Level2Scene extends Phaser.Scene {
 
     publishDebug(this);
     this.game.events.emit('level2Ready');
-    this.time.delayedCall(1100, () => this.advanceDisguise());
+    // ?level2&skip=hall (or contest, battle, won): jump straight to the
+    // palace hall, already disguised, for testing the end of the level.
+    const skip = new URLSearchParams(window.location.search).get('skip');
+    if (skip) this.time.delayedCall(300, () => this.skipToHall());
+    else this.time.delayedCall(1100, () => this.advanceDisguise());
   }
 
   advanceDisguise() {
@@ -637,12 +641,27 @@ export class Level2Scene extends Phaser.Scene {
   }
 
   // Walk into the hall: fade, step through the doors, fade back in.
+  // Testing shortcut (see ?skip= in create): skip the island and the hut.
+  skipToHall() {
+    this.inDisguise = false;
+    this.inHut = false;
+    this.hutDone = true;
+    this.hideAthena();
+    this.becomeBeggar();
+    this.skipping = true;
+    this.enterHall();
+  }
+
   enterHall() {
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);
     this.moveTo(HALL_AREA, HALL_SPAWN, 'n', () => {
       this.inHall = true;
       if (!this.hallWon) this.arrowFor = 'bow';
+      if (this.skipping) {
+        this.skipping = false;
+        this.game.events.emit('skipInHall');
+      }
       this.game.events.emit('objective', {
         title: 'The hall of Odysseus',
         note: 'The suitors feast in your hall. Look for the great bow.',

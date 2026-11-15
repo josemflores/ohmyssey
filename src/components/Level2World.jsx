@@ -49,6 +49,20 @@ export default function Level2World({ onHome }) {
     game.events.on('bowFound', onBowFound);
     const onReunion = () => setStory('reunion');
     game.events.on('reunion', onReunion);
+    // Testing shortcut: ?level2&skip=contest|battle|won opens that part of
+    // the hall story as soon as the scene has jumped into the hall
+    // (Level2Scene skipToHall). skip=hall just stands you in the hall.
+    const skip = new URLSearchParams(window.location.search).get('skip');
+    const onReady = () => {
+      if (!['contest', 'battle', 'won'].includes(skip)) return;
+      if (skip === 'won') {
+        setStory('won');
+        game.events.emit('suitorsFall');
+      } else {
+        setStory(skip);
+      }
+    };
+    game.events.once('skipInHall', onReady);
     const timer = window.setTimeout(() => setHint(false), 5200);
     return () => {
       window.clearTimeout(timer);
@@ -58,6 +72,7 @@ export default function Level2World({ onHome }) {
       game.events.off('hallDoor', onHallDoor);
       game.events.off('bowFound', onBowFound);
       game.events.off('reunion', onReunion);
+      game.events.off('skipInHall', onReady);
       clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
