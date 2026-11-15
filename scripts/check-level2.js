@@ -1,5 +1,6 @@
 // Checks that Level 2 (Ithaca) is walkable: the spawn is clear and every
 // "Press E" spot can be reached by a feet-sized box. Run: node scripts/check-level2.js
+import { hallLayoutReport } from '../src/game/level2/hallMap.js';
 import {
   COLS, ROWS, SPAWN, SPOTS, buildLevel2Map, level2LayoutReport, reachableField, allSolids,
 } from '../src/game/level2/map.js';
@@ -17,4 +18,9 @@ if (!report.ok) {
   console.error(report.problems.join('\n'));
   process.exit(1);
 }
-console.log('Level 2 layout OK.');
+const hallReport = hallLayoutReport();
+if (!hallReport.ok) {
+  console.error(hallReport.problems.join('\n'));
+  process.exit(1);
+}
+console.log(`Level 2 layout OK. The hall: every spot reachable (${hallReport.reachable} cells).`);

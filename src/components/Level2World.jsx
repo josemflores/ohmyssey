@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { createLevel2Game } from '../game/level2/createLevel2Game.js';
 import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
+import { firstHallQuestion, hallQuestionAfter } from '../game/level2/hallQuestions.js';
+import CircuitDiagram from './CircuitDiagram.jsx';
+import {
+  ChoiceLabel,
+  KeysHint,
+  QuestionHeader,
+  choicesClass,
+  useChoiceKeys,
+} from './QuestionCard.jsx';
 import './Level2World.css';
 
 // Level 2: Ithaca at night. Phaser draws the island and moves Odysseus;
@@ -13,6 +22,8 @@ export default function Level2World() {
   const [near, setNear] = useState(null);
   const [talk, setTalk] = useState(null);
   const [objective, setObjective] = useState(null);
+  // The question at the hall doors. status: open, wrong.
+  const [quiz, setQuiz] = useState(null);
 
   useEffect(() => {
     const game = createLevel2Game(host.current);
@@ -21,15 +32,18 @@ export default function Level2World() {
     const onNear = (spot) => setNear(spot || null);
     const onTalk = (line) => setTalk(line);
     const onObjective = (next) => setObjective(next);
+    const onHallDoor = () => setQuiz({ question: firstHallQuestion(), picked: null, status: 'open' });
     game.events.on('near', onNear);
     game.events.on('talk', onTalk);
     game.events.on('objective', onObjective);
+    game.events.on('hallDoor', onHallDoor);
     const timer = window.setTimeout(() => setHint(false), 5200);
     return () => {
       window.clearTimeout(timer);
       game.events.off('near', onNear);
       game.events.off('talk', onTalk);
       game.events.off('objective', onObjective);
+      game.events.off('hallDoor', onHallDoor);
       clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
@@ -52,6 +66,41 @@ export default function Level2World() {
     };
   }, [talk]);
 
+  function pickAnswer(index) {
+    if (!quiz || quiz.status !== 'open') return;
+    if (index === quiz.question.answer) {
+      // Right: the doors open and he walks into the hall.
+      setQuiz(null);
+      gameRef.current?.events.emit('hallOpen');
+      return;
+    }
+    setQuiz({ ...quiz, picked: index, status: 'wrong' });
+  }
+
+  function anotherQuestion() {
+    if (!quiz) return;
+    setQuiz({ question: hallQuestionAfter(quiz.question.id), picked: null, status: 'open' });
+  }
+
+  function closeQuiz() {
+    setQuiz(null);
+    gameRef.current?.events.emit('unlockInput');
+  }
+
+  useChoiceKeys(Boolean(quiz && quiz.status === 'open'), quiz?.question.choices.length || 4, pickAnswer);
+
+  useEffect(() => {
+    if (!quiz) return undefined;
+    function onKey(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeQuiz();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [quiz]);
+
   function closeTalk() {
     setTalk(null);
     gameRef.current?.events.emit('unlockInput');
@@ -72,6 +121,44 @@ export default function Level2World() {
           <p className="l2-objective-kicker">Objective</p>
           <p className="l2-objective-title">{objective.title}</p>
           {objective.note && <p className="l2-objective-note">{objective.note}</p>}
+        </div>
+      )}
+      {quiz && (
+        <div className="l2-quiz-shade">
+          <div className="q-card l2-quiz" role="dialog" aria-label="The hall doors">
+            <QuestionHeader eyebrow="Ω · The palace of Odysseus" title="The Hall" />
+            <CircuitDiagram circuit={quiz.question.circuit} />
+            <p className="q-prompt">{quiz.question.prompt}</p>
+            <div className={choicesClass(quiz.question.choices)}>
+              {quiz.question.choices.map((choice, index) => {
+                const shown = quiz.status !== 'open';
+                const correct = index === quiz.question.answer;
+                let mark = '';
+                if (shown && correct) mark = ' is-right';
+                else if (shown && index === quiz.picked) mark = ' is-wrong';
+                return (
+                  <button
+                    key={choice}
+                    type="button"
+                    className={`q-choice${mark}`}
+                    data-correct={correct ? '1' : '0'}
+                    disabled={quiz.status !== 'open'}
+                    onClick={() => pickAnswer(index)}
+                  >
+                    <ChoiceLabel index={index}>{choice}</ChoiceLabel>
+                  </button>
+                );
+              })}
+            </div>
+            {quiz.status === 'open' && <KeysHint count={quiz.question.choices.length} />}
+            {quiz.status === 'wrong' && (
+              <>
+                <p className="q-note is-wrong">{quiz.question.hint} The doors stay shut.</p>
+                <button type="button" className="q-action" onClick={anotherQuestion}>Another question</button>
+              </>
+            )}
+            <button type="button" className="l2-quiz-leave" onClick={closeQuiz}>Step back (Esc)</button>
+          </div>
         </div>
       )}
       {talk ? (

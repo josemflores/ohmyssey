@@ -41,16 +41,16 @@ try {
 
   // ---- Circuits: shape, and the answer solved from the drawing alone ----
   const si = (label) => {
-    const m = String(label).match(/(-?[\d.]+)\s*(k|m)?\s*(Ω|V|A)/);
+    const m = String(label).match(/(-?[\d.]+)\s*(k|m|µ)?\s*(Ω|V|A|F|H|C|J|s)(?![a-zA-Z])/);
     if (!m) return NaN;
-    return Number(m[1]) * (m[2] === 'k' ? 1000 : m[2] === 'm' ? 0.001 : 1);
+    return Number(m[1]) * ({ k: 1000, m: 0.001, µ: 0.000001 }[m[2]] || 1);
   };
   function checkCircuitShape(c, where) {
     assert.ok(c.layout === 'series' || c.layout === 'parallel', `${where}: layout`);
     assert.ok(Array.isArray(c.parts) && c.parts.length >= 1 && c.parts.length <= 3, `${where}: 1-3 parts`);
     if (c.layout === 'parallel') assert.equal(c.parts.length, 2, `${where}: parallel has two branches`);
     for (const part of c.parts) {
-      assert.ok(['resistor', 'diode', 'led'].includes(part.kind), `${where}: only resistors, diodes and LEDs (${part.kind})`);
+      assert.ok(['resistor', 'diode', 'led', 'capacitor', 'inductor'].includes(part.kind), `${where}: only sources, resistors, diodes, LEDs, capacitors and inductors (${part.kind})`);
       if (c.layout === 'parallel') assert.equal(part.kind, 'resistor', `${where}: parallel branches are resistors`);
     }
     if (c.ask) {
@@ -58,7 +58,7 @@ try {
       if (c.ask.type !== 'current') {
         const part = c.parts[c.ask.part];
         assert.ok(part, `${where}: ask points at a real part`);
-        assert.equal(part.kind, 'resistor', `${where}: unknown V or R is on a resistor`);
+        if (c.ask.type === 'resistance') assert.equal(part.kind, 'resistor', `${where}: unknown R is on a resistor`);
       }
     }
   }
@@ -69,6 +69,24 @@ try {
       const rs = c.parts.map((part) => si(part.label));
       if (c.ask.branch != null) return V / rs[c.ask.branch];
       return rs.reduce((sum, r) => sum + V / r, 0);
+    }
+    // Capacitors and inductors in a DC loop, at the moment the drawing says.
+    // Just after switch-on: an empty capacitor is a wire, an inductor passes
+    // nothing yet. Long after: a full capacitor passes nothing, an inductor
+    // is a wire. A part that passes nothing takes the voltage that is left.
+    const reactive = c.parts.map((part) => part.kind === 'capacitor' || part.kind === 'inductor');
+    if (reactive.some(Boolean)) {
+      const blocks = c.parts.some((part) => (part.kind === 'capacitor' && c.moment === 'settled') || (part.kind === 'inductor' && c.moment === 'start'));
+      const diodeDrop = c.parts.filter((part) => part.kind === 'diode' || part.kind === 'led').reduce((sum, part) => sum + si(part.label), 0);
+      const rTotal = c.parts.filter((part) => part.kind === 'resistor').reduce((sum, part) => sum + si(part.label), 0);
+      const current = blocks ? 0 : (V - diodeDrop) / rTotal;
+      if (c.ask.type === 'current') return current;
+      if (c.ask.type === 'voltage') {
+        const part = c.parts[c.ask.part];
+        if (part.kind === 'resistor') return current * si(part.label);
+        const thisBlocks = (part.kind === 'capacitor' && c.moment === 'settled') || (part.kind === 'inductor' && c.moment === 'start');
+        return thisBlocks ? V - diodeDrop : 0;
+      }
     }
     const drops = c.parts.filter((part) => part.kind !== 'resistor');
     if (drops.some((part) => part.reversed)) return 0;
@@ -207,7 +225,33 @@ try {
   }
   assert.equal(gateSlots.size, 4, 'gate answers do not move');
 
-  console.log(`Question checks passed: ${level1.length} authored (${hardCount} hard, ${drawnBank} drawn), generators verified on 6,000 rolls, ${circuitsSolved} drawings solved.`);
+  // ---- Ithaca: the hall-door pool (capacitors and inductors) ----
+  const hall = await vite.ssrLoadModule('/src/game/level2/hallQuestions.js');
+  const hallIds = new Set();
+  for (const raw of hall.HALL_QUESTIONS) {
+    assert.ok(!hallIds.has(raw.id), `hall: duplicate id ${raw.id}`);
+    hallIds.add(raw.id);
+    const q = { ...raw };
+    wellFormed(q, 'hall');
+    assert.ok(q.hint && q.hint.length > 20, `hall ${q.id}: needs a hint`);
+    assert.ok(q.prompt.length <= 110, `hall ${q.id}: keep the prompt short`);
+    if (q.circuit && q.circuit.ask && !q.circuit.moment && q.circuit.parts.some((part) => part.kind === 'capacitor' || part.kind === 'inductor')) {
+      assert.fail(`hall ${q.id}: a capacitor or inductor question with an unknown needs a moment (start or settled)`);
+    }
+    checkCircuit(q, 'hall');
+  }
+  const topical = hall.HALL_QUESTIONS.filter((q) => /capacit|inductor|coil|µF|mH|τ/.test(`${q.prompt} ${q.hint} ${JSON.stringify(q.circuit || {})}`)).length;
+  assert.ok(topical >= hall.HALL_QUESTIONS.length * 0.75, `hall pool should be mostly capacitors and inductors (${topical}/${hall.HALL_QUESTIONS.length})`);
+  const hallSlots = new Set();
+  let hq = hall.firstHallQuestion(rng);
+  for (let i = 0; i < 80; i += 1) {
+    wellFormed(hq, 'hall serve');
+    hallSlots.add(answerOf(hq));
+    hq = hall.hallQuestionAfter(hq.id, rng);
+  }
+  assert.ok(hallSlots.size >= 3, 'hall answers always sit in the same slot');
+
+  console.log(`Question checks passed: ${level1.length} authored (${hardCount} hard, ${drawnBank} drawn), generators verified on 6,000 rolls, ${circuitsSolved} drawings solved, ${hall.HALL_QUESTIONS.length} hall questions.`);
 } finally {
   await vite.close();
 }

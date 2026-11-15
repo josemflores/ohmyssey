@@ -11,6 +11,8 @@ import { ANIM_CONFIG, facingFromVector } from '../animConfig.js';
 import { RUN_SPEED, WALK_SPEED } from '../patrol.js';
 import { buildWorldTextures } from '../textures.js';
 import { buildLevel2Textures, propTexture } from './art.js';
+import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, preloadHall } from './hall.js';
+import { HALL, HALL_SPAWN, HALL_SPOTS } from './hallMap.js';
 import {
   DECOR,
   FEET,
@@ -65,6 +67,7 @@ export class Level2Scene extends Phaser.Scene {
 
   preload() {
     loadHeroActions(this);
+    preloadHall(this);
     if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
       this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
         frameWidth: ANIM_CONFIG.frameWidth,
@@ -149,6 +152,10 @@ export class Level2Scene extends Phaser.Scene {
     this.addPenelope();
     this.addSwineherd();
     addRect(this.blockers, penelopeRect());
+    // The great hall, built east of the island (hall.js). He walks in
+    // through its doors once he answers the question at them.
+    buildHall(this, this.blockers);
+    this.area = ISLAND;
 
     this.glints = createGlints(this);
     this.fireflies = createFireflies(this);
@@ -178,7 +185,7 @@ export class Level2Scene extends Phaser.Scene {
     this.feet.setDrag(0, 0);
     this.feet.body.pushable = false;
     this.feet.body.setMaxVelocity(RUN_SPEED, RUN_SPEED);
-    this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
+    this.physics.world.setBounds(0, 0, HALL.x + HALL.w, Math.max(MAP_H, HALL.y + HALL.h));
     // Same biases as Troy: deep enough that a slow frame cannot tunnel
     // and a wall cannot swallow his feet.
     this.physics.world.TILE_BIAS = 32;
@@ -201,7 +208,7 @@ export class Level2Scene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     cam.roundPixels = true;
-    cam.setBounds(0, 0, MAP_W, MAP_H);
+    cam.setBounds(ISLAND.x, ISLAND.y, ISLAND.w, ISLAND.h);
     cam.startFollow(this.feet, true, 0.14, 0.14);
     cam.fadeIn(900, 6, 10, 18);
     const fit = () => {
@@ -236,9 +243,12 @@ export class Level2Scene extends Phaser.Scene {
     };
     this.game.events.on('lockInput', onLock);
     this.game.events.on('unlockInput', onUnlock);
+    const onHallOpen = () => this.enterHall();
+    this.game.events.on('hallOpen', onHallOpen);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('lockInput', onLock);
       this.game.events.off('unlockInput', onUnlock);
+      this.game.events.off('hallOpen', onHallOpen);
       this.scale.off('resize', fit);
       if (globalThis.__level2?.owner === this) delete globalThis.__level2;
     });
@@ -496,8 +506,45 @@ export class Level2Scene extends Phaser.Scene {
     this.penelope = sprite;
   }
 
+  // Walk into the hall: fade, step through the doors, fade back in.
+  enterHall() {
+    this.inputLocked = true;
+    this.feet.setVelocity(0, 0);
+    this.moveTo(HALL_AREA, HALL_SPAWN, 'n', () => {
+      this.inHall = true;
+      this.game.events.emit('objective', {
+        title: 'The hall of Odysseus',
+        note: 'The suitors feast in your hall. Look for the great bow.',
+      });
+    });
+  }
+
+  leaveHall() {
+    this.inputLocked = true;
+    this.feet.setVelocity(0, 0);
+    this.moveTo(ISLAND, COURTYARD_RETURN, 's', () => { this.inHall = false; });
+  }
+
+  moveTo(area, at, facing, done) {
+    const cam = this.cameras.main;
+    cam.fadeOut(320, 6, 10, 18);
+    cam.once('camerafadeoutcomplete', () => {
+      this.area = area;
+      this.feet.setPosition(at.x, at.y);
+      this.feet.body.reset(at.x, at.y);
+      this.facing = facing;
+      cam.setBounds(area.x, area.y, area.w, area.h);
+      fitCamera(this);
+      cam.centerOn(at.x, at.y);
+      cam.fadeIn(420, 6, 10, 18);
+      this.inputLocked = false;
+      this.keys.keyE.reset();
+      if (done) done();
+    });
+  }
+
   update(time, delta) {
-    clampToMap(this.feet);
+    clampToMap(this.feet, this.area);
     const locked = this.inputLocked;
     const k = this.keys;
     let vx = 0;
@@ -562,7 +609,21 @@ export class Level2Scene extends Phaser.Scene {
     if (!locked && this.nearest && Phaser.Input.Keyboard.JustDown(k.keyE)) {
       this.inputLocked = true;
       this.feet.setVelocity(0, 0);
-      if (this.nearest.id === 'hut' && !this.hutDone && !this.inHut) {
+      if (this.nearest.id === 'hall-door') {
+        // The doors ask a question once he has been to Eumaeus (Level2World
+        // shows it; a right answer comes back as 'hallOpen').
+        if (this.hutDone) {
+          this.game.events.emit('hallDoor');
+        } else {
+          this.game.events.emit('talk', {
+            id: 'hall-door',
+            who: 'The hall doors',
+            line: 'The doors are shut, and the suitors would mock a stranger. Find shelter with Eumaeus first.',
+          });
+        }
+      } else if (this.nearest.id === 'hall-exit') {
+        this.leaveHall();
+      } else if (this.nearest.id === 'hut' && !this.hutDone && !this.inHut) {
         this.inHut = true;
         this.hutIndex = 0;
         this.advanceHut();
@@ -598,17 +659,23 @@ function poseHero(scene, facing, moving) {
 
 // Whole-number zoom, at least 3×. On a very wide screen the zoom rises
 // until the island fills the view, so no empty page shows past the edge.
+// The island, and the hall to its east. The camera and his feet stay
+// inside whichever one he is in.
+const ISLAND = { x: 0, y: 0, w: MAP_W, h: MAP_H };
+const HALL_AREA = { x: HALL.x, y: HALL.y, w: HALL.w, h: HALL.h };
+
 function fitCamera(scene) {
   const cam = scene.cameras.main;
-  const cover = Math.max(scene.scale.width / MAP_W, scene.scale.height / MAP_H);
+  const area = scene.area || ISLAND;
+  const cover = Math.max(scene.scale.width / area.w, scene.scale.height / area.h);
   cam.setZoom(Math.max(3, Math.ceil(cover)));
 }
 
-function clampToMap(feet) {
+function clampToMap(feet, area = ISLAND) {
   const body = feet.body;
   if (!body) return;
-  const x = Phaser.Math.Clamp(feet.x, body.halfWidth, MAP_W - body.halfWidth);
-  const y = Phaser.Math.Clamp(feet.y, body.halfHeight, MAP_H - body.halfHeight);
+  const x = Phaser.Math.Clamp(feet.x, area.x + body.halfWidth, area.x + area.w - body.halfWidth);
+  const y = Phaser.Math.Clamp(feet.y, area.y + body.halfHeight, area.y + area.h - body.halfHeight);
   if (x === feet.x && y === feet.y) return;
   feet.setPosition(x, y);
   body.reset(x, y);
@@ -718,7 +785,7 @@ function makePrompt(scene) {
 function nearestSpot(x, y) {
   let best = null;
   let bestDist = Infinity;
-  for (const spot of SPOTS) {
+  for (const spot of [...SPOTS, HALL_DOOR_SPOT, ...HALL_SPOTS]) {
     const dist = Math.hypot(spot.x - x, spot.y - y);
     if (dist <= spot.radius && dist < bestDist) {
       best = spot;
@@ -796,6 +863,7 @@ function publishDebug(scene) {
     get y() { return feet.y; },
     get near() { return scene.nearId; },
     get inputLocked() { return scene.inputLocked; },
+    get inHall() { return !!scene.inHall; },
     teleport(x, y) {
       feet.setVelocity(0, 0);
       feet.setPosition(x, y);
