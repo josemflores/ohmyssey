@@ -127,16 +127,17 @@ License texts: [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), 
 
 ## Other sprites
 
-The Greek and Trojan idle sheets were made in PixelLab by the Ohmyssey team. They are still idle only. The scene bobs those frames while a warrior moves.
+The Greek and Trojan idle sheets and the Trojan horse were made in PixelLab by the Ohmyssey team. The soldiers are still idle only. The scene bobs those frames while a warrior moves.
 
-- `public/assets/sprites/greek_idle.png`
-- `public/assets/sprites/trojan_idle.png`
+- `public/assets/sprites/soldier_red_greek.png` — the Greek army. Red crests, same as Odysseus.
+- `public/assets/sprites/soldier_teal_trojan.png` — the Trojan army. Teal.
+- `public/assets/sprites/trojan_horse.png` — 1024×128, eight frames of 128×128 in the same facing order. The plaza shows the south frame.
 
-Each of those sheets is 256×32: eight frames of 32×32, one facing each, in the same order as Odysseus. `WARRIOR_CONFIG` in `src/game/warriorConfig.js` is where a walk sheet for them would plug in.
+Each soldier sheet is 256×32: eight frames of 32×32, one facing each, in the same order as Odysseus. `WARRIOR_CONFIG` in `src/game/warriorConfig.js` is where a walk sheet for them would plug in.
 
 ## Scenery
 
-The beach, wall, temple, houses, horse, and props are drawn in code (`src/game/textures.js`). No downloaded tileset. `src/game/warriorArt.js` is only a fallback for a team whose sprite path is empty.
+The beach, wall, temple, houses, lamps, and props are drawn in code (`src/game/textures.js`). No downloaded tileset. `src/game/warriorArt.js` is only a fallback for a team whose sprite path is empty.
 
 ## Fonts
 

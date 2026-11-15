@@ -7,19 +7,8 @@ import { facingFromVector } from './animConfig.js';
 export const FACING_NAMES = ['s', 'se', 'e', 'ne', 'n', 'nw', 'w', 'sw'];
 
 export const TEAMS = {
+  // Red, matching Odysseus. Teal is the Trojan fallback below.
   greek: {
-    cloak: '#1a7f96',
-    cloakDark: '#0c5568',
-    crest: '#5ee0ee',
-    shield: '#146880',
-    bronze: '#e0c07a',
-    bronzeDark: '#8d6230',
-    skin: '#f0c8a4',
-    spear: '#d9cbb0',
-    tip: '#f4f0e4',
-    line: '#1a140c',
-  },
-  trojan: {
     cloak: '#a32030',
     cloakDark: '#6c101c',
     crest: '#f05060',
@@ -28,6 +17,18 @@ export const TEAMS = {
     bronzeDark: '#5c3e22',
     skin: '#e8c0a0',
     spear: '#c4b49a',
+    tip: '#f4f0e4',
+    line: '#1a140c',
+  },
+  trojan: {
+    cloak: '#1a7f96',
+    cloakDark: '#0c5568',
+    crest: '#5ee0ee',
+    shield: '#146880',
+    bronze: '#e0c07a',
+    bronzeDark: '#8d6230',
+    skin: '#f0c8a4',
+    spear: '#d9cbb0',
     tip: '#f4f0e4',
     line: '#1a140c',
   },

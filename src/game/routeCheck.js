@@ -18,6 +18,7 @@ export function routeReport() {
   const want = [
     ['the gate', 480, 400],
     ['the plaza beside the horse', 400, 180],
+    ['behind the horse head', 480, 172],
     ['the west beach', 176, 500],
     ['the east beach', 800, 500],
   ];

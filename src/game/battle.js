@@ -1,8 +1,8 @@
 // The two armies, and the standoff between them.
 //
-// On the beach the Greeks (teal) trail Odysseus in a wedge.
+// On the beach the Greeks (red crests, with Odysseus) trail him in a wedge.
 // Once he is through the gate they walk to a rank, each on his own slot,
-// facing north. The Trojans (crimson) hold the rank just north of them,
+// facing north. The Trojans (teal) hold the rank just north of them,
 // facing south, with about one tile of open ground between the lines.
 //
 // onStandoff(pair) fires when a pair is in place. The default calls
@@ -264,7 +264,7 @@ export class Battle {
   }
 
   glint(x, y) {
-    const spark = this.scene.add.circle(x, y - 14, 3, 0xfff6d0, 1);
+    const spark = this.scene.add.circle(x, y - 22, 1.5, 0xfff6d0, 0.9);
     spark.setDepth(9000);
     spark.setBlendMode(Phaser.BlendModes.ADD);
     this.scene.tweens.add({
