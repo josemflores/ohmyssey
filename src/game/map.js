@@ -1,10 +1,12 @@
 // The shape of Troy. Edit numbers in this file to move a building.
-// Tiles are 16×16. The whole map is 60 across and 45 down (960×720 pixels).
+// Tiles are 16×16. The map is 60 across and 59 down (960×944 pixels).
 // y = 0 is the north edge. The sea is the bottom of the map.
+// The plaza between the horse and the gate is long on purpose, so the
+// walk south to the gate has a pace instead of a few steps.
 
 export const TILE = 16;
 export const COLS = 60;
-export const ROWS = 45;
+export const ROWS = 59;
 export const MAP_W = COLS * TILE;
 export const MAP_H = ROWS * TILE;
 
@@ -54,11 +56,11 @@ export const WALKABLE = new Set([
 // Opening in the great wall, in tile columns, inclusive.
 export const GATE = { left: 26, right: 33 };
 // The wall itself, in tile rows, inclusive. North of this is the city.
-// The wall sits lower so the plaza is deep enough for the horse and two ranks.
-export const WALL = { top: 23, bottom: 26 };
+// It sits well south of the horse so the road to the gate is a real walk.
+export const WALL = { top: 37, bottom: 40 };
 
-// Beach, on the road, just south of the gate. He starts facing the city.
-export const SPAWN = { x: 480, y: 470 };
+// Beach, on the road, just south of the gate. The voyage starts in the horse.
+export const SPAWN = { x: 480, y: 694 };
 
 // id must match a picture in textures.js.
 // baseY is the bottom of the picture (the ground contact).
@@ -72,7 +74,7 @@ export const PROPS = [
   { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
   { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
 
-  // Columns stand by the temple, north of the battle line, so the ranks stay clear.
+  // Columns stand by the temple, north of the horse.
   { id: 'column', x: 400, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
   { id: 'column', x: 560, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
   { id: 'column', x: 436, baseY: 112, bodyW: 12, bodyH: 8, insetBottom: 0 },
@@ -86,17 +88,17 @@ export const PROPS = [
 
   { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
   { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
-  { id: 'rubble', x: 120, baseY: 530, bodyW: 28, bodyH: 12, insetBottom: 2 },
-  { id: 'rubble', x: 860, baseY: 530, bodyW: 28, bodyH: 12, insetBottom: 2 },
+  { id: 'rubble', x: 120, baseY: 754, bodyW: 28, bodyH: 12, insetBottom: 2 },
+  { id: 'rubble', x: 860, baseY: 754, bodyW: 28, bodyH: 12, insetBottom: 2 },
 
   // Unlit bowls on the beach. A few lamps live in LAMPS.
-  { id: 'brazier', x: 200, baseY: 500, bodyW: 14, bodyH: 10, insetBottom: 0 },
-  { id: 'brazier', x: 760, baseY: 490, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 200, baseY: 724, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 760, baseY: 714, bodyW: 14, bodyH: 10, insetBottom: 0 },
 
   { id: 'cypress', x: 250, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 710, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 140, baseY: 500, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 840, baseY: 505, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 140, baseY: 724, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 840, baseY: 729, bodyW: 10, bodyH: 8, insetBottom: 0 },
 ];
 
 // Pictures with no collision of their own. They stand on tiles that are
@@ -151,9 +153,9 @@ export const INTERACTABLES = [
 // Every entry is a real standing lamp. The glow is drawn on its flame.
 // The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [
-  // Flanking the ranks, not standing in them.
-  { x: 292, y: 300 },
-  { x: 668, y: 300 },
+  // Along the road from the horse down toward the gate.
+  { x: 292, y: 420 },
+  { x: 668, y: 560 },
   // On the paving beside the temple colonnade, not on the horse.
   { x: 390, y: 150 },
 ];
@@ -174,13 +176,14 @@ export function buildMap() {
   }
 
   // Pale limestone in the plaza, up to the wall. The road is painted after this.
-  fillRect(grid, 12, 3, 36, 20, (x, y) => ((x + y) % 2 === 0 ? T.paveAlt : T.pave));
+  fillRect(grid, 12, 3, 36, WALL.top - 3, (x, y) => ((x + y) % 2 === 0 ? T.paveAlt : T.pave));
 
   // Beach, then the surf, then the sea. Only the blue water is solid.
-  fillRect(grid, 0, 27, COLS, 7, (x, y) => ((x * 3 + y) % 8 === 0 ? T.sandAlt : T.sand));
-  fillRect(grid, 0, 34, COLS, 2, () => T.wet);
-  fillRect(grid, 0, 36, COLS, 4, () => T.water);
-  fillRect(grid, 0, 40, COLS, 5, () => T.waterDeep);
+  const shore = WALL.bottom + 1;
+  fillRect(grid, 0, shore, COLS, 7, (x, y) => ((x * 3 + y) % 8 === 0 ? T.sandAlt : T.sand));
+  fillRect(grid, 0, shore + 7, COLS, 2, () => T.wet);
+  fillRect(grid, 0, shore + 9, COLS, 4, () => T.water);
+  fillRect(grid, 0, shore + 13, COLS, 5, () => T.waterDeep);
 
   // Back wall of this district.
   fillRect(grid, 0, 0, COLS, 1, () => T.battlement);
@@ -198,7 +201,7 @@ export function buildMap() {
   }
 
   // One road, the same width as the gate, from the temple steps to the beach.
-  for (let y = 5; y <= 33; y += 1) {
+  for (let y = 5; y <= WALL.bottom + 7; y += 1) {
     if (y >= WALL.top && y <= WALL.bottom) continue;
     for (let x = GATE.left; x <= GATE.right; x += 1) grid[y][x] = T.road;
     // Sandy or dusty edge so the road does not meet the ground in a hard line.
@@ -210,24 +213,24 @@ export function buildMap() {
   // Dry weeds along the foot of the wall, and a few cracks in the paving.
   for (let x = 2; x < COLS - 2; x += 1) {
     if (x >= GATE.left - 1 && x <= GATE.right + 1) continue;
-    if (x % 4 === 0) grid[22][x] = T.weed;
-    if (x % 5 === 2 && grid[27]) grid[27][x] = T.weed;
+    if (x % 4 === 0) grid[WALL.top - 1][x] = T.weed;
+    if (x % 5 === 2 && grid[WALL.bottom + 1]) grid[WALL.bottom + 1][x] = T.weed;
   }
-  const cracks = [[20, 8], [36, 7], [24, 12], [40, 11], [18, 27], [44, 26]];
+  const cracks = [[20, 8], [36, 7], [24, 12], [40, 11], [18, WALL.bottom + 1], [44, WALL.bottom]];
   for (const [x, y] of cracks) {
     if (WALKABLE.has(grid[y][x]) && grid[y][x] !== T.road) grid[y][x] = T.pebble;
   }
 
   // Solid rocks: map edges on land, plus a few boulders off the path.
-  for (let y = 0; y < 36; y += 1) {
+  for (let y = 0; y < WALL.bottom + 10; y += 1) {
     if (y >= WALL.top && y <= WALL.bottom) continue;
     grid[y][0] = T.rock;
     grid[y][COLS - 1] = T.rock;
   }
   const rocks = [
-    [6, 30], [54, 31],
+    [6, 44], [54, 45],
     [8, 8], [51, 9], [12, 12], [48, 13],
-    [6, 38], [20, 42], [42, 41], [54, 39],
+    [6, 52], [20, 56], [42, 55], [54, 53],
   ];
   for (const [x, y] of rocks) grid[y][x] = T.rock;
 

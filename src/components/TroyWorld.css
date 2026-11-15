@@ -108,3 +108,66 @@
   border-color: #e7a090;
 }
 .troy-quiz-note { margin: 0 0 0.7rem; color: #f0d48a; }
+#gate-arrow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  color: #f0d48a;
+  font-size: 26px;
+  line-height: 28px;
+  text-align: center;
+  text-shadow: 0 1px 2px #000, 0 0 2px #000;
+  pointer-events: none;
+}
+.troy-quest {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  z-index: 2;
+  margin: 0;
+  max-width: 210px;
+  padding: 0.35rem 0.55rem 0.4rem;
+  border-radius: 8px;
+  background: rgba(8, 14, 24, 0.72);
+  color: #f6ead2;
+  border: 1px solid rgba(230, 194, 122, 0.4);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  pointer-events: none;
+}
+.troy-quest span {
+  display: block;
+  margin-bottom: 0.1rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f0d48a;
+  font-size: 0.62rem;
+}
+.troy-quest.is-done { opacity: 0.72; }
+.troy-run,
+.troy-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  z-index: 2;
+  margin: 0;
+  transform: translateX(-50%);
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(8, 14, 24, 0.82);
+  color: #f6ead2;
+  border: 1px solid rgba(230, 194, 122, 0.75);
+  font-size: 0.92rem;
+  pointer-events: none;
+}
+.troy-banner { bottom: 112px; }
+.troy-fight-hp {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: #d7f3ee;
+}

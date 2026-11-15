@@ -2,7 +2,7 @@
 // and do the sea, the wall, the temple, and the horse actually stop him?
 // TroyScene logs a warning if the answer is no. Safe to ignore while playing.
 
-import { FEET, MAP_H, MAP_W, PROPS, SPAWN, TILE, WALKABLE, buildMap } from './map.js';
+import { FEET, MAP_H, MAP_W, PROPS, SPAWN, TILE, WALL, WALKABLE, buildMap } from './map.js';
 
 const STEP = 4;
 
@@ -15,16 +15,19 @@ export function routeReport() {
   }
 
   const reach = reachable(solid, SPAWN.x, SPAWN.y);
+  const gateY = (WALL.top + 1) * TILE + 8;
+  const beachY = (WALL.bottom + 4) * TILE;
+  const wallY = (WALL.top + 2) * TILE;
   const want = [
-    ['the gate', 480, 400],
+    ['the gate', 480, gateY],
     ['the plaza beside the horse', 400, 180],
     ['behind the horse head', 480, 172],
-    ['the west beach', 176, 500],
-    ['the east beach', 800, 500],
+    ['the west beach', 176, beachY],
+    ['the east beach', 800, beachY],
   ];
   const blocked = [
-    ['the open sea', 480, 640],
-    ['the great wall', 192, 400],
+    ['the open sea', 480, MAP_H - 24],
+    ['the great wall', 192, wallY],
     ['the temple', 480, 110],
     ['the horse', 480, 210],
     ['a house', 120, 120],

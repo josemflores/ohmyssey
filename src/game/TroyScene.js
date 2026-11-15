@@ -21,13 +21,22 @@ import {
   WALKABLE,
   buildMap,
 } from './map.js';
-import { Battle } from './battle.js';
+import {
+  createPatrol,
+  FOE_HIT,
+  FOE_MAX,
+  FULL_HIT,
+  HERO_MAX,
+  RUN_SPEED,
+  WALK_SPEED,
+  WEAK_HIT,
+  hintDistance,
+} from './patrol.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 import { routeReport } from './routeCheck.js';
 import { buildWorldTextures } from './textures.js';
 
-// Pixels per second. Diagonals are scaled so they are not faster.
-const SPEED = 80;
+// Walk speed lives in patrol.js so the sentries match him. Shift runs.
 // The LPC figure fills about 25 of the 32px cell. 4/3 brings him in line
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
@@ -156,10 +165,18 @@ export class TroyScene extends Phaser.Scene {
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
 
-    this.battle = new Battle(this, {
-      heroBody: this.feet,
+    this.patrol = createPatrol(this, {
       ground,
       blockers: this.blockers,
+      fromHorse: this.arrive,
+    });
+    this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
+    this.fighting = false;
+    this.fight = null;
+    this.questDone = !!this.game.registry.get('gateOpen');
+    this.runHintShown = !!this.game.registry.get('runHintShown');
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      document.getElementById('gate-arrow')?.remove();
     });
 
     const cam = this.cameras.main;
@@ -179,9 +196,10 @@ export class TroyScene extends Phaser.Scene {
       arrowLeft: Phaser.Input.Keyboard.KeyCodes.LEFT,
       arrowRight: Phaser.Input.Keyboard.KeyCodes.RIGHT,
       keyE: Phaser.Input.Keyboard.KeyCodes.E,
+      shift: Phaser.Input.Keyboard.KeyCodes.SHIFT,
     });
     this.input.keyboard.addCapture([
-      'W', 'A', 'S', 'D', 'E', 'UP', 'DOWN', 'LEFT', 'RIGHT',
+      'W', 'A', 'S', 'D', 'E', 'SHIFT', 'UP', 'DOWN', 'LEFT', 'RIGHT',
     ]);
 
     // A dialogue or puzzle sets this so he stops walking.
@@ -192,14 +210,29 @@ export class TroyScene extends Phaser.Scene {
 
     const lockInput = () => { this.inputLocked = true; };
     const unlockInput = () => { this.inputLocked = false; };
+    const onStrike = (payload) => this.resolveStrike(payload);
+    const onAttack = () => {
+      if (!this.fight) return;
+      const question = this.patrol.question();
+      this.fight.question = question;
+      this.game.events.emit('fightQuestion', {
+        id: question.id,
+        prompt: question.prompt,
+        choices: question.choices,
+      });
+    };
     this.game.events.on('lockInput', lockInput);
     this.game.events.on('unlockInput', unlockInput);
+    this.game.events.on('fightStrike', onStrike);
+    this.game.events.on('fightAttack', onAttack);
 
     publishDebug(this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('lockInput', lockInput);
       this.game.events.off('unlockInput', unlockInput);
+      this.game.events.off('fightStrike', onStrike);
+      this.game.events.off('fightAttack', onAttack);
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -215,6 +248,11 @@ export class TroyScene extends Phaser.Scene {
     if (target.id === 'horse_hatch') {
       this.scene.start('horse');
       return;
+    }
+    if (target.id === 'gate') {
+      this.questDone = true;
+      this.game.registry.set('gateOpen', true);
+      this.game.events.emit('questDone');
     }
     this.game.events.emit('interact', {
       id: target.id,
@@ -256,12 +294,14 @@ export class TroyScene extends Phaser.Scene {
     if (up) vy -= 1;
     if (down) vy += 1;
 
+    const running = !locked && this.keys.shift.isDown;
     if (vx === 0 && vy === 0) {
       this.feet.setVelocity(0, 0);
     } else {
       // (1, 1) has length sqrt(2). Divide so a diagonal is not a speed boost.
       const len = Math.hypot(vx, vy);
-      this.feet.setVelocity((vx / len) * SPEED, (vy / len) * SPEED);
+      const speed = running ? RUN_SPEED : WALK_SPEED;
+      this.feet.setVelocity((vx / len) * speed, (vy / len) * speed);
       this.facing = facingFromVector(vx, vy);
     }
 
@@ -299,7 +339,7 @@ export class TroyScene extends Phaser.Scene {
 
     // JustDown is true only on the frame E goes down, so holding E does not repeat.
     // If a box is already open, the same key asks React to close it.
-    if (Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
+    if (!this.fighting && Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
       if (locked) this.game.events.emit('closeInteract');
       else if (this.nearest) this.interact(this.nearest);
     }
@@ -309,13 +349,150 @@ export class TroyScene extends Phaser.Scene {
       glint.x += glint.speed * dt;
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
-    this.battle.update(time, delta);
+
+    this.patrol.update(dt, this.feet.x, this.feet.y, locked || this.fighting);
+    this.maybeHintRun();
+    if (!this.fighting && !locked) this.maybeStartFight();
+    aimArrow(this);
+  }
+
+  maybeHintRun() {
+    if (this.runHintShown) return;
+    const first = this.patrol.firstSentry();
+    if (!first) return;
+    const dist = Math.hypot(first.body.x - this.feet.x, first.body.y - this.feet.y);
+    if (dist > hintDistance()) return;
+    this.runHintShown = true;
+    this.game.registry.set('runHintShown', true);
+    this.game.events.emit('runHint');
+  }
+
+  maybeStartFight() {
+    const near = this.patrol.nearestSentry(this.feet.x, this.feet.y);
+    if (!near || !near.man.touch) return;
+    this.beginFight(near.man);
+  }
+
+  beginFight(enemy) {
+    this.fighting = true;
+    this.inputLocked = true;
+    this.feet.setVelocity(0, 0);
+    this.fight = {
+      enemy,
+      foeHp: enemy.hp,
+      // A step back from where he was grabbed, used if he falls.
+      backX: this.feet.x,
+      backY: this.feet.y,
+    };
+    this.game.events.emit('fightStart', {
+      id: enemy.id,
+      name: 'Trojan sentry',
+      heroHp: this.heroHp,
+      heroMax: HERO_MAX,
+      foeHp: enemy.hp,
+      foeMax: FOE_MAX,
+    });
+  }
+
+  // React sends the choice index. A right answer is a full hit.
+  // A wrong one still lands, at 75 percent. Then the sentry strikes back.
+  resolveStrike(payload) {
+    const fight = this.fight;
+    if (!fight || !this.fighting) return;
+    const question = fight.question;
+    if (!question) return;
+    const correct = payload.index === question.answer;
+    const dealt = correct ? FULL_HIT : WEAK_HIT;
+    fight.foeHp = Math.max(0, fight.foeHp - dealt);
+    fight.enemy.hp = fight.foeHp;
+    fight.question = null;
+    if (fight.foeHp <= 0) {
+      this.patrol.remove(fight.enemy);
+      this.heroHpStay();
+      this.endFight(true, correct ? 'The sentry falls.' : 'A weak blow, but it was enough.');
+      return;
+    }
+    this.heroHp = Math.max(0, this.heroHp - FOE_HIT);
+    this.heroHpStay();
+    if (this.heroHp <= 0) {
+      this.heroHp = HERO_MAX;
+      fight.enemy.hp = FOE_MAX;
+      fight.foeHp = FOE_MAX;
+      this.heroHpStay();
+      const dx = fight.backX - fight.enemy.body.x;
+      const dy = fight.backY - fight.enemy.body.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = fight.enemy.body.x + (dx / len) * 140;
+      const ny = fight.enemy.body.y + (dy / len) * 140;
+      this.feet.setPosition(nx, ny);
+      this.feet.body.reset(nx, ny);
+      this.endFight(false, 'You fall back. The sentry recovers.');
+      return;
+    }
+    this.game.events.emit('fightBlow', {
+      heroHp: this.heroHp,
+      foeHp: fight.foeHp,
+      note: correct
+        ? `A clean hit for ${FULL_HIT}. The sentry strikes back for ${FOE_HIT}.`
+        : `A glancing blow for ${WEAK_HIT}. The sentry strikes back for ${FOE_HIT}.`,
+    });
+  }
+
+  heroHpStay() {
+    this.game.registry.set('heroHp', this.heroHp);
+  }
+
+  endFight(won, note) {
+    this.fighting = false;
+    this.inputLocked = false;
+    this.fight = null;
+    this.game.events.emit('fightEnd', { won, note });
   }
 }
 
 // "Press E" floats over his head. The camera is zoomed 3×, so the letters
 // are drawn at 15px and then shrunk to 1/3. 15 × (1/3) × 3 = 15 screen
 // pixels, which keeps the letters sharp instead of blurry.
+function aimArrow(scene) {
+  const host = scene.game.canvas?.parentElement?.parentElement;
+  if (!host) return;
+  let arrow = document.getElementById('gate-arrow');
+  if (!arrow) {
+    arrow = document.createElement('div');
+    arrow.id = 'gate-arrow';
+    arrow.textContent = '➤';
+    host.appendChild(arrow);
+  }
+  if (scene.questDone) {
+    arrow.style.display = 'none';
+    return;
+  }
+  const gate = INTERACTABLES.find((spot) => spot.id === 'gate');
+  const cam = scene.cameras.main;
+  const sx = (gate.x - cam.scrollX) * cam.zoom;
+  const sy = (gate.y - cam.scrollY) * cam.zoom;
+  const w = cam.width;
+  const h = cam.height;
+  const onScreen = sx > 48 && sy > 48 && sx < w - 48 && sy < h - 48;
+  let x = sx;
+  let y = sy - 42;
+  let angle = Math.PI / 2;
+  if (!onScreen) {
+    const cx = w / 2;
+    const cy = h / 2;
+    const dx = sx - cx;
+    const dy = sy - cy;
+    const hw = cx - 64;
+    const hh = cy - 120;
+    const scale = Math.min(hw / Math.abs(dx || 0.001), hh / Math.abs(dy || 0.001));
+    x = cx + dx * scale;
+    y = cy + dy * scale;
+    angle = Math.atan2(dy, dx);
+  }
+  arrow.style.display = 'block';
+  arrow.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px) rotate(${angle}rad)`;
+}
+
 function makePrompt(scene) {
   const label = scene.add.text(0, 0, 'Press E', {
     fontFamily: 'monospace',
@@ -371,8 +548,11 @@ function publishDebug(scene) {
       feet.setPosition(x, y);
       feet.body.reset(x, y);
     },
-    armies() {
-      return scene.battle.summary();
+    sentries() {
+      return scene.patrol.sentries.filter((man) => !man.dead).length;
+    },
+    greeks() {
+      return scene.patrol.greeks.length;
     },
     lookAt(x, y, zoom) {
       const cam = scene.cameras.main;
@@ -464,7 +644,7 @@ function createGlints(scene) {
   for (let i = 0; i < 8; i += 1) {
     const glint = scene.add.ellipse(
       Math.random() * MAP_W,
-      590 + Math.random() * 100,
+      MAP_H - 160 + Math.random() * 80,
       16 + Math.random() * 20,
       3,
       0xb7dbe8,
