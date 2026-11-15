@@ -30,6 +30,14 @@ import {
 
 const HERO_SCALE = 4 / 3;
 const SORT = 7000;
+const FACINGS = ['s', 'se', 'e', 'ne', 'n', 'nw', 'w', 'sw'];
+// Odyssey 13: he wakes on Ithaca, and Athena hides him as a beggar.
+const DISGUISE = [
+  { who: 'Odysseus', line: 'What shore is this? They set me here while I slept.' },
+  { who: 'Athena', line: 'It is Ithaca, cloaked in mist. Suitors fill your house.', appear: true },
+  { who: 'Athena', line: 'I will disguise you, so the suitors will not know you.' },
+  { who: 'Athena', line: 'Go as a beggar. The hour to reveal yourself will come.', shimmer: true },
+];
 // Props are drawn above the moonlight grade (so they y-sort with him), so
 // they take the moon as a tint instead. Lit windows keep a little warmth.
 const MOON_TINT = 0x8a9cc4;
@@ -65,6 +73,24 @@ export class Level2Scene extends Phaser.Scene {
         frameHeight: 32,
       });
     }
+    if (!this.textures.exists('odysseus-beggar')) {
+      this.load.spritesheet('odysseus-beggar', '/assets/sprites/odysseus_beggar/idle.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
+    if (!this.textures.exists('odysseus-beggar-walk')) {
+      this.load.spritesheet('odysseus-beggar-walk', '/assets/sprites/odysseus_beggar/walk.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
+    if (!this.textures.exists('odysseus-beggar-idle')) {
+      this.load.spritesheet('odysseus-beggar-idle', '/assets/sprites/odysseus_beggar/idle_animation.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
   }
 
   create() {
@@ -75,7 +101,7 @@ export class Level2Scene extends Phaser.Scene {
     // Troy's shared pieces: blank boxes, feet, lamp, lamp glow, vignette.
     if (!this.textures.exists('oil-lamp')) buildWorldTextures(this);
     buildLevel2Textures(this);
-    for (const key of ['lighthouse-unlit', 'penelope', ANIM_CONFIG.textureKey, 'odysseus-walk']) {
+    for (const key of ['lighthouse-unlit', 'penelope', ANIM_CONFIG.textureKey, 'odysseus-walk', 'odysseus-beggar', 'odysseus-beggar-walk', 'odysseus-beggar-idle']) {
       if (this.textures.exists(key)) this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.createAnims();
@@ -141,7 +167,10 @@ export class Level2Scene extends Phaser.Scene {
       .setOrigin(0.5, 1).setScale(HERO_SCALE);
 
     this.prompt = makePrompt(this);
-    this.inputLocked = false;
+    this.inputLocked = true;
+    this.disguised = false;
+    this.inDisguise = true;
+    this.disguiseIndex = 0;
 
     const cam = this.cameras.main;
     cam.roundPixels = true;
@@ -167,9 +196,12 @@ export class Level2Scene extends Phaser.Scene {
       this.feet.setVelocity(0, 0);
     };
     const onUnlock = () => {
-      this.inputLocked = false;
-      // A key held through the dialog should not fire E again.
       this.keys.keyE.reset();
+      if (this.inDisguise) {
+        this.advanceDisguise();
+        return;
+      }
+      this.inputLocked = false;
     };
     this.game.events.on('lockInput', onLock);
     this.game.events.on('unlockInput', onUnlock);
@@ -182,6 +214,71 @@ export class Level2Scene extends Phaser.Scene {
 
     publishDebug(this);
     this.game.events.emit('level2Ready');
+    this.time.delayedCall(1100, () => this.advanceDisguise());
+  }
+
+  advanceDisguise() {
+    if (!this.inDisguise) return;
+    if (this.disguiseIndex >= DISGUISE.length) {
+      this.inDisguise = false;
+      this.hideAthena();
+      this.inputLocked = false;
+      return;
+    }
+    const beat = DISGUISE[this.disguiseIndex];
+    this.disguiseIndex += 1;
+    const show = () => {
+      if (beat.appear) this.showAthena();
+      this.inputLocked = true;
+      this.feet.setVelocity(0, 0);
+      this.game.events.emit('talk', { who: beat.who, line: beat.line });
+    };
+    if (beat.shimmer) this.playShimmer(show);
+    else show();
+  }
+
+  showAthena() {
+    if (this.athenaGlow) return;
+    this.athenaGlow = this.add.ellipse(this.hero.x + 34, this.hero.y - 24, 16, 36, 0xf0d48a, 0.55);
+    this.athenaGlow.setBlendMode(Phaser.BlendModes.ADD);
+    this.athenaGlow.setDepth(12000);
+    this.tweens.add({
+      targets: this.athenaGlow,
+      alpha: 0.2,
+      scaleY: 1.12,
+      yoyo: true,
+      repeat: -1,
+      duration: 620,
+    });
+  }
+
+  hideAthena() {
+    if (!this.athenaGlow) return;
+    this.athenaGlow.destroy();
+    this.athenaGlow = null;
+  }
+
+  playShimmer(done) {
+    this.becomeBeggar();
+    this.cameras.main.flash(380, 255, 236, 190);
+    const ring = this.add.circle(this.hero.x, this.hero.y - 18, 6, 0xfff1c4, 0.9);
+    ring.setBlendMode(Phaser.BlendModes.ADD);
+    ring.setDepth(this.hero.depth + 6);
+    this.tweens.add({
+      targets: ring,
+      scale: 8,
+      alpha: 0,
+      duration: 460,
+      onComplete: () => {
+        ring.destroy();
+        done();
+      },
+    });
+  }
+
+  becomeBeggar() {
+    this.disguised = true;
+    poseHero(this, this.facing, false);
   }
 
   createAnims() {
@@ -199,6 +296,32 @@ export class Level2Scene extends Phaser.Scene {
         });
       });
     }
+    FACINGS.forEach((dir, row) => {
+      const walkKey = `beggar-walk-${dir}`;
+      if (!this.anims.exists(walkKey)) {
+        this.anims.create({
+          key: walkKey,
+          frames: this.anims.generateFrameNumbers('odysseus-beggar-walk', {
+            start: row * 8,
+            end: row * 8 + 7,
+          }),
+          frameRate: 10,
+          repeat: -1,
+        });
+      }
+      const idleKey = `beggar-idle-${dir}`;
+      if (!this.anims.exists(idleKey)) {
+        this.anims.create({
+          key: idleKey,
+          frames: this.anims.generateFrameNumbers('odysseus-beggar-idle', {
+            start: row * 2,
+            end: row * 2 + 1,
+          }),
+          frameRate: 2,
+          repeat: -1,
+        });
+      }
+    });
     if (!this.anims.exists('lamp-flicker')) {
       this.anims.create({
         key: 'lamp-flicker',
@@ -253,7 +376,7 @@ export class Level2Scene extends Phaser.Scene {
     const groundY = this.feet.y + this.feet.body.halfHeight;
     const hx = Math.round(this.feet.x);
     const hy = Math.round(groundY);
-    poseHero(this.hero, this.facing, moving);
+    poseHero(this, this.facing, moving);
     this.hero.setPosition(hx, hy);
     this.heroRim.setTexture(this.hero.texture.key, this.hero.frame.name);
     this.heroRim.setPosition(hx, hy);
@@ -309,7 +432,12 @@ function facingRow(facing) {
   return FACING_ROWS[facing] ?? 0;
 }
 
-function poseHero(hero, facing, moving) {
+function poseHero(scene, facing, moving) {
+  const hero = scene.hero;
+  if (scene.disguised) {
+    hero.anims.play(moving ? `beggar-walk-${facing}` : `beggar-idle-${facing}`, true);
+    return;
+  }
   if (ANIM_CONFIG.walk && moving) {
     hero.anims.play(`walk-${facing}`, true);
   } else {
