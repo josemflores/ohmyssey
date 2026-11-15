@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getPlayerName } from '../learn/player.js';
 import NightBackdrop from './NightBackdrop.jsx';
 import './NightBackdrop.css';
 import './IntroScreen.css';
@@ -41,37 +42,93 @@ const CARDS = [
 
 export default function IntroScreen({ onBegin }) {
   const [index, setIndex] = useState(0);
+  const name = getPlayerName();
+  const welcomeRef = useRef(null);
+  const armed = useRef(false);
   const last = index === CARDS.length - 1;
   const card = CARDS[index];
 
   useEffect(() => {
+    welcomeRef.current?.focus({ preventScroll: true });
+    const timer = setTimeout(() => {
+      armed.current = true;
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (last) return undefined;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const timer = setTimeout(() => setIndex((n) => n + 1), CARD_MS);
     return () => clearTimeout(timer);
   }, [index, last]);
+
+  useEffect(() => {
+    function onKey(event) {
+      if (!armed.current || event.repeat || event.key !== 'Enter') return;
+      const tag = event.target?.tagName;
+      if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+      event.preventDefault();
+      if (last) onBegin();
+      else setIndex((n) => n + 1);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [last, onBegin]);
 
   function next() {
     if (last) onBegin();
     else setIndex((n) => n + 1);
   }
 
+  function onTabKey(event) {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
+      return;
+    }
+    event.preventDefault();
+    let nextIndex = index;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % CARDS.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + CARDS.length) % CARDS.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else nextIndex = CARDS.length - 1;
+    setIndex(nextIndex);
+    requestAnimationFrame(() => {
+      document.getElementById(`intro-tab-${nextIndex}`)?.focus();
+    });
+  }
+
   return (
     <NightBackdrop>
       <main className="intro" data-screen="intro" style={{ '--card-ms': `${CARD_MS}ms` }}>
-        <article className="card intro-card" key={card.title}>
-          <p className="eyebrow">{card.kicker}</p>
-          <h1 data-card-title>{card.title}</h1>
-          <StoryArt name={card.art} />
-          <p className="intro-text">{card.text}</p>
-          <div className="intro-dots" role="tablist" aria-label="Story">
+        <article className="card intro-card">
+          <p ref={welcomeRef} className="intro-welcome" tabIndex={-1}>Welcome, {name}.</p>
+          <p className="intro-sr" role="status">{card.title}. {card.text}</p>
+          <div
+            key={card.title}
+            id="intro-panel"
+            className="intro-slide"
+            role="tabpanel"
+            aria-labelledby={`intro-tab-${index}`}
+          >
+            <p className="eyebrow">{card.kicker}</p>
+            <h1 data-card-title>{card.title}</h1>
+            <StoryArt name={card.art} />
+            <p className="intro-text">{card.text}</p>
+          </div>
+          <div className="intro-dots" role="tablist" aria-label="Story" aria-orientation="horizontal">
             {CARDS.map((item, i) => (
               <button
                 key={item.title}
+                id={`intro-tab-${i}`}
                 type="button"
+                role="tab"
                 className={i === index ? 'is-on' : ''}
                 aria-label={item.title}
                 aria-selected={i === index}
+                aria-controls="intro-panel"
+                tabIndex={i === index ? 0 : -1}
                 onClick={() => setIndex(i)}
+                onKeyDown={onTabKey}
               />
             ))}
           </div>
