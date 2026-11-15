@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ATTACKS } from '../game/battleQuestions.js';
 import { createTroyGame } from '../game/createTroyGame.js';
 import { hatchQuestionAfter } from '../game/hatchQuestions.js';
+import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
 import './TroyWorld.css';
 
 const MOVES = [ATTACKS.light, ATTACKS.heavy];
@@ -36,6 +37,7 @@ export default function TroyWorld() {
     const parent = host.current;
     const game = createTroyGame(parent);
     gameRef.current = game;
+    setActiveGame(game);
 
     // The scene found a spot and the player pressed E.
     function onInteract(spot) {
@@ -147,6 +149,7 @@ export default function TroyWorld() {
       game.events.off('gateWrong');
       game.events.off('gateClosed');
       game.events.off('runHint');
+      clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
     };
