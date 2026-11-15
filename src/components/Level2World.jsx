@@ -12,6 +12,7 @@ export default function Level2World() {
   const [hint, setHint] = useState(true);
   const [near, setNear] = useState(null);
   const [talk, setTalk] = useState(null);
+  const [objective, setObjective] = useState(null);
 
   useEffect(() => {
     const game = createLevel2Game(host.current);
@@ -19,13 +20,16 @@ export default function Level2World() {
     setActiveGame(game);
     const onNear = (spot) => setNear(spot || null);
     const onTalk = (line) => setTalk(line);
+    const onObjective = (next) => setObjective(next);
     game.events.on('near', onNear);
     game.events.on('talk', onTalk);
+    game.events.on('objective', onObjective);
     const timer = window.setTimeout(() => setHint(false), 5200);
     return () => {
       window.clearTimeout(timer);
       game.events.off('near', onNear);
       game.events.off('talk', onTalk);
+      game.events.off('objective', onObjective);
       clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
@@ -63,6 +67,13 @@ export default function Level2World() {
         Ithaca
         <span>home, at night</span>
       </h1>
+      {objective && (
+        <div className="l2-objective" role="status">
+          <p className="l2-objective-kicker">Objective</p>
+          <p className="l2-objective-title">{objective.title}</p>
+          {objective.note && <p className="l2-objective-note">{objective.note}</p>}
+        </div>
+      )}
       {talk ? (
         <div className="l2-talk" role="dialog" aria-labelledby="l2-talk-who">
           <p id="l2-talk-who" className="l2-talk-who">{talk.who}</p>
