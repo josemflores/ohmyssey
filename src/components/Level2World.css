@@ -59,6 +59,13 @@
   transition: opacity 0.4s ease;
 }
 .l2-hint.is-hidden { opacity: 0; }
+@media (max-width: 720px) {
+  .l2-hint {
+    white-space: normal;
+    width: min(340px, calc(100% - 24px));
+    text-align: center;
+  }
+}
 
 .l2-talk {
   position: absolute;
