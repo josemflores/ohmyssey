@@ -24,12 +24,11 @@ import {
   solidRects,
 } from './map.js';
 import {
-  createScatter,
+  createRelief,
   FOE_HIT,
   FOE_MAX,
   HERO_MAX,
   RUN_SPEED,
-  WALK_FIGHT_SECONDS,
   WALK_SPEED,
 } from './patrol.js';
 import { attackById, createBattleQuestions } from './battleQuestions.js';
@@ -181,17 +180,12 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, this.blockers);
 
-    addBeachArmy(this);
-    addGateSentries(this);
-    this.gateFalling = false;
+    // Empty streets until the gate opens. The army and the sentries come in then.
     this.questions = createBattleQuestions();
-    this.walkFight = 0;
-    this.scatter = createScatter(this, {
-      ground,
-      blockers: this.blockers,
-      heroBody: this.feet,
-      fromHorse: this.arrive,
-    });
+    this.relief = createRelief(this);
+    this.fightCooldown = 0;
+    this.engagedFoe = null;
+    this.gateFalling = false;
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
     this.fighting = false;
     this.fight = null;
@@ -296,9 +290,14 @@ export class TroyScene extends Phaser.Scene {
       this.feet.setVelocity(0, 0);
       this.game.registry.set('gateOpen', true);
       this.game.events.emit('questDone');
+      this.game.events.emit('notice', 'The gate is open. The army is coming through.');
       if (this.prompt) this.prompt.setVisible(false);
-      playGateFall(this, () => {
-        this.game.events.emit('levelComplete');
+      openGateDoors(this);
+      this.relief.start();
+      // Hold him just long enough to see the doors go, then let him move.
+      this.time.delayedCall(700, () => {
+        this.gateFalling = false;
+        if (!this.fighting) this.inputLocked = false;
       });
       return;
     }
@@ -400,10 +399,10 @@ export class TroyScene extends Phaser.Scene {
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
 
-    this.scatter.update(dt);
+    this.relief.update(dt);
+    if (this.fightCooldown > 0) this.fightCooldown -= dt;
     this.maybeHintRun(moving);
-    if (!this.fighting && !locked && moving) this.maybeRandomFight(dt);
-    this.poseGateSentries(time);
+    if (!this.fighting && !locked) this.maybeMeetFoe();
     aimArrow(this);
   }
 
@@ -414,22 +413,12 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.emit('runHint');
   }
 
-  poseGateSentries(time) {
-    if (this.gateFalling || !this.gateSentries) return;
-    for (const man of this.gateSentries) {
-      const wave = Math.sin(time / 260 + man.phase);
-      const squat = (Math.sin(time / 210 + man.phase) + 1) / 2;
-      man.sprite.setPosition(Math.round(man.x + wave * 1.6), Math.round(man.y + squat * 2));
-      man.sprite.setAngle(wave * 3.2);
-      man.sprite.setScale(1 + squat * 0.05, 1 - squat * 0.07);
-      man.shadow.setPosition(man.sprite.x + 3, man.y + 2);
-    }
-  }
-
-  maybeRandomFight(dt) {
-    this.walkFight += dt;
-    if (this.walkFight < WALK_FIGHT_SECONDS) return;
-    this.walkFight = 0;
+  // No sentries exist until the army has come through the gate.
+  maybeMeetFoe() {
+    if (this.fightCooldown > 0) return;
+    const foe = this.relief.nearestFoe(this.feet.x, this.feet.y, 64);
+    if (!foe) return;
+    this.engagedFoe = foe;
     this.beginFight();
   }
 
@@ -536,10 +525,18 @@ export class TroyScene extends Phaser.Scene {
   }
 
   endFight(won, note) {
+    const foe = this.engagedFoe;
+    this.engagedFoe = null;
     this.fighting = false;
     this.inputLocked = false;
     this.fight = null;
+    this.fightCooldown = 1.2;
+    if (won) this.relief.retire(foe);
+    else this.relief.separate(foe, this.feet);
     this.game.events.emit('fightEnd', { won, note });
+    if (won && this.relief.phase() === 'foes' && this.relief.foeCount() === 0) {
+      this.game.events.emit('levelComplete');
+    }
   }
 
   // A straight knockback can land inside a house or past the map. Step back
@@ -592,10 +589,10 @@ function aimArrow(scene) {
   if (!arrow) {
     arrow = document.createElement('div');
     arrow.id = 'gate-arrow';
-    arrow.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><polygon points="3,5 21,12 3,19" fill="#f0d48a" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    arrow.innerHTML = '<svg viewBox="0 0 64 64" width="84" height="84" aria-hidden="true"><polygon points="4,10 58,32 4,54 18,32" fill="#f0d48a" stroke="#1a1208" stroke-width="3" stroke-linejoin="round"/></svg>';
     host.appendChild(arrow);
   }
-  if (scene.questDone) {
+  if (scene.questDone || scene.nearest?.id === 'gate') {
     arrow.style.display = 'none';
     return;
   }
@@ -617,18 +614,25 @@ function aimArrow(scene) {
   const onScreen = sx > 40 && sy > 40 && sx < w - 40 && sy < h - 40;
   let x;
   let y;
-  if (onScreen) {
+  const nearGate = onScreen && Math.hypot(dx, dy) < 220;
+  if (nearGate) {
+    // Above his head, still aimed down at the doors, so it does not cover him.
+    x = sx;
+    y = Math.max(78, sy - 280);
+  } else if (onScreen) {
     const len = Math.hypot(dx, dy) || 1;
-    x = sx - (dx / len) * 56;
-    y = sy - (dy / len) * 56;
+    x = sx - (dx / len) * 130;
+    y = sy - (dy / len) * 130;
   } else {
-    const hw = cx - 56;
-    const hh = cy - 88;
+    const hw = Math.max(72, cx - 96);
+    const hh = Math.max(72, cy - 220);
     const scale = Math.min(hw / Math.abs(dx || 0.001), hh / Math.abs(dy || 0.001));
     x = cx + dx * scale;
     y = cy + dy * scale;
   }
-  const angle = Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
+  const angle = nearGate
+    ? Math.PI / 2
+    : Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
   arrow.style.display = 'block';
   arrow.style.transform = `translate(${Math.round(x + ox)}px, ${Math.round(y + oy)}px) rotate(${angle}rad)`;
 }
@@ -653,6 +657,7 @@ function nearestInteractable(x, y, scene) {
   let bestDist = Infinity;
   for (const spot of INTERACTABLES) {
     if (spot.id === 'horse_hatch' && scene.game.registry.get('leftHorse')) continue;
+    if (spot.id === 'gate' && scene.questDone) continue;
     const radius = spot.radius ?? INTERACT_RADIUS;
     const dist = Math.hypot(spot.x - x, spot.y - y);
     if (dist <= radius && dist < bestDist) {
@@ -690,13 +695,16 @@ function publishDebug(scene) {
       feet.body.reset(x, y);
     },
     sentries() {
-      return scene.gateSentries ? scene.gateSentries.length : 0;
+      return scene.relief.foeCount();
     },
     startFight() {
       scene.beginFight();
     },
     greeks() {
-      return scene.scatter.count();
+      return scene.relief.greekCount();
+    },
+    get reliefPhase() {
+      return scene.relief.phase();
     },
     lookAt(x, y, zoom) {
       const cam = scene.cameras.main;
@@ -753,75 +761,19 @@ function addRect(scene, group, x, y, w, h) {
   return blocker;
 }
 
-function addBeachArmy(scene) {
-  const key = WARRIOR_CONFIG.teams.greek.key;
-  const tex = scene.textures.get(key);
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  const frame = WARRIOR_CONFIG.facingFrames.n;
-  const army = [];
-  // Two ranks pressed against the doors, centered on the gate.
-  for (let row = 0; row < 2; row += 1) {
-    for (let col = 0; col < 7; col += 1) {
-      const x = 480 + (col - 3) * 42;
-      const y = 678 + row * 34;
-      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
-      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
-      const sort = 7000 + y;
-      shadow.setDepth(sort - 2);
-      sprite.setDepth(sort);
-      // The picture is the solid. He slides along the rank instead of
-      // walking through a soldier.
-      addPersonBlock(scene, scene.blockers, x, y);
-      army.push({ sprite, shadow, x, y, row, col });
-    }
-  }
-  scene.beachArmy = army;
-}
-
-// Four teal sentries braced on the city side of the shut doors.
-function addGateSentries(scene) {
-  const key = WARRIOR_CONFIG.teams.trojan.key;
-  const tex = scene.textures.get(key);
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  const frame = WARRIOR_CONFIG.facingFrames.s;
-  const spots = [
-    { x: 438, y: 642 },
-    { x: 466, y: 648 },
-    { x: 494, y: 648 },
-    { x: 522, y: 642 },
-  ];
-  scene.gateSentries = spots.map((spot, index) => {
-    const shadow = scene.add.ellipse(spot.x + 3, spot.y + 1, 14, 5, 0x0c1424, 0.55);
-    const sprite = scene.add.sprite(spot.x, spot.y, key, frame).setOrigin(0.5, 1);
-    // In front of the wooden doors (depth 7652) so the brace reads.
-    const depth = 7692 + index;
-    shadow.setDepth(depth - 2);
-    sprite.setDepth(depth);
-    return { ...spot, sprite, shadow, phase: index * 0.8 };
-  });
-}
-
-// Doors crash outward, the brace is thrown clear, the Greeks surge through,
-// then the screen fades to the Level 1 card. About four seconds. Input
-// stays locked by the caller.
-function playGateFall(scene, onDone) {
-  const cam = scene.cameras.main;
-  cam.stopFollow();
-  cam.pan(480, 636, 320, 'Sine.easeOut');
-  cam.shake(260, 0.008);
-
+function openGateDoors(scene) {
   const door = scene.gateDoor;
-  const src = door && door.sprite;
+  if (!door) return;
+  const src = door.sprite;
   const x = src ? src.x : 480;
   const y = src ? src.y : 652;
   if (src) src.setVisible(false);
-  if (door && door.blocker) door.blocker.destroy();
-
+  if (door.blocker) door.blocker.destroy();
+  // One picture holds both leaves. Crop each half, then swing them open.
   const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
   const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
   left.setCrop(0, 0, 64, 72);
   right.setCrop(64, 0, 64, 72);
-
   scene.tweens.add({
     targets: left,
     x: x - 74,
@@ -837,87 +789,13 @@ function playGateFall(scene, onDone) {
     angle: 84,
     duration: 700,
     ease: 'Cubic.easeIn',
-    onComplete: () => {
-      cam.shake(240, 0.014);
-      burstDust(scene, x, y + 6);
-    },
+    onComplete: () => burstDust(scene, x, y + 6),
   });
-
-  const flash = scene.add.rectangle(0, 0, cam.width, cam.height, 0xfff6e0, 1)
-    .setOrigin(0, 0)
-    .setScrollFactor(0)
-    .setDepth(20000)
-    .setAlpha(0);
-  scene.tweens.add({
-    targets: flash,
-    delay: 660,
-    alpha: 0.42,
-    duration: 50,
-    yoyo: true,
-    hold: 30,
-    onComplete: () => flash.destroy(),
-  });
-
-  (scene.gateSentries || []).forEach((man, index) => {
-    const dir = man.x < x ? -1 : 1;
-    const fallX = man.x + dir * 22;
-    const fallY = man.y - 46;
-    scene.tweens.add({
-      targets: man.sprite,
-      delay: 180 + index * 40,
-      duration: 380,
-      x: fallX,
-      y: fallY,
-      angle: dir * 96,
-      ease: 'Quad.easeIn',
-    });
-    scene.tweens.add({
-      targets: man.sprite,
-      delay: 560 + index * 40,
-      duration: 480,
-      alpha: 0,
-      y: fallY - 10,
-      onComplete: () => man.sprite.destroy(),
-    });
-    scene.tweens.add({
-      targets: man.shadow,
-      delay: 180 + index * 40,
-      duration: 860,
-      x: fallX,
-      y: fallY + 8,
-      alpha: 0,
-      onComplete: () => man.shadow.destroy(),
-    });
-  });
-
-  (scene.beachArmy || []).forEach((man) => {
-    scene.tweens.add({
-      targets: [man.sprite, man.shadow],
-      delay: 780 + man.row * 180 + man.col * 28,
-      duration: 1200,
-      y: '-=172',
-      ease: 'Cubic.easeOut',
-    });
-  });
-
-  scene.time.delayedCall(2900, () => {
-    const cover = scene.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
-      .setOrigin(0, 0)
-      .setScrollFactor(0)
-      .setDepth(30000)
-      .setAlpha(0);
-    cover.setDisplaySize(cam.width, cam.height);
-    scene.tweens.add({ targets: cover, alpha: 1, duration: 900 });
-    cam.fadeOut(900, 0, 0, 0);
-  });
-  scene.time.delayedCall(3600, () => {
-    if (onDone) onDone();
-  });
+  scene.cameras.main.shake(220, 0.006);
 }
 
 function burstDust(scene, x, y) {
-  const specks = 12;
-  for (let i = 0; i < specks; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     const puff = scene.add.circle(
       x + (Math.random() - 0.5) * 90,
       y + (Math.random() - 0.5) * 14,
@@ -938,13 +816,6 @@ function burstDust(scene, x, y) {
   }
 }
 
-function addPersonBlock(scene, group, x, y) {
-  const blocker = group.create(x, y - 14, 'blank');
-  blocker.setDisplaySize(20, 28);
-  blocker.refreshBody();
-  blocker.setVisible(false);
-  return blocker;
-}
 
 function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.

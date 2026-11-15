@@ -22,7 +22,6 @@ export default function TroyWorld() {
   const [quiz, setQuiz] = useState(null);
   const [fight, setFight] = useState(null);
   const [questDone, setQuestDone] = useState(false);
-  const [faded, setFaded] = useState(false);
   const [complete, setComplete] = useState(false);
   const [runHint, setRunHint] = useState(false);
   const [banner, setBanner] = useState('');
@@ -113,8 +112,8 @@ export default function TroyWorld() {
     game.events.on('fightEnd', onFightEnd);
     game.events.on('questDone', () => {
       setQuestDone(true);
-      setFaded(true);
     });
+    game.events.on('notice', (text) => setBanner(text || ''));
     game.events.on('levelComplete', () => setComplete(true));
     game.events.on('runHint', () => setRunHint(true));
     return () => {
@@ -128,6 +127,7 @@ export default function TroyWorld() {
       game.events.off('fightTurn', onFightTurn);
       game.events.off('fightEnd', onFightEnd);
       game.events.off('questDone');
+      game.events.off('notice');
       game.events.off('levelComplete');
       game.events.off('runHint');
       game.destroy(true);
@@ -242,19 +242,26 @@ export default function TroyWorld() {
     <div className="troy" data-screen="world">
       <p className="troy-sr" role="status">{arrived}</p>
       <div ref={host} className="troy-host" />
-      {!faded && <h1 className="troy-plaque">
+      <h1 className="troy-plaque">
         {place === 'horse' ? 'The horse' : 'Troy'}
         <span>{place === 'horse' ? 'inside' : 'at night'}</span>
-      </h1>}
-      {!faded && place !== 'horse' && (
+      </h1>
+      {place !== 'horse' && (
         <p className={questDone ? 'troy-quest is-done' : 'troy-quest'}>
           <span>Quest</span>
-          {questDone ? 'The gate is open' : 'Follow the arrow to the gate and open it'}
+          {questDone ? 'The army is inside' : 'Open the gate'}
         </p>
       )}
-      {!faded && <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>}
-      {!faded && runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
-      {!faded && banner && <p className="troy-banner">{banner}</p>}
+      {place !== 'horse' && !questDone && !fight && !talk && (
+        <div className="troy-objective" role="status">
+          <p className="troy-objective-kicker">Objective</p>
+          <p className="troy-objective-title">Open the gate</p>
+          <p className="troy-objective-note">Follow the arrow. Press E at the doors.</p>
+        </div>
+      )}
+      <p className={hint && !quiz && !fight ? 'troy-hint' : 'troy-hint is-hidden'}>WASD to move</p>
+      {runHint && !fight && <p className="troy-run">Hold Shift to run</p>}
+      {banner && <p className="troy-banner">{banner}</p>}
       {talk && (
         <div className="troy-talk" role="dialog" aria-label={talk.id}>
           <p className="troy-talk-id">{talk.id}</p>
