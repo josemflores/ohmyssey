@@ -246,3 +246,101 @@ body:has(.q-card) .troy-learn-hud { display: none; }
   .battle-screen .q-card p.q-prompt { margin-bottom: 0.6rem; font-size: 1.12rem; }
   .q-choices { gap: 0.4rem; }
 }
+
+/* ---- Battle menu: the same parchment, as a list of moves ---- */
+.battle-dock .battle-commands.q-menu {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(420px, 92vw);
+  padding: 0.85rem 1rem 1rem;
+  text-align: left;
+}
+.q-menu .q-eyebrow { text-align: center; margin-bottom: 0.1rem; }
+.q-card .q-command,
+.battle-dock .q-command {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  justify-content: flex-start;
+  min-height: 56px;
+  padding: 0.45rem 1rem 0.45rem 0.55rem;
+  border: 1px solid #b89458;
+  border-radius: 999px;
+  background: linear-gradient(#fffaf0, #f3e4c4);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(138, 100, 36, 0.25);
+}
+.battle-dock .q-command + .q-command { border-top: 1px solid #b89458; }
+.battle-dock .q-command:hover {
+  background: linear-gradient(#f6e3a8, #d9b064);
+  border-color: #8a6424;
+  box-shadow: 0 0 0 3px rgba(240, 212, 138, 0.4), 0 3px 0 rgba(138, 100, 36, 0.3);
+}
+.battle-dock .q-command:active { transform: translateY(1px); box-shadow: none; }
+.battle-dock .q-command:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
+.q-command-key {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f6dfa0, #c4963c);
+  border: 1px solid #8a6424;
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.q-command-text { display: grid; gap: 0.05rem; }
+.q-command-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.08rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.battle-dock .q-command small {
+  color: var(--ink-soft);
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: 0.98rem;
+  letter-spacing: 0;
+}
+/* Flee is a step back, so it is quieter: outline, no gold seal. */
+.battle-dock .q-command.is-quiet {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+}
+.battle-dock .q-command.is-quiet .q-command-key {
+  background: transparent;
+  color: var(--ink-soft);
+  border-color: #b89458;
+}
+
+/* Continue during the foe's turn: the gold login button. */
+.battle-dock .battle-continue.q-action {
+  align-self: center;
+  min-width: 200px;
+  min-height: 50px;
+  padding: 0.5rem 1.6rem;
+  border: 1px solid #8a6424;
+  border-radius: 999px;
+  background: linear-gradient(#f3dd9a, #c4963c);
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  box-shadow: 0 0 0 4px rgba(240, 212, 138, 0.28), 0 10px 18px rgba(0, 0, 0, 0.35);
+}
+.battle-dock .battle-continue.q-action:hover { filter: brightness(1.06); }
+
+@media (max-width: 560px) {
+  .battle-dock .q-command { min-height: 48px; }
+  .q-command-label { font-size: 0.98rem; }
+}
