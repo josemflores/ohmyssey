@@ -870,7 +870,7 @@ export class TroyScene extends Phaser.Scene {
       note = 'Open the gate (E)';
     } else if (!this.shoreReady()) {
       title = `Defeat the Trojan warriors! (${cleared}/${total})`;
-      note = 'Walk into a group, or press E';
+      note = 'Defeat the remaining groups of enemies';
     } else {
       title = 'Leave through the gate';
       note = 'Reach the ship at the shore';
