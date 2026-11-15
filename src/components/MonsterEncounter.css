@@ -1,0 +1,191 @@
+.encounter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(215, 243, 238, 0.08), transparent 46%),
+    rgba(7, 11, 22, 0.78);
+}
+
+.encounter-card {
+  width: min(640px, 100%);
+  max-height: min(100%, 860px);
+  overflow: auto;
+  padding: 1.15rem 1.25rem 1rem;
+  animation: encounter-in 0.35s ease;
+}
+
+.encounter-card:focus {
+  outline: none;
+}
+
+.encounter-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  text-align: left;
+}
+
+.encounter-mark {
+  width: 84px;
+  height: 84px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 40% 30%, rgba(240, 212, 138, 0.45), transparent 55%),
+    #143246;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+
+.encounter-mark svg { width: 68px; height: 68px; display: block; }
+
+.encounter-name {
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  color: var(--ink);
+}
+
+.encounter-flavor {
+  margin-top: 0.3rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.encounter-bars {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.9rem 0 0.75rem;
+}
+
+.encounter-hp-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.92rem;
+}
+
+.encounter-hp-top strong { font-family: var(--font-display); font-weight: 700; }
+
+.encounter-hp-track {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(36, 28, 20, 0.14);
+  overflow: hidden;
+  margin-top: 0.2rem;
+}
+
+.encounter-hp-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--laurel);
+  transition: width 0.25s ease;
+}
+
+.encounter-hp.tone-foe .encounter-hp-track span { background: var(--terracotta); }
+.encounter-hp.is-low .encounter-hp-track span { background: var(--terracotta-hot); }
+
+.encounter-prompt {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.3;
+  margin: 0.2rem 0 0;
+}
+
+.encounter-aside {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.encounter-choices {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.encounter-choice {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.encounter-choice:disabled {
+  cursor: default;
+  opacity: 1;
+  color: var(--ink);
+}
+
+.encounter-key {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--sea);
+  color: var(--foam);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+}
+
+.encounter-choice.is-right {
+  border-color: var(--laurel);
+  background: #e7f2e6;
+  box-shadow: 0 0 0 2px rgba(47, 107, 69, 0.28);
+}
+
+.encounter-choice.is-wrong {
+  border-color: var(--terracotta);
+  background: #f8ece6;
+  box-shadow: 0 0 0 2px rgba(156, 59, 46, 0.28);
+}
+
+.encounter-note { margin-top: 0.75rem; }
+.encounter-note h3 { font-size: 1.05rem; margin-bottom: 0.2rem; }
+.encounter-note p + p { margin-top: 0.35rem; }
+
+.encounter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.encounter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.encounter-keys {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.encounter-empty { text-align: center; padding: 0.4rem 0.2rem 0.2rem; }
+.encounter-empty h2 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.encounter-empty p { color: var(--ink-soft); }
+
+@keyframes encounter-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 560px) {
+  .encounter-head { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .encounter-actions, .encounter-buttons { flex-direction: column; align-items: stretch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .encounter-card { animation: none; }
+  .encounter-hp-track span { transition: none; }
+}
