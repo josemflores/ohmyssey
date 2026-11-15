@@ -18,12 +18,72 @@
   "npcs": {
     "siren": "sprites/npcs/siren/siren_32.png",
     "crew_lantern": "sprites/npcs/crew_lantern/crew_lantern_32.png",
-    "aeolus": "sprites/npcs/aeolus/aeolus_32.png"
+    "aeolus": "sprites/npcs/aeolus/aeolus_32.png",
+    "greek_hoplite": "sprites/npcs/greek_hoplite/greek_hoplite_32.png",
+    "trojan_soldier": "sprites/npcs/trojan_soldier/trojan_soldier_32.png",
+    "suitor_antinous": "sprites/npcs/suitor_antinous/suitor_antinous_32.png",
+    "suitor_eurymachus": "sprites/npcs/suitor_eurymachus/suitor_eurymachus_32.png",
+    "suitor_amphinomus": "sprites/npcs/suitor_amphinomus/suitor_amphinomus_32.png",
+    "suitors_hound": "sprites/npcs/suitors_hound/suitors_hound_32.png"
   },
   "props": {
     "bag_of_winds": {
       "image": "props/bag_of_winds_32.png",
       "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 4
+    },
+    "palace_throne": {
+      "image": "props/palace_throne.png",
+      "frameWidth": 48,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    "palace_banquet": {
+      "image": "props/palace_banquet.png",
+      "frameWidth": 64,
+      "frameHeight": 48,
+      "frames": 1
+    },
+    "palace_bow_rack": {
+      "image": "props/palace_bow_rack.png",
+      "frameWidth": 32,
+      "frameHeight": 48,
+      "frames": 1
+    },
+    "palace_column": {
+      "image": "props/palace_column.png",
+      "frameWidth": 32,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    "palace_amphora": {
+      "image": "props/palace_amphora.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 1
+    },
+    "palace_loom": {
+      "image": "props/palace_loom.png",
+      "frameWidth": 32,
+      "frameHeight": 48,
+      "frames": 2
+    },
+    "palace_brazier": {
+      "image": "props/palace_brazier.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 4
+    },
+    "palace_door": {
+      "image": "props/palace_door.png",
+      "frameWidth": 48,
+      "frameHeight": 64,
+      "frames": 2
+    },
+    "palace_hearth": {
+      "image": "props/palace_hearth.png",
+      "frameWidth": 48,
       "frameHeight": 32,
       "frames": 4
     }
