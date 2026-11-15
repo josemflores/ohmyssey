@@ -1,10 +1,19 @@
 .intro { width: min(540px, 100%); }
 
 .intro-card {
+  position: relative;
   padding: 1.25rem 1.4rem 1.15rem;
   text-align: center;
-  animation: card-in 0.45s ease;
 }
+.intro-welcome {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--terracotta);
+  font-size: 0.98rem;
+}
+.intro-welcome:focus { outline: none; }
+.intro-slide { animation: card-in 0.45s ease; }
 .intro-card h1 {
   font-size: clamp(1.5rem, 3vw, 2rem);
   margin-bottom: 0.35rem;
@@ -26,19 +35,39 @@
 .intro-dots {
   display: flex;
   justify-content: center;
-  gap: 0.45rem;
-  margin: 0.85rem 0 0.45rem;
+  gap: 0;
+  margin: 0.55rem 0 0.15rem;
+}
+.intro-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .intro-dots button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.intro-dots button::before {
+  content: "";
   width: 10px;
   height: 10px;
   border-radius: 50%;
   border: 1px solid #8a6424;
   background: transparent;
-  padding: 0;
-  cursor: pointer;
 }
-.intro-dots button.is-on { background: #c4963c; }
+.intro-dots button.is-on::before { background: #c4963c; }
 
 .intro-timer {
   height: 3px;
@@ -65,6 +94,7 @@
   align-items: center;
   gap: 0.75rem;
 }
+.intro-actions .btn { min-height: 44px; }
 .intro-next.is-begin {
   background: linear-gradient(#f3dd9a, #c4963c);
   color: #2a1c0c;
@@ -75,7 +105,12 @@
   box-shadow: 0 0 0 4px rgba(240, 212, 138, 0.28);
 }
 
+@media (max-width: 460px) {
+  .intro-actions { flex-wrap: wrap; }
+  .intro-actions .btn { flex: 1 1 8rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .intro-card, .intro-timer span { animation: none; }
+  .intro-slide, .intro-timer span { animation: none; }
   .intro-timer { display: none; }
 }

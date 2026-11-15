@@ -104,8 +104,13 @@ export default function TroyWorld() {
     return () => window.removeEventListener('keydown', onKey);
   }, [talk, quiz]);
 
+  const arrived = place === 'horse'
+    ? 'Inside the horse. WASD to move. Press E at the hatch.'
+    : 'Troy at night. WASD to move.';
+
   return (
     <div className="troy" data-screen="world">
+      <p className="troy-sr" role="status">{arrived}</p>
       <div ref={host} className="troy-host" />
       <h1 className="troy-plaque">
         {place === 'horse' ? 'The horse' : 'Troy'}
