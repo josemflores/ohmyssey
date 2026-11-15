@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import './VoyageScreen.css';
 
 // One card is about four seconds. Thirteen stops land near a minute,
-// which is the whole wander from Troy to Ithaca.
+// which is the whole wander from Troy to Ithaca. The demo sail is one card.
 const CARD_MS = 4000;
+const BRIEF_MS = 5000;
 
 const STOPS = [
   {
@@ -99,6 +100,16 @@ const STOPS = [
   },
 ];
 
+const BRIEF_STOPS = [
+  {
+    sky: 'dawn',
+    island: 'ithaca',
+    kicker: 'The return',
+    title: '',
+    text: 'Ten years of storms, monsters and angry gods cost Odysseus his ships and his crew. Now he returns to Ithaca alone, where suitors crowd his palace and Penelope still waits.',
+  },
+];
+
 const STARS = Array.from({ length: 28 }, (_, i) => ({
   id: i,
   left: `${(i * 47) % 100}%`,
@@ -107,7 +118,10 @@ const STARS = Array.from({ length: 28 }, (_, i) => ({
   big: i % 8 === 0,
 }));
 
-export default function VoyageScreen({ onArrive }) {
+export default function VoyageScreen({ onArrive, brief = false }) {
+  const stops = brief ? BRIEF_STOPS : STOPS;
+  const cardMs = brief ? BRIEF_MS : CARD_MS;
+  const count = stops.length;
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const indexRef = useRef(0);
@@ -115,8 +129,8 @@ export default function VoyageScreen({ onArrive }) {
   const lastAdvance = useRef(0);
   const onArriveRef = useRef(onArrive);
   const arriveTimer = useRef(0);
-  const stop = STOPS[index];
-  const last = index === STOPS.length - 1;
+  const stop = stops[index] || stops[0];
+  const last = index >= count - 1;
   indexRef.current = index;
   onArriveRef.current = onArrive;
 
@@ -124,11 +138,11 @@ export default function VoyageScreen({ onArrive }) {
     if (leaving) return undefined;
     const timer = setTimeout(() => {
       if (leavingRef.current) return;
-      if (indexRef.current >= STOPS.length - 1) finish();
+      if (indexRef.current >= count - 1) finish();
       else setIndex(indexRef.current + 1);
-    }, CARD_MS);
+    }, cardMs);
     return () => clearTimeout(timer);
-  }, [index, leaving]);
+  }, [index, leaving, count, cardMs]);
 
   function finish() {
     if (leavingRef.current) return;
@@ -148,7 +162,7 @@ export default function VoyageScreen({ onArrive }) {
     const now = performance.now();
     if (now - lastAdvance.current < 400) return;
     lastAdvance.current = now;
-    if (indexRef.current >= STOPS.length - 1) finish();
+    if (indexRef.current >= count - 1) finish();
     else setIndex(indexRef.current + 1);
   }
 
@@ -172,12 +186,12 @@ export default function VoyageScreen({ onArrive }) {
   return (
     <div
       className={leaving ? 'voyage is-leaving' : 'voyage'}
-      data-screen="voyage"
+      data-screen={brief ? 'sail' : 'voyage'}
       data-sky={stop.sky}
       data-stop={index}
-      style={{ '--card-ms': `${CARD_MS}ms` }}
+      style={{ '--card-ms': `${cardMs}ms` }}
       role="dialog"
-      aria-label="The voyage home"
+      aria-label={brief ? 'The sail to Ithaca' : 'The voyage home'}
       onClick={advance}
     >
       <div className="voyage-sky" aria-hidden="true" />
@@ -198,13 +212,13 @@ export default function VoyageScreen({ onArrive }) {
         <article className="card voyage-card" key={stop.title}>
           <p className="voyage-sr" role="status">{stop.kicker}. {stop.title}. {stop.text}</p>
           <p className="eyebrow">{stop.kicker}</p>
-          <h2>{stop.title}</h2>
-          <p className="voyage-text">{stop.text}</p>
+          {stop.title ? <h2>{stop.title}</h2> : null}
+          <p className={brief ? 'voyage-text is-brief' : 'voyage-text'}>{stop.text}</p>
           <div className="voyage-timer" aria-hidden="true">
             <span key={index} />
           </div>
           <div className="voyage-actions">
-            <span className="voyage-count">{index + 1} / {STOPS.length}</span>
+            <span className="voyage-count">{brief ? 'Ithaca' : `${index + 1} / ${count}`}</span>
             <button
               className="btn btn-quiet voyage-skip"
               type="button"

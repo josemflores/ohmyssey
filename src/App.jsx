@@ -5,24 +5,25 @@ import LoginScreen from './components/LoginScreen.jsx';
 import PauseMenu from './components/PauseMenu.jsx';
 import TroyLearn from './components/TroyLearn.jsx';
 import TroyWorld from './components/TroyWorld.jsx';
+import JourneyMap from './components/JourneyMap.jsx';
 import VoyageScreen from './components/VoyageScreen.jsx';
 import { applySettings, loadSettings } from './lib/settings.js';
 
 // The playable path for the hackathon demo:
-//   login  →  story intro  →  Troy at night  →  the voyage  →  Ithaca
+//   login → story intro → Troy → journey map → a short sail → Ithaca
 //
-// Dev mode and ?level2 open Ithaca directly. They do not play the voyage.
+// Dev mode and ?level2 open Ithaca directly. They skip the map and the sail.
+// ?voyage still plays the long card sequence. ?journeymap opens the map.
 //
 // TroyLearn sits on top of the city. It opens Ask Athena and the two
 // lessons in the current scope (Troy, then Ithaca). It does not replace
 // the login, the story, or the walk.
 
-// ?level2 opens Ithaca directly and skips the voyage. ?voyage opens the
-// sea interlude on its own, the same way, for a look at the cards.
 function openingScreen() {
   const params = new URLSearchParams(window.location.search);
   if (params.has('level2')) return 'level2';
   if (params.has('voyage')) return 'voyage';
+  if (params.has('journeymap')) return 'journey';
   return 'login';
 }
 
@@ -47,10 +48,12 @@ export default function App() {
       {screen === 'intro' && <IntroScreen onBegin={() => setScreen('world')} />}
       {screen === 'world' && (
         <>
-          <TroyWorld key={run} onSail={() => goto('voyage')} />
+          <TroyWorld key={run} onSail={() => goto('journey')} />
           <TroyLearn />
         </>
       )}
+      {screen === 'journey' && <JourneyMap key={run} onChoose={() => goto('sail')} />}
+      {screen === 'sail' && <VoyageScreen brief key={run} onArrive={() => goto('level2')} />}
       {screen === 'voyage' && <VoyageScreen key={run} onArrive={() => goto('level2')} />}
       {screen === 'level2' && (
         <>
