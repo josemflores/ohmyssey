@@ -23,6 +23,7 @@ code reads them the same way). Each row is the LPC idle breath: frames
 
   eumaeus/eumaeus_32.png
   telemachus/telemachus_32.png
+  telemachus/telemachus_walk_32.png  (8 steps x 8 facings, same row order)
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
 
 Run from the repo root (needs Pillow):
@@ -206,6 +207,35 @@ def by_lightness(image: Image.Image, target: list[str]) -> Image.Image:
     return out
 
 
+def build_walk_sheet(layers: list[dict]) -> Image.Image:
+    """8 columns (LPC walk steps 1-8) x 8 rows (S SW W NW N NE E SE)."""
+    sheets = []
+    for layer in layers:
+        rel = layer["path"].replace("/idle.png", "/walk.png")
+        dest = CACHE / "spritesheets" / rel
+        if not dest.exists() or dest.stat().st_size == 0:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            import urllib.request
+
+            print(f"download {rel}")
+            urllib.request.urlretrieve(lpc.LPC_RAW + "spritesheets/" + rel, dest)
+        image = Image.open(dest).convert("RGBA")
+        if image.size != (9 * SRC, 4 * SRC):
+            raise SystemExit(f"{rel} is {image.size}, expected a 9x4 walk sheet")
+        if layer.get("ramp"):
+            image = by_lightness(image, layer["ramp"])
+        sheets.append(image)
+    rows = [lpc.LPC_ROWS[d] for d in ROW_FACINGS]
+    out = Image.new("RGBA", (OUT * 8, OUT * 8))
+    for r, lpc_row in enumerate(rows):
+        for c in range(8):
+            canvas = Image.new("RGBA", (SRC, SRC))
+            for image in sheets:
+                canvas.alpha_composite(image.crop(((c + 1) * SRC, lpc_row * SRC, (c + 2) * SRC, (lpc_row + 1) * SRC)))
+            out.paste(lpc.half_size(canvas), (c * OUT, r * OUT))
+    return out
+
+
 def build_sheet(layers: list[dict]) -> Image.Image:
     sheets = []
     for layer in layers:
@@ -237,6 +267,10 @@ def main() -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     built["telemachus"].save(path)
     print(f"wrote {path.relative_to(lpc.ROOT)}")
+    # He walks in to the hut, so he also gets a walk cycle.
+    walk_path = NPCS / "telemachus" / "telemachus_walk_32.png"
+    build_walk_sheet(telemachus()).save(walk_path)
+    print(f"wrote {walk_path.relative_to(lpc.ROOT)}")
     for outfit in "abc":
         for n, (main_ramp, accent) in enumerate(COMBOS, start=1):
             name = f"suitor_{outfit}_{n}"

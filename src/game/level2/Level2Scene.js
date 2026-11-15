@@ -52,8 +52,14 @@ const HUT = [
   { who: 'Odysseus', line: 'We take the palace together. Tell no one until I say.', conceal: true },
 ];
 const EUMAEUS_AT = { x: 248, y: 508 };
-const SON_FROM = { x: 360, y: 516 };
+// Telemachus walks in from off to the east along the path to the hut, and
+// stops beside the fire, facing Eumaeus.
+const SON_FROM = { x: 470, y: 520 };
+const SON_TURN = { x: 300, y: 548 };
 const SON_AT = { x: 190, y: 556 };
+const SON_WALK_SPEED = 72; // a little slower than Odysseus walks
+// Rows of the Ithaca people sheets: S SW W NW N NE E SE.
+const PEOPLE_ROWS = ['s', 'sw', 'w', 'nw', 'n', 'ne', 'e', 'se'];
 // Props are drawn above the moonlight grade (so they y-sort with him), so
 // they take the moon as a tint instead. Lit windows keep a little warmth.
 const MOON_TINT = 0x8a9cc4;
@@ -120,6 +126,13 @@ export class Level2Scene extends Phaser.Scene {
         frameHeight: 32,
       });
     }
+    // He walks up to the hut (8 steps per facing, rows S SW W NW N NE E SE).
+    if (!this.textures.exists('telemachus-walk')) {
+      this.load.spritesheet('telemachus-walk', '/assets/sprites/npcs/telemachus/telemachus_walk_32.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
   }
 
   create() {
@@ -130,7 +143,7 @@ export class Level2Scene extends Phaser.Scene {
     // Troy's shared pieces: blank boxes, feet, lamp, lamp glow, vignette.
     if (!this.textures.exists('oil-lamp')) buildWorldTextures(this);
     buildLevel2Textures(this);
-    for (const key of ['lighthouse-unlit', 'penelope', 'eumaeus', 'telemachus', ANIM_CONFIG.textureKey, 'odysseus-walk', 'odysseus-beggar', 'odysseus-beggar-walk', 'odysseus-beggar-idle']) {
+    for (const key of ['lighthouse-unlit', 'penelope', 'eumaeus', 'telemachus', 'telemachus-walk', ANIM_CONFIG.textureKey, 'odysseus-walk', 'odysseus-beggar', 'odysseus-beggar-walk', 'odysseus-beggar-idle']) {
       if (this.textures.exists(key)) this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.createAnims();
@@ -358,14 +371,15 @@ export class Level2Scene extends Phaser.Scene {
     this.hutIndex += 1;
     const show = () => {
       if (beat.appear) this.showAthena();
-      if (beat.arrive) this.arriveSon();
       this.inputLocked = true;
       this.feet.setVelocity(0, 0);
       this.game.events.emit('talk', { who: beat.who, line: beat.line });
     };
     if (beat.arrive) {
-      this.arriveSon();
-      this.time.delayedCall(700, show);
+      // He walks all the way in first; his line comes when he stops.
+      this.inputLocked = true;
+      this.feet.setVelocity(0, 0);
+      this.arriveSon(show);
       return;
     }
     if (beat.reveal) {
@@ -379,22 +393,48 @@ export class Level2Scene extends Phaser.Scene {
     show();
   }
 
-  arriveSon() {
-    if (!this.telemachus || this.sonHere) return;
+  // Telemachus comes home from Pylos (Odyssey 16): he walks in from the east
+  // along the path, turns toward the fire, stops beside Eumaeus and faces
+  // him. Eumaeus turns to greet him. Then done() shows his first line.
+  arriveSon(done) {
+    if (!this.telemachus || this.sonHere) {
+      if (done) done();
+      return;
+    }
     this.sonHere = true;
-    this.telemachus.setVisible(true);
-    this.sonShadow.setVisible(true);
-    this.tweens.add({
-      targets: this.telemachus,
-      x: SON_AT.x,
-      duration: 680,
-      ease: 'Sine.easeOut',
-    });
-    this.tweens.add({
-      targets: this.sonShadow,
-      x: SON_AT.x + 3,
-      duration: 680,
-      ease: 'Sine.easeOut',
+    const son = this.telemachus;
+    const shadow = this.sonShadow;
+    son.setVisible(true).setAlpha(0);
+    shadow.setVisible(true).setAlpha(0);
+    this.tweens.add({ targets: son, alpha: 1, duration: 300 });
+    this.tweens.add({ targets: shadow, alpha: 0.5, duration: 300 });
+    const legs = [];
+    let from = SON_FROM;
+    for (const to of [SON_TURN, SON_AT]) {
+      const facing = facingToward(to.x - from.x, to.y - from.y);
+      legs.push({
+        targets: son,
+        x: to.x,
+        y: to.y,
+        duration: (Math.hypot(to.x - from.x, to.y - from.y) / SON_WALK_SPEED) * 1000,
+        onStart: () => son.play(`telemachus-walk-${facing}`, true),
+        onUpdate: () => {
+          shadow.setPosition(son.x + 1, son.y - 1);
+          son.setDepth(SORT + son.y);
+        },
+      });
+      from = to;
+    }
+    this.tweens.chain({
+      tweens: legs,
+      onComplete: () => {
+        // Face each other across the fire.
+        const toEumaeus = facingToward(EUMAEUS_AT.x - SON_AT.x, EUMAEUS_AT.y - SON_AT.y);
+        const toSon = facingToward(SON_AT.x - EUMAEUS_AT.x, SON_AT.y - EUMAEUS_AT.y);
+        son.play(`telemachus-idle-${toEumaeus}`);
+        if (this.eumaeus) this.eumaeus.play(`eumaeus-idle-${toSon}`);
+        this.time.delayedCall(250, () => done && done());
+      },
     });
   }
 
@@ -487,6 +527,28 @@ export class Level2Scene extends Phaser.Scene {
         repeat: -1,
       });
     }
+    // Per-facing idles for the two of them, and Telemachus' walk.
+    PEOPLE_ROWS.forEach((facing, row) => {
+      for (const who of ['eumaeus', 'telemachus']) {
+        const key = `${who}-idle-${facing}`;
+        if (this.anims.exists(key) || !this.textures.exists(who)) continue;
+        this.anims.create({
+          key,
+          frames: this.anims.generateFrameNumbers(who, { start: row * 4, end: row * 4 + 3 }),
+          frameRate: 3,
+          repeat: -1,
+        });
+      }
+      const walk = `telemachus-walk-${facing}`;
+      if (!this.anims.exists(walk) && this.textures.exists('telemachus-walk')) {
+        this.anims.create({
+          key: walk,
+          frames: this.anims.generateFrameNumbers('telemachus-walk', { start: row * 8, end: row * 8 + 7 }),
+          frameRate: 10,
+          repeat: -1,
+        });
+      }
+    });
     if (!this.anims.exists('telemachus-idle')) {
       this.anims.create({
         key: 'telemachus-idle',
@@ -897,4 +959,14 @@ function publishDebug(scene) {
       feet.body.reset(x, y);
     },
   };
+}
+
+// Which of the eight facings points along (dx, dy). Screen y grows downward.
+function facingToward(dx, dy) {
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  if (ay >= ax * 1.6) return dy < 0 ? 'n' : 's';
+  if (ax >= ay * 1.6) return dx < 0 ? 'w' : 'e';
+  if (dy < 0) return dx < 0 ? 'nw' : 'ne';
+  return dx < 0 ? 'sw' : 'se';
 }
