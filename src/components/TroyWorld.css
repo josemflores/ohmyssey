@@ -307,8 +307,10 @@
 }
 .troy-banner { bottom: 112px; }
 .battle-screen {
-  --sp: 200px;
-  --foe: 112px;
+  /* Odysseus and the Trojans are the same 32x32 LPC body, so they share one
+     scale (4x). They used to be 200px and 112px, so he stood twice as tall. */
+  --sp: 128px;
+  --foe: 128px;
   position: absolute;
   inset: 0;
   z-index: 6;
@@ -378,7 +380,7 @@
 }
 .battle-member {
   position: relative;
-  width: 124px;
+  width: calc(var(--foe) + 12px);
 }
 .battle-member .battle-name { font-size: 0.72rem; }
 .battle-member .battle-hp-track { width: 100%; margin-left: 0; }
