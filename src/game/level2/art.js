@@ -637,6 +637,13 @@ function addCanvas(scene, key, canvas) {
   return tex;
 }
 
+// The Phaeacian ship, for any scene that needs it (Troy's beach uses the
+// same ship that carries Odysseus home to Ithaca). Returns the texture key.
+export function shipTexture(scene) {
+  if (!scene.textures.exists('l2-ship')) addCanvas(scene, 'l2-ship', paintShip());
+  return 'l2-ship';
+}
+
 // Texture keys are prefixed "l2-" so they never clash with Troy's.
 export function buildLevel2Textures(scene) {
   addCanvas(scene, 'l2-tiles', paintTileset());
