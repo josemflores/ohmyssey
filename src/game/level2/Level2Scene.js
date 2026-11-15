@@ -13,6 +13,7 @@ import { buildWorldTextures } from '../textures.js';
 import { buildLevel2Textures, propTexture } from './art.js';
 import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, clearSuitors, preloadHall } from './hall.js';
 import { HALL, HALL_SPAWN, HALL_SPOTS, SOUTH_WALL, TILE } from './hallMap.js';
+import { hideObjectiveArrow, updateObjectiveArrow } from '../objectiveArrow.js';
 import {
   DECOR,
   FEET,
@@ -262,6 +263,7 @@ export class Level2Scene extends Phaser.Scene {
     this.game.events.on('hallOpen', onHallOpen);
     const onHallWon = () => {
       this.hallWon = true;
+      this.arrowFor = null;
       clearSuitors(this, this.hall);
       this.inputLocked = false;
       this.keys.keyE.reset();
@@ -273,6 +275,7 @@ export class Level2Scene extends Phaser.Scene {
       this.game.events.off('hallOpen', onHallOpen);
       this.game.events.off('hallWon', onHallWon);
       this.scale.off('resize', fit);
+      hideObjectiveArrow();
       if (globalThis.__level2?.owner === this) delete globalThis.__level2;
     });
 
@@ -287,6 +290,7 @@ export class Level2Scene extends Phaser.Scene {
       this.inDisguise = false;
       this.hideAthena();
       this.inputLocked = false;
+      this.arrowFor = 'eumaeus';
       this.game.events.emit('objective', {
         title: 'Find shelter with Eumaeus the swineherd',
         note: 'His hut is west of the town, by the pig pen.',
@@ -361,6 +365,7 @@ export class Level2Scene extends Phaser.Scene {
       this.hutDone = true;
       this.hideAthena();
       this.inputLocked = false;
+      this.arrowFor = 'palace';
       this.game.events.emit('objective', {
         title: 'Go to the palace',
         note: 'The road north leads up to the hall.',
@@ -591,6 +596,7 @@ export class Level2Scene extends Phaser.Scene {
     this.feet.setVelocity(0, 0);
     this.moveTo(HALL_AREA, HALL_SPAWN, 'n', () => {
       this.inHall = true;
+      if (!this.hallWon) this.arrowFor = 'bow';
       this.game.events.emit('objective', {
         title: 'The hall of Odysseus',
         note: 'The suitors feast in your hall. Look for the great bow.',
@@ -620,6 +626,24 @@ export class Level2Scene extends Phaser.Scene {
       this.keys.keyE.reset();
       if (done) done();
     });
+  }
+
+  // Where the objective arrow points: Eumaeus, then the palace gate, then
+  // (inside the hall) the great bow. Hidden once he is standing there, or
+  // when the goal is in the other area (the hall is a separate room).
+  arrowTarget(x, y) {
+    let target = null;
+    if (this.arrowFor === 'eumaeus' && !this.hutDone && !this.inHut && !this.inHall) {
+      target = { x: EUMAEUS_AT.x, y: EUMAEUS_AT.y, reach: 52 };
+    } else if (this.arrowFor === 'palace' && !this.inHall) {
+      const spot = SPOTS.find((s) => s.id === 'palace');
+      if (spot) target = { x: spot.x, y: spot.y, reach: spot.radius };
+    } else if (this.arrowFor === 'bow' && this.inHall && !this.hallWon) {
+      const spot = HALL_SPOTS.find((s) => s.id === 'bow');
+      if (spot) target = { x: spot.x, y: spot.y, reach: spot.radius };
+    }
+    if (!target || Math.hypot(target.x - x, target.y - y) < target.reach) return null;
+    return target;
   }
 
   update(time, delta) {
@@ -672,6 +696,7 @@ export class Level2Scene extends Phaser.Scene {
     }
 
     this.nearest = locked ? null : nearestSpot(this.feet.x, groundY, this.hallWon);
+    updateObjectiveArrow(this, locked ? null : this.arrowTarget(this.feet.x, groundY));
     if (this.nearest) {
       this.prompt.setText('Press E');
       this.prompt.setVisible(true);
