@@ -1,24 +1,15 @@
 import { useEffect, useRef } from 'react';
 import './JourneyMap.css';
 
-// Percent positions on journey_map.webp, read off the painting.
-// Troy is done. The shores between are locked. Ithaca is the only choice.
+// Six stops on journey_map.webp. Percents are read off the painting.
+// Troy is done. The four between are locked. Ithaca is the only choice.
 const STOPS = [
-  { id: 'troy', n: 1, name: 'Troy', line: 'The war is won', x: 91, y: 50, state: 'done', side: 'left' },
-  { id: 'ismarus', n: 2, name: 'Ismarus', line: 'The crew pillages the town', x: 86, y: 42, state: 'locked', side: 'above' },
-  { id: 'malea', n: 3, name: 'Cape Malea', line: 'Storms blow the fleet south', x: 79, y: 70, state: 'locked', side: 'right' },
-  { id: 'lotus', n: 4, name: 'Lotus-Eaters', line: 'They forget the way home', x: 30, y: 71, state: 'locked', side: 'left' },
-  { id: 'cyclops', n: 5, name: 'Cyclops', line: 'Blinds Polyphemus', x: 43, y: 65, state: 'locked', side: 'left' },
-  { id: 'aeolia', n: 6, name: 'Aeolia', line: 'The bag of winds is opened', x: 52, y: 56, state: 'locked', side: 'above' },
-  { id: 'laestry', n: 7, name: 'Laestrygonians', line: 'Giants destroy the fleet', x: 38, y: 41, state: 'locked', side: 'above' },
-  { id: 'aeaea', n: 8, name: 'Aeaea', line: 'Circe turns the crew into swine', x: 50, y: 37, state: 'locked', side: 'right' },
-  { id: 'underworld', n: 9, name: 'Underworld', line: 'Tiresias names the way home', x: 7, y: 50, state: 'locked', side: 'below' },
-  { id: 'sirens', n: 10, name: 'Sirens', line: 'Lashed to the mast', x: 57, y: 46, state: 'locked', side: 'left' },
-  { id: 'scylla', n: 11, name: 'Scylla & Charybdis', line: 'Six men are seized', x: 63, y: 63, state: 'locked', side: 'below' },
-  { id: 'thrinacia', n: 12, name: 'Thrinacia', line: 'The cattle of the sun', x: 48, y: 66, state: 'locked', side: 'above' },
-  { id: 'ogygia', n: 13, name: 'Ogygia', line: 'Seven years with Calypso', x: 35, y: 80, state: 'locked', side: 'left' },
-  { id: 'scheria', n: 14, name: 'Scheria', line: 'The Phaeacians', x: 67, y: 49, state: 'locked', side: 'above' },
-  { id: 'ithaca', n: 15, name: 'Ithaca', line: 'Penelope still waits', x: 74, y: 57, state: 'open', side: 'right' },
+  { id: 'troy', n: 1, name: 'Troy', line: 'The war is won', x: 90, y: 49, state: 'done', side: 'left' },
+  { id: 'cyclops', n: 2, name: 'Cyclops', line: 'The cave of Polyphemus', x: 47, y: 65, state: 'locked', side: 'left' },
+  { id: 'aeaea', n: 3, name: 'Aeaea', line: 'Circe turns the crew into swine', x: 47, y: 39, state: 'locked', side: 'left' },
+  { id: 'underworld', n: 4, name: 'Underworld', line: 'Tiresias names the way home', x: 9, y: 50, state: 'locked', side: 'right' },
+  { id: 'scylla', n: 5, name: 'Scylla & Charybdis', line: 'Six men are seized', x: 56, y: 63, state: 'locked', side: 'below' },
+  { id: 'ithaca', n: 6, name: 'Ithaca', line: 'Penelope still waits', x: 67, y: 58, state: 'open', side: 'left' },
 ];
 
 // The painting is 16:9. This viewBox matches it, so a percent on the image
