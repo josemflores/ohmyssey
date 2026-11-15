@@ -480,7 +480,7 @@ export default function TroyWorld({ onSail }) {
           <div className="card level-complete-card">
             <p className="eyebrow">Level 1</p>
             <h2>Complete</h2>
-            <p>The ship leaves Troy. Ithaca is next.</p>
+            <p>The ship leaves Troy. The long way home begins.</p>
           </div>
         </div>
       )}
