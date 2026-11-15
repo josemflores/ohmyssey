@@ -217,11 +217,19 @@ export const SPOTS = [
   },
   {
     id: 'hut',
-    x: 208,
-    y: 508,
-    radius: 34,
+    x: 228,
+    y: 516,
+    radius: 48,
     who: 'Eumaeus the swineherd',
-    line: 'Your old swineherd does not know you in these rags. "The suitors eat my best pigs every night, stranger. Rest here, then go up to the palace."',
+    line: 'The fire is still warm. The palace road is north, and the suitors are feasting.',
+  },
+  {
+    id: 'palace',
+    x: 512,
+    y: 300,
+    radius: 40,
+    who: 'The palace gate',
+    line: 'The hall is ahead. The suitors feast inside. The door waits.',
   },
   {
     id: 'well',

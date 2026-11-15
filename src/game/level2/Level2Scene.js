@@ -38,6 +38,20 @@ const DISGUISE = [
   { who: 'Athena', line: 'I will disguise you, so the suitors will not know you.' },
   { who: 'Athena', line: 'Go as a beggar. The hour to reveal yourself will come.', shimmer: true },
 ];
+// Odyssey 14–16: the swineherd's hut, the son's return, the reveal.
+const HUT = [
+  { who: 'Eumaeus', line: 'Sit, stranger. A beggar is welcome by this fire.' },
+  { who: 'Eumaeus', line: 'The suitors eat my master\'s best hogs, and the house goes hungry.' },
+  { who: 'Telemachus', line: 'Eumaeus, I am home from Pylos. Who is this ragged man?', arrive: true },
+  { who: 'Eumaeus', line: 'A wanderer, my prince. He asks after your father.' },
+  { who: 'Athena', line: 'You are alone now. Let your son see his father.', appear: true },
+  { who: 'Odysseus', line: 'Telemachus, I am your father. Athena hid me in these rags.', reveal: true },
+  { who: 'Telemachus', line: 'Father? After twenty years, you stand in this hut.' },
+  { who: 'Odysseus', line: 'We take the palace together. Tell no one until I say.', conceal: true },
+];
+const EUMAEUS_AT = { x: 248, y: 508 };
+const SON_FROM = { x: 360, y: 516 };
+const SON_AT = { x: 190, y: 556 };
 // Props are drawn above the moonlight grade (so they y-sort with him), so
 // they take the moon as a tint instead. Lit windows keep a little warmth.
 const MOON_TINT = 0x8a9cc4;
@@ -91,6 +105,18 @@ export class Level2Scene extends Phaser.Scene {
         frameHeight: 32,
       });
     }
+    if (!this.textures.exists('eumaeus')) {
+      this.load.spritesheet('eumaeus', '/assets/sprites/npcs/eumaeus/eumaeus_32.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
+    if (!this.textures.exists('telemachus')) {
+      this.load.spritesheet('telemachus', '/assets/sprites/npcs/telemachus/telemachus_32.png', {
+        frameWidth: 32,
+        frameHeight: 32,
+      });
+    }
   }
 
   create() {
@@ -101,7 +127,7 @@ export class Level2Scene extends Phaser.Scene {
     // Troy's shared pieces: blank boxes, feet, lamp, lamp glow, vignette.
     if (!this.textures.exists('oil-lamp')) buildWorldTextures(this);
     buildLevel2Textures(this);
-    for (const key of ['lighthouse-unlit', 'penelope', ANIM_CONFIG.textureKey, 'odysseus-walk', 'odysseus-beggar', 'odysseus-beggar-walk', 'odysseus-beggar-idle']) {
+    for (const key of ['lighthouse-unlit', 'penelope', 'eumaeus', 'telemachus', ANIM_CONFIG.textureKey, 'odysseus-walk', 'odysseus-beggar', 'odysseus-beggar-walk', 'odysseus-beggar-idle']) {
       if (this.textures.exists(key)) this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.createAnims();
@@ -121,6 +147,7 @@ export class Level2Scene extends Phaser.Scene {
     }
     for (const decor of DECOR) addDecor(this, decor);
     this.addPenelope();
+    this.addSwineherd();
     addRect(this.blockers, penelopeRect());
 
     this.glints = createGlints(this);
@@ -201,6 +228,10 @@ export class Level2Scene extends Phaser.Scene {
         this.advanceDisguise();
         return;
       }
+      if (this.inHut) {
+        this.advanceHut();
+        return;
+      }
       this.inputLocked = false;
     };
     this.game.events.on('lockInput', onLock);
@@ -223,6 +254,10 @@ export class Level2Scene extends Phaser.Scene {
       this.inDisguise = false;
       this.hideAthena();
       this.inputLocked = false;
+      this.game.events.emit('objective', {
+        title: 'Find shelter with Eumaeus the swineherd',
+        note: 'His hut is west of the town, by the pig pen.',
+      });
       return;
     }
     const beat = DISGUISE[this.disguiseIndex];
@@ -281,6 +316,100 @@ export class Level2Scene extends Phaser.Scene {
     poseHero(this, this.facing, false);
   }
 
+  showKing() {
+    this.disguised = false;
+    poseHero(this, this.facing, false);
+  }
+
+  advanceHut() {
+    if (!this.inHut) return;
+    if (this.hutIndex >= HUT.length) {
+      this.inHut = false;
+      this.hutDone = true;
+      this.hideAthena();
+      this.inputLocked = false;
+      this.game.events.emit('objective', {
+        title: 'Go to the palace',
+        note: 'The road north leads up to the hall.',
+      });
+      return;
+    }
+    const beat = HUT[this.hutIndex];
+    this.hutIndex += 1;
+    const show = () => {
+      if (beat.appear) this.showAthena();
+      if (beat.arrive) this.arriveSon();
+      this.inputLocked = true;
+      this.feet.setVelocity(0, 0);
+      this.game.events.emit('talk', { who: beat.who, line: beat.line });
+    };
+    if (beat.arrive) {
+      this.arriveSon();
+      this.time.delayedCall(700, show);
+      return;
+    }
+    if (beat.reveal) {
+      this.flashForm(false, show);
+      return;
+    }
+    if (beat.conceal) {
+      this.flashForm(true, show);
+      return;
+    }
+    show();
+  }
+
+  arriveSon() {
+    if (!this.telemachus || this.sonHere) return;
+    this.sonHere = true;
+    this.telemachus.setVisible(true);
+    this.sonShadow.setVisible(true);
+    this.tweens.add({
+      targets: this.telemachus,
+      x: SON_AT.x,
+      duration: 680,
+      ease: 'Sine.easeOut',
+    });
+    this.tweens.add({
+      targets: this.sonShadow,
+      x: SON_AT.x + 3,
+      duration: 680,
+      ease: 'Sine.easeOut',
+    });
+  }
+
+  flashForm(asBeggar, done) {
+    if (asBeggar) this.becomeBeggar();
+    else this.showKing();
+    this.cameras.main.flash(320, 255, 236, 190);
+    const ring = this.add.circle(this.hero.x, this.hero.y - 18, 6, 0xfff1c4, 0.9);
+    ring.setBlendMode(Phaser.BlendModes.ADD);
+    ring.setDepth(this.hero.depth + 6);
+    this.tweens.add({
+      targets: ring,
+      scale: 7,
+      alpha: 0,
+      duration: 420,
+      onComplete: () => {
+        ring.destroy();
+        done();
+      },
+    });
+  }
+
+  addSwineherd() {
+    const depth = SORT + EUMAEUS_AT.y;
+    this.add.ellipse(EUMAEUS_AT.x + 3, EUMAEUS_AT.y + 1, 18, 6, 0x0c1424, 0.5).setDepth(5200);
+    this.eumaeus = this.add.sprite(EUMAEUS_AT.x, EUMAEUS_AT.y, 'eumaeus', 0)
+      .setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(depth);
+    this.eumaeus.play('eumaeus-idle');
+    this.sonShadow = this.add.ellipse(SON_FROM.x + 3, SON_FROM.y + 1, 16, 5, 0x0c1424, 0.5)
+      .setDepth(5200).setVisible(false);
+    this.telemachus = this.add.sprite(SON_FROM.x, SON_FROM.y, 'telemachus', 0)
+      .setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(SORT + SON_AT.y).setVisible(false);
+    this.telemachus.play('telemachus-idle');
+  }
+
   createAnims() {
     const walk = ANIM_CONFIG.walk;
     if (walk && !this.anims.exists('walk-s')) {
@@ -327,6 +456,22 @@ export class Level2Scene extends Phaser.Scene {
         key: 'lamp-flicker',
         frames: this.anims.generateFrameNumbers('oil-lamp', { start: 0, end: 2 }),
         frameRate: 5,
+        repeat: -1,
+      });
+    }
+    if (!this.anims.exists('eumaeus-idle')) {
+      this.anims.create({
+        key: 'eumaeus-idle',
+        frames: this.anims.generateFrameNumbers('eumaeus', { start: 0, end: 3 }),
+        frameRate: 3,
+        repeat: -1,
+      });
+    }
+    if (!this.anims.exists('telemachus-idle')) {
+      this.anims.create({
+        key: 'telemachus-idle',
+        frames: this.anims.generateFrameNumbers('telemachus', { start: 0, end: 3 }),
+        frameRate: 4,
         repeat: -1,
       });
     }
@@ -417,7 +562,13 @@ export class Level2Scene extends Phaser.Scene {
     if (!locked && this.nearest && Phaser.Input.Keyboard.JustDown(k.keyE)) {
       this.inputLocked = true;
       this.feet.setVelocity(0, 0);
-      this.game.events.emit('talk', { id: this.nearest.id, who: this.nearest.who, line: this.nearest.line });
+      if (this.nearest.id === 'hut' && !this.hutDone && !this.inHut) {
+        this.inHut = true;
+        this.hutIndex = 0;
+        this.advanceHut();
+      } else {
+        this.game.events.emit('talk', { id: this.nearest.id, who: this.nearest.who, line: this.nearest.line });
+      }
     }
 
     animateGlints(this.glints, delta);
