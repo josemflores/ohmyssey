@@ -10,7 +10,8 @@
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
 import { loadSoldierActions, createSoldierActions, createSoldierWalks, playSoldierIdle } from './soldierAnimations.js';
-import { GATE_VIEW_Y, startGateBattle } from './gateBattle.js';
+import { GATE_VIEW_Y, boardShip, endGateBattle, startGateBattle } from './gateBattle.js';
+import { shipTexture } from './level2/art.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -775,7 +776,10 @@ export class TroyScene extends Phaser.Scene {
       if (won) this.removeGroup(group);
       this.publishObjective();
       if (won && this.shoreReady()) {
-        this.game.events.emit('notice', 'The shore is open. The ship is waiting.');
+        // The last group is down: the duels end, the Trojans run, and the
+        // Greeks fall back to the ship (gateBattle.js).
+        endGateBattle(this);
+        this.game.events.emit('notice', 'Troy is won. The Greeks fall back to the ship.');
         if (this.shipMark) this.shipMark.setVisible(true);
       }
       return;
@@ -871,7 +875,7 @@ export class TroyScene extends Phaser.Scene {
 
   nearBoat(radius) {
     if (!this.ship) return false;
-    return Math.hypot(this.ship.x - this.feet.x, this.ship.y - this.feet.y) <= radius;
+    return Math.hypot(SHIP.x - this.feet.x, SHIP.y - this.feet.y) <= radius;
   }
 
   watchBoat() {
@@ -902,9 +906,21 @@ export class TroyScene extends Phaser.Scene {
     this.feet.setVelocity(0, 0);
     if (this.shipMark) this.shipMark.setVisible(false);
     const cam = this.cameras.main;
-    cam.fadeOut(800, 0, 0, 0);
-    this.time.delayedCall(700, () => {
-      this.game.events.emit('levelComplete');
+    // Odysseus steps aboard first, then his men climb in after him, then
+    // the ship pulls away from Troy.
+    const aboard = [this.hero, this.heroRim, this.heroShadow].filter(Boolean);
+    this.tweens.add({ targets: aboard, alpha: 0, duration: 400 });
+    boardShip(this, { x: SHIP.x, y: SHIP.y + 18 }, () => {
+      if (this.shipSwell) this.shipSwell.stop();
+      this.tweens.add({
+        targets: this.ship,
+        x: this.ship.x - 260,
+        y: this.ship.y + 30,
+        duration: 2400,
+        ease: 'Sine.easeIn',
+      });
+      this.time.delayedCall(1300, () => cam.fadeOut(900, 0, 0, 0));
+      this.time.delayedCall(2200, () => this.game.events.emit('levelComplete'));
     });
   }
 
@@ -1187,44 +1203,37 @@ function addRect(scene, group, x, y, w, h) {
   return blocker;
 }
 
+// The Phaeacian ship from Ithaca (level2/art.js), so the ship that takes
+// Odysseus from Troy is the one that carries him home. Drawn up at the
+// waterline below the beach road. SHIP is the boarding point on the sand;
+// the picture sits a little south of it, in the shallows.
+const SHIP_BASE_Y = SHIP.y + 40;
+// Same moonlight tint the ship has at Ithaca.
+const SHIP_TINT = 0x8a9cc4;
+
 function addShip(scene) {
-  if (!scene.textures.exists('ship')) {
-    const g = scene.make.graphics({ add: false });
-    g.fillStyle(0x2a180e, 1);
-    g.fillEllipse(24, 48, 36, 56);
-    g.fillStyle(0x6a4428, 1);
-    g.fillEllipse(24, 46, 28, 46);
-    g.fillStyle(0xc4a36a, 1);
-    g.fillRect(22, 14, 4, 34);
-    g.fillStyle(0xf6ead2, 1);
-    g.fillTriangle(26, 16, 44, 28, 26, 42);
-    g.fillStyle(0x8d5a32, 1);
-    g.fillRect(12, 42, 24, 4);
-    g.fillStyle(0x9ec8d8, 0.9);
-    g.fillEllipse(24, 66, 30, 8);
-    g.generateTexture('ship', 48, 72);
-    g.destroy();
-  }
-  const ship = scene.add.image(SHIP.x, SHIP.y, 'ship').setOrigin(0.5, 0.62);
-  const tex = scene.textures.get('ship');
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  ship.setDepth(7000 + SHIP.y);
+  const key = shipTexture(scene);
+  const ship = scene.add.image(SHIP.x, SHIP_BASE_Y, key).setOrigin(0.5, 1);
+  ship.setTint(SHIP_TINT);
+  ship.setDepth(7000 + SHIP_BASE_Y);
   scene.ship = ship;
-  const mark = scene.add.triangle(SHIP.x, SHIP.y - 52, 0, 14, 12, 14, 6, 0, 0xf0d48a);
+  const mark = scene.add.triangle(SHIP.x, SHIP.y - 60, 0, 14, 12, 14, 6, 0, 0xf0d48a);
   mark.setDepth(9100);
   mark.setVisible(false);
   scene.shipMark = mark;
-  scene.tweens.add({
+  // It rides the swell: a gentle bob, no tilt (rotating pixel art shears
+  // its straight lines into steps).
+  scene.shipSwell = scene.tweens.add({
     targets: ship,
-    y: SHIP.y + 3,
-    duration: 1600,
+    y: SHIP_BASE_Y + 1.5,
+    duration: 2200,
     yoyo: true,
     repeat: -1,
     ease: 'Sine.easeInOut',
   });
   scene.tweens.add({
     targets: mark,
-    y: SHIP.y - 60,
+    y: SHIP.y - 68,
     duration: 700,
     yoyo: true,
     repeat: -1,

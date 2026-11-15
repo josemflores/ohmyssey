@@ -81,18 +81,21 @@ function sortDepth(man) {
 
 // Keep the shadow (and torch, if he has one) with him while a tween moves him.
 function follow(man) {
+  if (!man.sprite.active) return;
   man.shadow.setPosition(man.sprite.x + 3, man.sprite.y + 1);
   sortDepth(man);
   if (man.torch) man.torch.follow();
 }
 
 function playWalk(man, facing) {
+  if (!man.sprite.active) return;
   man.facing = facing;
   const key = soldierWalk(man.team, facing);
   if (man.sprite.scene.anims.exists(key)) man.sprite.play(key, true);
 }
 
 function playIdle(man) {
+  if (!man.sprite.active) return;
   const key = soldierAnim(man.team, 'idle', man.facing);
   if (man.sprite.scene.anims.exists(key)) man.sprite.play(key, true);
   addBreathing(man.sprite);
@@ -127,6 +130,8 @@ function runPath(scene, man, points, delay, done) {
     from = to;
   }
   scene.time.delayedCall(delay, () => {
+    // He may have boarded the ship (and been removed) before his turn came.
+    if (!man.sprite.active || man.boarded) return;
     // Fade in over the first steps (they start out of view anyway).
     scene.tweens.add({ targets: man.sprite, alpha: 1, duration: 250 });
     scene.tweens.add({ targets: man.shadow, alpha: 0.5, duration: 250 });
@@ -170,6 +175,7 @@ function exchange(scene, attacker, defender) {
 // Keep a pair fighting: pick who strikes, wait a moment, repeat.
 function startDuel(scene, pair) {
   const next = () => {
+    if (scene.duelsOver) return;
     if (!pair.greek.sprite.active || !pair.trojan.sprite.active) return;
     // The Greeks win a little more often. It is their night.
     const greekStrikes = Math.random() < 0.6;
@@ -439,4 +445,125 @@ export function startGateBattle(scene) {
   scene.gateBattle = pairs;
   scene.gateBattleMs = lastMs;
   return pairs;
+}
+
+// ---------------------------------------------------------------------------
+// Victory. Once Odysseus has beaten every Trojan group, the duels end: each
+// Trojan breaks and runs back into the city, and every Greek (duelists and
+// torch-bearers) falls back through the gate to the beach, forming up on
+// either side of the ship with the road to it left open for Odysseus.
+// ---------------------------------------------------------------------------
+
+// Rows on the beach, west and east of the road to the ship (x 437 to 523
+// stays clear for Odysseus). Any spot touching something solid is skipped.
+function beachSpots(boxes) {
+  const spots = [];
+  for (const y of [708, 730, 752, 774]) {
+    for (const x of [428, 532, 404, 556, 380, 580, 356, 604]) spots.push({ x, y });
+  }
+  return spots.filter((spot) => {
+    const a = feetBox(spot.x, spot.y);
+    return !boxes.some((b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
+  });
+}
+
+function dropSolid(man) {
+  if (man.blocker) {
+    man.blocker.destroy();
+    man.blocker = null;
+  }
+}
+
+export function endGateBattle(scene) {
+  if (scene.duelsOver) return;
+  scene.duelsOver = true;
+  const pairs = scene.gateBattle || [];
+  const boxes = solidBoxes(scene);
+
+  // The Trojans break: a red flash, then they run north and are gone.
+  pairs.forEach((pair, index) => {
+    const man = pair.trojan;
+    if (!man.sprite.active) return;
+    dropSolid(man);
+    scene.time.delayedCall(index * 60, () => {
+      man.sprite.setTintFill(HURT_RED);
+      scene.time.delayedCall(140, () => man.sprite.active && man.sprite.clearTint());
+      const away = { x: man.sprite.x, y: man.sprite.y - 70 };
+      const clear = lineClear(boxes, { x: man.sprite.x, y: man.sprite.y }, away);
+      if (clear) runPath(scene, man, [away], 160, () => {});
+      scene.tweens.add({
+        targets: [man.sprite, man.shadow],
+        alpha: 0,
+        delay: clear ? 260 : 160,
+        duration: 420,
+        onComplete: () => {
+          man.sprite.destroy();
+          man.shadow.destroy();
+        },
+      });
+    });
+  });
+
+  // The Greeks fall back to the ship, nearest to the gate first.
+  const greeks = [
+    ...pairs.map((pair) => pair.greek),
+    ...(scene.torchBearers || []),
+  ].filter((man) => man.sprite.active);
+  greeks.sort((a, b) => b.sprite.y - a.sprite.y);
+  const spots = beachSpots(boxes);
+  scene.retreatingGreeks = [];
+  greeks.forEach((man, index) => {
+    const spot = spots[index];
+    if (!spot) return;
+    dropSolid(man);
+    if (man.torch) {
+      man.torch.drop();
+      man.torch = null;
+    }
+    const from = { x: man.sprite.x, y: man.sprite.y };
+    const route = routePath(boxes, from, spot) || [spot];
+    scene.retreatingGreeks.push(man);
+    runPath(scene, man, route, 300 + index * 110, () => {
+      if (!man.sprite.active || man.boarded) return;
+      // Face the sea and the ship, and stand solid on the sand.
+      man.facing = 's';
+      playIdle(man);
+      standSolid(scene, man);
+      man.atShip = true;
+    });
+  });
+}
+
+// Odysseus has reached the ship: his men climb aboard after him.
+// Calls done once the last one is on the ship.
+export function boardShip(scene, ship, done) {
+  const men = (scene.retreatingGreeks || []).filter((man) => man.sprite.active);
+  if (!men.length) {
+    done();
+    return;
+  }
+  let left = men.length;
+  men.forEach((man, index) => {
+    man.boarded = true;
+    dropSolid(man);
+    scene.tweens.killTweensOf(man.sprite);
+    playWalk(man, facingToward(ship.x - man.sprite.x, ship.y - man.sprite.y));
+    scene.tweens.add({
+      targets: man.sprite,
+      x: ship.x + ((index % 5) - 2) * 10,
+      y: ship.y,
+      alpha: 0,
+      delay: index * 45,
+      duration: 520,
+      ease: 'Sine.easeIn',
+      onUpdate: () => follow(man),
+      onComplete: () => {
+        man.sprite.destroy();
+        man.shadow.destroy();
+        left -= 1;
+        if (left === 0) done();
+      },
+    });
+    scene.tweens.add({ targets: man.shadow, alpha: 0, delay: index * 45, duration: 520 });
+  });
 }
