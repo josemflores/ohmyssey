@@ -10,7 +10,8 @@
  * circuit = {
  *   layout: 'series' | 'parallel',
  *   source: '9 V',            // '' draws an unlabeled source
- *   parts: [{ kind: 'resistor' | 'diode' | 'led', label: '1 kΩ', reversed?: true }],
+ *   parts: [{ kind: 'resistor' | 'diode' | 'led' | 'capacitor' | 'inductor', label: '1 kΩ', reversed?: true }],
+ *   moment: 'start' | 'settled',   // optional tag: just after switch-on, or long after
  *   current: '20 mA',         // optional known current
  *   ask: { type: 'current' | 'voltage' | 'resistance', part?: 0, branch?: 0 },
  * }
@@ -35,6 +36,11 @@ export default function CircuitDiagram({ circuit }) {
           </marker>
         </defs>
         {parallel ? <Parallel circuit={circuit} /> : <Series circuit={circuit} />}
+        {circuit.moment && (
+          <text x="8" y="14" className="q-circuit-text q-circuit-moment" fontSize="11.5" fill={INK} fontStyle="italic">
+            {circuit.moment === 'start' ? 'just after switch-on' : 'long after switch-on'}
+          </text>
+        )}
       </svg>
     </figure>
   );
@@ -163,16 +169,18 @@ function Part({ part, index, x, y, vertical, ask }) {
   const askHere = ask && ask.part === index && (ask.type === 'voltage' || ask.type === 'resistance');
   const unknownR = ask.type === 'resistance' && ask.part === index;
   const label = unknownR ? 'R = ?' : part.label;
-  const glyph = part.kind === 'resistor'
-    ? <Resistor />
-    : <Diode led={part.kind === 'led'} reversed={part.reversed} />;
+  let glyph;
+  if (part.kind === 'resistor') glyph = <Resistor />;
+  else if (part.kind === 'capacitor') glyph = <Capacitor />;
+  else if (part.kind === 'inductor') glyph = <Inductor />;
+  else glyph = <Diode led={part.kind === 'led'} reversed={part.reversed} />;
   return (
     <g>
       <g transform={`translate(${x} ${y})${vertical ? ' rotate(90)' : ''}`}>{glyph}</g>
       {label && (
         vertical
           ? <Text x={x - 14} y={y + 4} anchor="end" ask={unknownR}>{partName(part, label)}</Text>
-          : <Text x={x} y={y - (part.kind === 'resistor' ? 13 : 22)} ask={unknownR}>{partName(part, label)}</Text>
+          : <Text x={x} y={y - (part.kind === 'led' || part.kind === 'diode' ? 22 : 15)} ask={unknownR}>{partName(part, label)}</Text>
       )}
       {askHere && ask.type === 'voltage' && (
         vertical ? (
@@ -197,6 +205,23 @@ function partName(part, label) {
   if (part.kind === 'led') return `LED ${label}`;
   if (part.kind === 'diode') return `D ${label}`;
   return label;
+}
+
+// Two plates with a gap: no wire runs straight through a capacitor.
+function Capacitor() {
+  return (
+    <g>
+      <line x1="-22" y1="0" x2="-4" y2="0" />
+      <line x1="4" y1="0" x2="22" y2="0" />
+      <line x1="-4" y1="-10" x2="-4" y2="10" strokeWidth="2.6" />
+      <line x1="4" y1="-10" x2="4" y2="10" strokeWidth="2.6" />
+    </g>
+  );
+}
+
+// A coil: four loops in a row.
+function Inductor() {
+  return <path d="M-22 0 H-16 A4 4 0 0 1 -8 0 A4 4 0 0 1 0 0 A4 4 0 0 1 8 0 A4 4 0 0 1 16 0 H22" />;
 }
 
 // Drawn centered on (0, 0), 44 wide, along the x axis.
@@ -272,11 +297,14 @@ function describe(circuit) {
     const value = unknown ? 'unknown resistance' : part.label;
     if (part.kind === 'led') return `an LED that drops ${value}${part.reversed ? ', put in backwards' : ''}`;
     if (part.kind === 'diode') return `a diode that drops ${value}${part.reversed ? ', put in backwards' : ''}`;
+    if (part.kind === 'capacitor') return `a ${value} capacitor`;
+    if (part.kind === 'inductor') return `a ${value} inductor`;
     return `a ${value} resistor`;
   });
   const how = circuit.layout === 'parallel' ? 'in parallel across' : 'in a loop with';
   const source = circuit.source ? `a ${circuit.source} source` : 'a source';
   const known = circuit.current ? ` A current of ${circuit.current} flows.` : '';
+  const when = circuit.moment === 'start' ? ' Just after the switch closes.' : circuit.moment === 'settled' ? ' Long after the switch closes.' : '';
   const ask = { current: 'The current is marked unknown.', voltage: 'The voltage across a part is marked unknown.', resistance: 'The resistance is marked unknown.' }[circuit.ask?.type] || '';
-  return `Circuit: ${parts.join(', ')} ${how} ${source}.${known} ${ask}`;
+  return `Circuit: ${parts.join(', ')} ${how} ${source}.${when}${known} ${ask}`;
 }
