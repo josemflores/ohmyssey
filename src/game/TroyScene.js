@@ -640,10 +640,11 @@ function addBeachArmy(scene) {
   const tex = scene.textures.get(key);
   if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   const frame = WARRIOR_CONFIG.facingFrames.n;
+  // Two ranks pressed against the doors, centered on the gate.
   for (let row = 0; row < 2; row += 1) {
-    for (let col = 0; col < 6; col += 1) {
-      const x = 336 + col * 52;
-      const y = 730 + row * 40;
+    for (let col = 0; col < 7; col += 1) {
+      const x = 480 + (col - 3) * 42;
+      const y = 678 + row * 34;
       const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
       const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
       const sort = 7000 + y;

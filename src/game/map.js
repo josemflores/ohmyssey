@@ -100,7 +100,7 @@ export const PROPS = [
   { id: 'horse', x: 480, baseY: 228, bodyW: 66, bodyH: 30, insetBottom: 0 },
 
   // Wooden doors in the wall opening. He opens them from the north side.
-  { id: 'gate-door', x: 480, baseY: 652, bodyW: 120, bodyH: 64, insetBottom: 0 },
+  { id: 'gate-door', x: 480, baseY: 652, bodyW: 120, bodyH: 72, insetBottom: 0 },
 
   { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
   { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
