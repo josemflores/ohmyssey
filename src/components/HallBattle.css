@@ -1,0 +1,138 @@
+/* The fight in the hall of Odysseus (HallBattle.jsx). It reuses the battle
+   layout from Troy (TroyWorld.css, soldierBattle.css: the .troy wrapper
+   brings the same placement), with the hall as the backdrop, Odysseus with
+   the great bow, arrows that fly to their mark, and the suitors. */
+
+.l2-battle {
+  z-index: 8;
+}
+
+/* The hall by firelight (art/scripts/build_hall_contest.py). */
+.troy.l2-battle .battle-screen .battle-backdrop {
+  background:
+    linear-gradient(180deg, rgba(4, 8, 16, 0.3) 0%, rgba(4, 8, 16, 0) 40%, rgba(4, 8, 16, 0.55) 100%),
+    url('/assets/battle/hall_battle.png') 50% 40% / cover no-repeat;
+}
+
+.l2-battle-wave {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 3;
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(230, 194, 122, 0.75);
+  border-radius: 999px;
+  background: rgba(8, 14, 24, 0.82);
+  color: #f0d48a;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+
+/* ---- Odysseus with the bow ---------------------------------------------- */
+
+.battle-screen .battle-sprite.battle-hero.battle-archer {
+  background-image: url('/assets/battle/odysseus_bow_idle_e.png');
+  background-size: calc(var(--sp) * 2) var(--sp);
+  animation: odysseus-idle 0.6s steps(1) infinite alternate;
+}
+/* Draw, full draw, release, follow through: six 32px cells. */
+.battle-screen:is(.is-shot, .is-volley, .is-loose) .battle-sprite.battle-hero.battle-archer {
+  background-image: url('/assets/battle/odysseus_bow_shoot_e.png');
+  background-size: calc(var(--sp) * 6) var(--sp);
+  background-position: 0 0;
+  animation: archer-shoot 0.7s steps(5) forwards;
+}
+.battle-screen.is-volley .battle-sprite.battle-hero.battle-archer {
+  animation: archer-shoot 0.5s steps(5) 2 forwards;
+}
+@keyframes archer-shoot {
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--sp) * -5); }
+}
+/* He steps back into the draw and leans into the release. */
+.battle-screen:is(.is-shot, .is-volley, .is-loose) .battle-side:not(.is-foe) .battle-fighter {
+  animation: archer-lean 0.7s ease-in-out;
+}
+@keyframes archer-lean {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(-6px); }
+  62% { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+.battle-screen.is-counter .battle-sprite.battle-hero.battle-archer {
+  background-image: url('/assets/battle/odysseus_hit_e.png');
+  background-size: calc(var(--sp) * 3) var(--sp);
+  animation:
+    odysseus-hit 0.64s steps(2) forwards,
+    sprite-hurt 0.64s linear;
+}
+
+/* ---- Arrows ---------------------------------------------------------------- */
+
+.l2-arrow {
+  position: absolute;
+  z-index: 4;
+  width: 64px;
+  height: 20px;
+  margin: -10px 0 0 -32px;
+  background: url('/assets/battle/arrow.png') center / 64px 20px no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(0, 0) rotate(var(--angle));
+  /* Loosed on the release frame of the shot (about 0.42 s in). */
+  animation: arrow-fly 0.34s linear 0.42s forwards;
+}
+.l2-arrow.is-miss { animation-duration: 0.45s; }
+@keyframes arrow-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(var(--angle)); }
+  92% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--angle)); }
+}
+
+/* ---- The suitors ----------------------------------------------------------- */
+
+.battle-screen .battle-sprite.battle-suitor {
+  width: var(--foe);
+  height: var(--foe);
+  margin: 8px auto 0;
+  background-image: var(--sheet);
+  background-size: calc(var(--foe) * 4) calc(var(--foe) * 8);
+  /* Row 2 of the LPC sheet: facing west, toward Odysseus. */
+  background-position: 0 calc(var(--foe) * -2);
+}
+/* Struck when the arrow lands. */
+.battle-screen:is(.is-shot, .is-volley) .battle-member.is-target:not(.is-down) .battle-sprite.battle-suitor {
+  animation:
+    foe-hit 0.5s ease-out 0.72s,
+    sprite-hurt 0.5s linear 0.72s;
+}
+.battle-screen .battle-member.is-down .battle-sprite.battle-suitor {
+  animation: foe-defeat 0.85s ease-in 0.72s forwards;
+}
+/* A suitor lunges with his sword when Odysseus misses. */
+.battle-screen.is-counter .battle-member.is-target .battle-sprite.battle-suitor {
+  animation: suitor-lunge 0.64s ease-in-out;
+}
+@keyframes suitor-lunge {
+  0% { transform: translateX(0); }
+  45% { transform: translateX(-46px); }
+  60% { transform: translateX(-40px); }
+  100% { transform: translateX(0); }
+}
+.battle-screen .battle-member .battle-float { animation-delay: 0.72s; }
+
+/* The note after a miss, or between groups, sits in the dock. */
+.l2-battle-miss {
+  max-width: min(560px, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+}
+.l2-battle-miss .q-note { margin: 0 0 0.6rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .l2-arrow { animation-duration: 0.01s; }
+  .battle-screen .battle-sprite.battle-hero.battle-archer { animation: none; }
+}

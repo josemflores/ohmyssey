@@ -11,7 +11,7 @@ import { ANIM_CONFIG, facingFromVector } from '../animConfig.js';
 import { RUN_SPEED, WALK_SPEED } from '../patrol.js';
 import { buildWorldTextures } from '../textures.js';
 import { buildLevel2Textures, propTexture } from './art.js';
-import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, preloadHall } from './hall.js';
+import { COURTYARD_RETURN, HALL_DOOR_SPOT, buildHall, clearSuitors, preloadHall } from './hall.js';
 import { HALL, HALL_SPAWN, HALL_SPOTS, SOUTH_WALL, TILE } from './hallMap.js';
 import {
   DECOR,
@@ -154,7 +154,7 @@ export class Level2Scene extends Phaser.Scene {
     addRect(this.blockers, penelopeRect());
     // The great hall, built east of the island (hall.js). He walks in
     // through its doors once he answers the question at them.
-    buildHall(this, this.blockers);
+    this.hall = buildHall(this, this.blockers);
     this.area = ISLAND;
 
     this.glints = createGlints(this);
@@ -245,10 +245,18 @@ export class Level2Scene extends Phaser.Scene {
     this.game.events.on('unlockInput', onUnlock);
     const onHallOpen = () => this.enterHall();
     this.game.events.on('hallOpen', onHallOpen);
+    const onHallWon = () => {
+      this.hallWon = true;
+      clearSuitors(this, this.hall);
+      this.inputLocked = false;
+      this.keys.keyE.reset();
+    };
+    this.game.events.on('hallWon', onHallWon);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('lockInput', onLock);
       this.game.events.off('unlockInput', onUnlock);
       this.game.events.off('hallOpen', onHallOpen);
+      this.game.events.off('hallWon', onHallWon);
       this.scale.off('resize', fit);
       if (globalThis.__level2?.owner === this) delete globalThis.__level2;
     });
@@ -592,7 +600,7 @@ export class Level2Scene extends Phaser.Scene {
       }
     }
 
-    this.nearest = locked ? null : nearestSpot(this.feet.x, groundY);
+    this.nearest = locked ? null : nearestSpot(this.feet.x, groundY, this.hallWon);
     if (this.nearest) {
       this.prompt.setText('Press E');
       this.prompt.setVisible(true);
@@ -621,6 +629,10 @@ export class Level2Scene extends Phaser.Scene {
             line: 'The doors are shut, and the suitors would mock a stranger. Find shelter with Eumaeus first.',
           });
         }
+      } else if (this.nearest.id === 'bow' && !this.hallWon) {
+        // Odyssey 21: Penelope sets the contest of the bow. Level2World runs
+        // the contest and the fight, then sends 'hallWon'.
+        this.game.events.emit('bowFound');
       } else if (this.nearest.id === 'hall-exit') {
         this.leaveHall();
       } else if (this.nearest.id === 'hut' && !this.hutDone && !this.inHut) {
@@ -791,10 +803,14 @@ function makePrompt(scene) {
   return label;
 }
 
-function nearestSpot(x, y) {
+// The suitors' spots go quiet once they are gone from the hall.
+const SUITOR_SPOTS = new Set(['antinous', 'eurymachus', 'amphinomus']);
+
+function nearestSpot(x, y, hallWon = false) {
   let best = null;
   let bestDist = Infinity;
   for (const spot of [...SPOTS, HALL_DOOR_SPOT, ...HALL_SPOTS]) {
+    if (hallWon && SUITOR_SPOTS.has(spot.id)) continue;
     const dist = Math.hypot(spot.x - x, spot.y - y);
     if (dist <= spot.radius && dist < bestDist) {
       best = spot;
