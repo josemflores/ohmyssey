@@ -24,16 +24,14 @@ import {
   solidRects,
 } from './map.js';
 import {
-  createQuestions,
   createRelief,
   FOE_HIT,
   FOE_MAX,
-  FULL_HIT,
   HERO_MAX,
   RUN_SPEED,
   WALK_SPEED,
-  WEAK_HIT,
 } from './patrol.js';
+import { attackById, createBattleQuestions } from './battleQuestions.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
 import { routeReport } from './routeCheck.js';
 import { buildWorldTextures } from './textures.js';
@@ -43,6 +41,16 @@ import { buildWorldTextures } from './textures.js';
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
 const HERO_SCALE = 4 / 3;
+
+// How long each battle picture plays before the turn strip moves on.
+const BLOW_MS = {
+  jab: 520,
+  strike: 700,
+  heavy: 1000,
+  whiff: 560,
+  counter: 680,
+  defeat: 1500,
+};
 
 export class TroyScene extends Phaser.Scene {
   constructor() {
@@ -172,11 +180,12 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, this.blockers);
 
-    this.questions = createQuestions();
     // Empty streets until the gate opens. The army and the sentries come in then.
+    this.questions = createBattleQuestions();
     this.relief = createRelief(this);
     this.fightCooldown = 0;
     this.engagedFoe = null;
+    this.gateFalling = false;
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
     this.fighting = false;
     this.fight = null;
@@ -216,24 +225,35 @@ export class TroyScene extends Phaser.Scene {
     this.prompt = makePrompt(this);
 
     const lockInput = () => { this.inputLocked = true; };
-    const unlockInput = () => { this.inputLocked = false; };
+    const unlockInput = () => {
+      if (this.gateFalling) return;
+      this.inputLocked = false;
+    };
     const onStrike = (payload) => this.resolveStrike(payload);
     const onEnemyAct = () => this.enemyAct();
-    const onAttack = () => {
+    const onAttack = (payload) => {
       if (!this.fight) return;
-      const question = this.questions.next();
+      const attack = attackById(payload && payload.kind);
+      this.fight.attack = attack;
+      const question = this.questions.next(attack.difficulty);
       this.fight.question = question;
       this.game.events.emit('fightQuestion', {
         id: question.id,
         prompt: question.prompt,
         choices: question.choices,
+        attack: attack.label,
       });
+    };
+    const onFlee = () => {
+      if (!this.fighting || !this.fight || this.fight.question) return;
+      this.endFight(false, 'You slip past the sentry.');
     };
     this.game.events.on('lockInput', lockInput);
     this.game.events.on('unlockInput', unlockInput);
     this.game.events.on('fightStrike', onStrike);
     this.game.events.on('fightAttack', onAttack);
     this.game.events.on('fightEnemyAct', onEnemyAct);
+    this.game.events.on('fightFlee', onFlee);
 
     publishDebug(this);
 
@@ -243,6 +263,7 @@ export class TroyScene extends Phaser.Scene {
       this.game.events.off('fightStrike', onStrike);
       this.game.events.off('fightAttack', onAttack);
       this.game.events.off('fightEnemyAct', onEnemyAct);
+      this.game.events.off('fightFlee', onFlee);
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -265,14 +286,17 @@ export class TroyScene extends Phaser.Scene {
       if (this.questDone) return;
       this.questDone = true;
       this.inputLocked = true;
+      this.gateFalling = true;
       this.feet.setVelocity(0, 0);
       this.game.registry.set('gateOpen', true);
       this.game.events.emit('questDone');
       this.game.events.emit('notice', 'The gate is open. The army is coming through.');
+      if (this.prompt) this.prompt.setVisible(false);
       openGateDoors(this);
       this.relief.start();
       // Hold him just long enough to see the doors go, then let him move.
       this.time.delayedCall(700, () => {
+        this.gateFalling = false;
         if (!this.fighting) this.inputLocked = false;
       });
       return;
@@ -364,8 +388,9 @@ export class TroyScene extends Phaser.Scene {
     // JustDown is true only on the frame E goes down, so holding E does not repeat.
     // If a box is already open, the same key asks React to close it.
     if (!this.fighting && Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
-      if (locked) this.game.events.emit('closeInteract');
-      else if (this.nearest) this.interact(this.nearest);
+      if (locked) {
+        if (!this.gateFalling) this.game.events.emit('closeInteract');
+      } else if (this.nearest) this.interact(this.nearest);
     }
 
     const dt = delta / 1000;
@@ -413,48 +438,85 @@ export class TroyScene extends Phaser.Scene {
     });
   }
 
-  // His turn only. A right answer is a full hit. A wrong one still lands, at 75 percent.
-  // The sentry's turn is a separate step after that.
+  // His turn only. A right answer deals that attack's damage. A wrong answer
+  // misses, and the sentry still takes the next turn.
   resolveStrike(payload) {
     const fight = this.fight;
     if (!fight || !this.fighting) return;
     const question = fight.question;
     if (!question) return;
+    const attack = fight.attack || attackById('light');
     const correct = payload.index === question.answer;
-    const dealt = correct ? FULL_HIT : WEAK_HIT;
-    fight.foeHp = Math.max(0, fight.foeHp - dealt);
+    const damage = correct ? attack.damage : 0;
+    fight.foeHp = Math.max(0, fight.foeHp - damage);
     fight.question = null;
-    if (fight.foeHp <= 0) {
-      this.heroHpStay();
-      this.endFight(true, correct ? 'The sentry falls.' : 'A weak blow, but it was enough.');
-      return;
-    }
-    this.game.events.emit('fightTurn', {
-      side: 'enemy',
+    const defeated = fight.foeHp <= 0;
+    const note = correct ? `${attack.label} lands for ${damage}.` : 'The blow misses.';
+    const anim = correct ? attack.anim : 'whiff';
+    this.game.events.emit('fightBlow', {
+      anim,
+      damage,
+      hit: correct,
       heroHp: this.heroHp,
       foeHp: fight.foeHp,
-      note: correct
-        ? `A clean hit for ${FULL_HIT}.`
-        : `A glancing blow for ${WEAK_HIT}.`,
+      note,
+      defeated,
+    });
+    const wait = BLOW_MS[anim] || 700;
+    this.time.delayedCall(wait, () => {
+      if (!this.fighting) return;
+      if (defeated) {
+        this.game.events.emit('fightBlow', {
+          anim: 'defeat',
+          damage: 0,
+          hit: true,
+          heroHp: this.heroHp,
+          foeHp: 0,
+          note: 'The sentry falls.',
+          defeated: true,
+        });
+        this.time.delayedCall(BLOW_MS.defeat, () => {
+          if (this.fighting) this.endFight(true, 'The sentry falls.');
+        });
+        return;
+      }
+      this.game.events.emit('fightTurn', {
+        side: 'enemy',
+        heroHp: this.heroHp,
+        foeHp: fight.foeHp,
+        note,
+      });
     });
   }
 
   enemyAct() {
     const fight = this.fight;
     if (!fight || !this.fighting) return;
-    this.heroHp = Math.max(0, this.heroHp - FOE_HIT);
+    const nextHp = Math.max(0, this.heroHp - FOE_HIT);
+    const down = nextHp <= 0;
+    this.heroHp = down ? HERO_MAX : nextHp;
     this.heroHpStay();
-    if (this.heroHp <= 0) {
-      this.heroHp = HERO_MAX;
-      this.heroHpStay();
-      this.endFight(false, 'You fall back. The sentry recovers.');
-      return;
-    }
-    this.game.events.emit('fightTurn', {
-      side: 'hero',
-      heroHp: this.heroHp,
+    this.game.events.emit('fightBlow', {
+      anim: 'counter',
+      damage: FOE_HIT,
+      hit: true,
+      heroHp: down ? 0 : this.heroHp,
       foeHp: fight.foeHp,
       note: `The sentry strikes for ${FOE_HIT}.`,
+      defeated: false,
+    });
+    this.time.delayedCall(BLOW_MS.counter, () => {
+      if (!this.fighting) return;
+      if (down) {
+        this.endFight(false, 'You fall back. The sentry recovers.');
+        return;
+      }
+      this.game.events.emit('fightTurn', {
+        side: 'hero',
+        heroHp: this.heroHp,
+        foeHp: fight.foeHp,
+        note: `The sentry strikes for ${FOE_HIT}.`,
+      });
     });
   }
 
@@ -472,6 +534,9 @@ export class TroyScene extends Phaser.Scene {
     if (won) this.relief.retire(foe);
     else this.relief.separate(foe, this.feet);
     this.game.events.emit('fightEnd', { won, note });
+    if (won && this.relief.phase() === 'foes' && this.relief.foeCount() === 0) {
+      this.game.events.emit('levelComplete');
+    }
   }
 
   // A straight knockback can land inside a house or past the map. Step back
@@ -632,6 +697,9 @@ function publishDebug(scene) {
     sentries() {
       return scene.relief.foeCount();
     },
+    startFight() {
+      scene.beginFight();
+    },
     greeks() {
       return scene.relief.greekCount();
     },
@@ -696,20 +764,58 @@ function addRect(scene, group, x, y, w, h) {
 function openGateDoors(scene) {
   const door = scene.gateDoor;
   if (!door) return;
-  door.blocker.destroy();
   const src = door.sprite;
-  const x = src.x;
-  const y = src.y;
-  const depth = src.depth;
-  src.setVisible(false);
-  // One picture holds both leaves. Crop each half, then slide them apart.
-  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(depth);
-  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(depth);
+  const x = src ? src.x : 480;
+  const y = src ? src.y : 652;
+  if (src) src.setVisible(false);
+  if (door.blocker) door.blocker.destroy();
+  // One picture holds both leaves. Crop each half, then swing them open.
+  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
+  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
   left.setCrop(0, 0, 64, 72);
   right.setCrop(64, 0, 64, 72);
-  scene.tweens.add({ targets: left, x: x - 78, duration: 700, ease: 'Cubic.easeOut' });
-  scene.tweens.add({ targets: right, x: x + 78, duration: 700, ease: 'Cubic.easeOut' });
+  scene.tweens.add({
+    targets: left,
+    x: x - 74,
+    y: y + 26,
+    angle: -84,
+    duration: 700,
+    ease: 'Cubic.easeIn',
+  });
+  scene.tweens.add({
+    targets: right,
+    x: x + 74,
+    y: y + 26,
+    angle: 84,
+    duration: 700,
+    ease: 'Cubic.easeIn',
+    onComplete: () => burstDust(scene, x, y + 6),
+  });
+  scene.cameras.main.shake(220, 0.006);
 }
+
+function burstDust(scene, x, y) {
+  for (let i = 0; i < 12; i += 1) {
+    const puff = scene.add.circle(
+      x + (Math.random() - 0.5) * 90,
+      y + (Math.random() - 0.5) * 14,
+      1.6 + Math.random() * 1.6,
+      i % 3 === 0 ? 0x8a7358 : 0xe6d3b0,
+      0.85,
+    );
+    puff.setDepth(8000);
+    scene.tweens.add({
+      targets: puff,
+      x: puff.x + (Math.random() - 0.5) * 40,
+      y: puff.y - 6 - Math.random() * 16,
+      alpha: 0,
+      scale: 1.6,
+      duration: 420 + Math.random() * 280,
+      onComplete: () => puff.destroy(),
+    });
+  }
+}
+
 
 function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.

@@ -154,6 +154,79 @@
   color: var(--ink-soft);
   font-size: 0.88rem;
 }
+.login-mode {
+  margin: -0.35rem 0 0.75rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--terracotta);
+  font-size: 0.92rem;
+}
+.login-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.login-text-btn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--sea);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.login-text-btn:disabled { cursor: wait; opacity: 0.6; }
+.login-notice {
+  margin: 0 0 0.7rem;
+  text-align: left;
+  color: var(--laurel);
+  font-size: 0.92rem;
+}
+.login-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0.7rem;
+  background: #fffaf0;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+.login-google:hover:not(:disabled) { background: #fff; }
+.login-google-mark { width: 18px; height: 18px; flex: none; }
+.login-google-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  margin-top: 0.4rem;
+}
+.login-google-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--line);
+}
+.login-google-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+.login-google-email {
+  margin: 0 0 0.8rem;
+  color: var(--ink-soft);
+}
+.login-google-card .login-submit { width: 100%; }
+.login-switch { margin: 0.7rem 0 0; }
+.login-actions:not(:has(.login-skip)) { grid-template-columns: 1fr; }
 
 @media (max-width: 460px) {
   .login-actions { grid-template-columns: 1fr; }

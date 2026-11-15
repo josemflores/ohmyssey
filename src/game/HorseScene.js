@@ -48,7 +48,8 @@ const POSTS = [
   { x: 140, y: 86, w: 12, h: 12 },
 ];
 
-// His men, already waiting in the belly. No collision: the room is tight enough.
+// His men, already waiting in the belly. A body on each one, the size of
+// the picture, so he walks around them on the way to the hatch.
 const SQUAD = [
   { x: 70, y: 50, facing: 'se' },
   { x: 124, y: 52, facing: 'sw' },
@@ -162,6 +163,10 @@ export class HorseScene extends Phaser.Scene {
       sprite.setDepth(7000 + man.y);
       const shadow = this.add.ellipse(man.x + 3, man.y + 1, 16, 5, 0x1a0c08, 0.45);
       shadow.setDepth(7000 + man.y - 2);
+      const block = this.posts.create(man.x, man.y - 12, 'blank');
+      block.setDisplaySize(18, 24);
+      block.refreshBody();
+      block.setVisible(false);
       return sprite;
     });
 

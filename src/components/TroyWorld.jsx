@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { ATTACKS } from '../game/battleQuestions.js';
 import { createTroyGame } from '../game/createTroyGame.js';
 import { hatchQuestionAfter } from '../game/hatchQuestions.js';
 import './TroyWorld.css';
+
+const MOVES = [ATTACKS.light, ATTACKS.strike, ATTACKS.heavy];
 
 const MOVE_KEYS = new Set([
   'KeyW', 'KeyA', 'KeyS', 'KeyD',
@@ -19,6 +22,7 @@ export default function TroyWorld() {
   const [quiz, setQuiz] = useState(null);
   const [fight, setFight] = useState(null);
   const [questDone, setQuestDone] = useState(false);
+  const [complete, setComplete] = useState(false);
   const [runHint, setRunHint] = useState(false);
   const [banner, setBanner] = useState('');
   const [place, setPlace] = useState('horse');
@@ -45,7 +49,37 @@ export default function TroyWorld() {
       setFight({ ...payload, phase: 'menu', note: '' });
     }
     function onFightQuestion(question) {
-      setFight((current) => current && { ...current, phase: 'question', question });
+      setFight((current) => current && {
+        ...current,
+        phase: 'question',
+        question,
+        attack: question.attack || current.attack,
+        anim: '',
+      });
+    }
+    function onFightBlow(payload) {
+      setFight((current) => {
+        if (!current) return current;
+        const miss = payload.anim === 'whiff';
+        const onHero = payload.anim === 'counter';
+        const showFloat = payload.anim !== 'defeat';
+        return {
+          ...current,
+          heroHp: payload.heroHp,
+          foeHp: payload.foeHp,
+          phase: 'anim',
+          question: null,
+          anim: payload.anim,
+          shake: payload.anim === 'heavy' || payload.anim === 'counter',
+          blow: (current.blow || 0) + 1,
+          note: payload.note || '',
+          float: showFloat ? {
+            text: miss ? 'Miss' : `-${payload.damage}`,
+            side: onHero ? 'hero' : 'foe',
+            miss,
+          } : null,
+        };
+      });
     }
     function onFightTurn(payload) {
       setFight((current) => current && {
@@ -53,6 +87,9 @@ export default function TroyWorld() {
         ...payload,
         phase: payload.side === 'enemy' ? 'enemy' : 'menu',
         question: null,
+        anim: '',
+        shake: false,
+        float: null,
       });
     }
     function onFightEnd(payload) {
@@ -70,12 +107,14 @@ export default function TroyWorld() {
     game.events.on('hatchQuestion', onHatchQuestion);
     game.events.on('fightStart', onFightStart);
     game.events.on('fightQuestion', onFightQuestion);
+    game.events.on('fightBlow', onFightBlow);
     game.events.on('fightTurn', onFightTurn);
     game.events.on('fightEnd', onFightEnd);
     game.events.on('questDone', () => {
       setQuestDone(true);
     });
     game.events.on('notice', (text) => setBanner(text || ''));
+    game.events.on('levelComplete', () => setComplete(true));
     game.events.on('runHint', () => setRunHint(true));
     return () => {
       game.events.off('interact', onInteract);
@@ -84,10 +123,12 @@ export default function TroyWorld() {
       game.events.off('hatchQuestion', onHatchQuestion);
       game.events.off('fightStart', onFightStart);
       game.events.off('fightQuestion', onFightQuestion);
+      game.events.off('fightBlow', onFightBlow);
       game.events.off('fightTurn', onFightTurn);
       game.events.off('fightEnd', onFightEnd);
       game.events.off('questDone');
       game.events.off('notice');
+      game.events.off('levelComplete');
       game.events.off('runHint');
       game.destroy(true);
       gameRef.current = null;
@@ -127,17 +168,24 @@ export default function TroyWorld() {
     gameRef.current?.events.emit('unlockInput');
   }
 
-  function attack() {
-    setFight((current) => current && { ...current, phase: 'wait', note: '' });
-    gameRef.current?.events.emit('fightAttack');
+  function attack(kind) {
+    const move = ATTACKS[kind] || ATTACKS.light;
+    setFight((current) => current && {
+      ...current,
+      phase: 'wait',
+      note: '',
+      anim: '',
+      attack: move.label,
+    });
+    gameRef.current?.events.emit('fightAttack', { kind: move.id });
+  }
+
+  function flee() {
+    gameRef.current?.events.emit('fightFlee');
   }
 
   function pickFight(index) {
     gameRef.current?.events.emit('fightStrike', { index });
-  }
-
-  function placeholder(label) {
-    setFight((current) => current && { ...current, note: `${label} is not ready yet.` });
   }
 
   function enemyContinue() {
@@ -267,24 +315,43 @@ export default function TroyWorld() {
         </div>
       )}
       {fight && (
-        <div className="battle-screen" role="dialog" aria-label="Battle">
+        <div
+          className={`battle-screen${fight.anim ? ` is-${fight.anim}` : ''}${fight.shake ? ' is-shake' : ''}`}
+          role="dialog"
+          aria-label="Battle"
+        >
           <ol className="battle-order">
-            <li className={fight.side === 'hero' ? 'is-now' : ''}>Odysseus</li>
-            <li className={fight.side === 'enemy' ? 'is-now' : ''}>{fight.name}</li>
+            <li className={fight.side === 'hero' && fight.phase !== 'enemy' ? 'is-now' : ''}>Odysseus</li>
+            <li className={fight.side === 'enemy' || fight.phase === 'enemy' ? 'is-now' : ''}>{fight.name}</li>
           </ol>
           <div className="battle-stage">
             <div className="battle-side">
               <p className="battle-name">Odysseus</p>
               <p className="battle-hp-num">{fmtHp(fight.heroHp)} / {fight.heroMax}</p>
               <div className="battle-hp-track">
-                <span style={{ width: `${(fight.heroHp / fight.heroMax) * 100}%` }} />
+                <span style={{ width: `${Math.max(0, fight.heroHp / fight.heroMax) * 100}%` }} />
+              </div>
+              <div className="battle-fighter" key={`hero-${fight.blow || 0}`}>
+                <div className="battle-sprite battle-hero" />
+                <span className="battle-slash" />
+                <span className="battle-hurt" />
+                {fight.float && fight.float.side === 'hero' && (
+                  <b className={`battle-float${fight.float.miss ? ' is-miss' : ' is-hurt'}`}>{fight.float.text}</b>
+                )}
               </div>
             </div>
             <div className="battle-side is-foe">
               <p className="battle-name">{fight.name}</p>
               <p className="battle-hp-num">{fmtHp(fight.foeHp)} / {fight.foeMax}</p>
               <div className="battle-hp-track">
-                <span style={{ width: `${(fight.foeHp / fight.foeMax) * 100}%` }} />
+                <span style={{ width: `${Math.max(0, fight.foeHp / fight.foeMax) * 100}%` }} />
+              </div>
+              <div className="battle-fighter" key={`foe-${fight.blow || 0}`}>
+                <div className={`battle-sprite battle-foe${fight.anim === 'defeat' ? ' is-down' : ''}`} />
+                <span className="battle-flash" />
+                {fight.float && fight.float.side === 'foe' && (
+                  <b className={`battle-float${fight.float.miss ? ' is-miss' : ''}`}>{fight.float.text}</b>
+                )}
               </div>
             </div>
           </div>
@@ -292,6 +359,7 @@ export default function TroyWorld() {
             {fight.note && <p className="battle-note">{fight.note}</p>}
             {fight.phase === 'question' && fight.question && (
               <div className="battle-question">
+                {fight.attack && <p className="battle-ask">{fight.attack}</p>}
                 <p>{fight.question.prompt}</p>
                 <div className="battle-choices">
                   {fight.question.choices.map((choice, index) => (
@@ -309,13 +377,27 @@ export default function TroyWorld() {
             )}
             {fight.phase === 'menu' && (
               <div className="battle-commands">
-                <button type="button" className="battle-command" onClick={attack}>Attack</button>
-                <button type="button" className="battle-command" onClick={() => placeholder('Skills')}>Skills</button>
-                <button type="button" className="battle-command" onClick={() => placeholder('Item')}>Item</button>
-                <button type="button" className="battle-command" onClick={() => placeholder('Defend')}>Defend</button>
-                <button type="button" className="battle-command" onClick={() => placeholder('Flee')}>Flee</button>
+                {MOVES.map((move) => (
+                  <button key={move.id} type="button" className="battle-command" onClick={() => attack(move.id)}>
+                    <span>{move.label}</span>
+                    <small>{move.hint}</small>
+                  </button>
+                ))}
+                <button type="button" className="battle-command" onClick={flee}>
+                  <span>Flee</span>
+                  <small>Leave the fight</small>
+                </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {complete && (
+        <div className="level-complete" role="dialog" aria-label="Level 1 complete">
+          <div className="card level-complete-card">
+            <p className="eyebrow">Level 1</p>
+            <h2>Complete</h2>
+            <p>The gate has fallen. The sentries are down, and the Greek army is through.</p>
           </div>
         </div>
       )}
