@@ -222,7 +222,11 @@ export class HorseScene extends Phaser.Scene {
       this.feet.setVelocity(0, 0);
     };
     const unlockInput = () => { this.inputLocked = false; };
-    const unlockHatch = () => { this.hatchUnlocked = true; };
+    const unlockHatch = () => {
+  this.hatchUnlocked = true;
+  this.game.registry.set('leftHorse', true);
+  this.scene.start('troy', OUTSIDE);
+};
     this.game.events.on('lockInput', lockInput);
     this.game.events.on('unlockInput', unlockInput);
     this.game.events.on('unlockHatch', unlockHatch);
@@ -352,8 +356,8 @@ function makePrompt(scene) {
     fontFamily: 'monospace',
     fontSize: '15px',
     color: '#f6ead2',
-    backgroundColor: '#1a0e0c',
-    padding: { left: 6, right: 6, top: 3, bottom: 3 },
+    stroke: '#000000',
+    strokeThickness: 4,
   });
   label.setScale(1 / 3);
   label.setOrigin(0.5, 1);
