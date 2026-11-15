@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Turn Odysseus's LPC sheets into the beggar from Odyssey book 13.
+"""SUPERSEDED by build_odysseus_beggar_lpc.py, which builds the beggar from
+real LPC layers. Running this script would overwrite those sheets.
+
+Turn Odysseus's LPC sheets into the beggar from Odyssey book 13.
 
 Same frame sizes, rows, and counts as the king sheets. The crest and helmet
 come off, the sword and spear are erased (including the attack swing), and
