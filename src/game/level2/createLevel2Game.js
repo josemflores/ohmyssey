@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { attachGameAudio } from '../gameAudio.js';
 import { Level2Scene } from './Level2Scene.js';
 
 // Builds the Level 2 (Ithaca) Phaser game into the div React gives us.
@@ -8,7 +9,7 @@ export function createLevel2Game(parent) {
   const height = parent.clientHeight || window.innerHeight;
   const debug = new URLSearchParams(window.location.search).has('hitboxes');
 
-  return new Phaser.Game({
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     width,
@@ -29,4 +30,6 @@ export function createLevel2Game(parent) {
     scene: [Level2Scene],
     audio: { noAudio: true },
   });
+  attachGameAudio(game, { world: 'world-wilds', level: 'ithaca' });
+  return game;
 }

@@ -1,0 +1,419 @@
+/* The lesson book (LessonBook.jsx): a parchment page with a header, a row of
+   tabs and one section at a time. Same palette and type as the question
+   cards: Cinzel for titles, Cormorant for reading, gold rules. */
+
+.lesson-book {
+  --lb-max: 1180px;
+  min-height: 100%;
+  padding: 18px 20px 48px;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 250, 238, 0.9), transparent 70%),
+    linear-gradient(180deg, #efe0bf 0%, #e4cfa4 100%);
+  font-family: var(--font-classic, 'Cormorant Garamond', Georgia, serif);
+}
+
+/* ---- Header ---- */
+.lesson-book-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  max-width: var(--lb-max);
+  margin: 0 auto;
+}
+.lesson-book-back {
+  align-self: start;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid rgba(138, 100, 36, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.7);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.lesson-book-back:hover { background: #fffaf0; }
+/* Leave room for the Esc menu button in the top right corner. */
+.lesson-book-head .learn-progress { margin: 44px 8px 0 0; }
+.lesson-book-title { text-align: center; }
+.lesson-book-kicker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.lesson-book-title h1 {
+  margin: 0.15rem 0 0.25rem;
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  letter-spacing: 0.04em;
+}
+.lesson-book-epithet {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 1.12rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* ---- Tabs ---- */
+.lesson-book-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  max-width: var(--lb-max);
+  margin: 18px auto 0;
+  padding: 8px 0 10px;
+  border-bottom: 2px solid rgba(196, 150, 60, 0.55);
+  background: linear-gradient(180deg, #ecdcb8 80%, rgba(236, 220, 184, 0));
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lesson-book-tabs button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.05rem;
+  border: 1px solid rgba(138, 100, 36, 0.45);
+  border-radius: 10px 10px 0 0;
+  background: rgba(255, 250, 240, 0.5);
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.lesson-book-tabs button:hover { background: rgba(255, 250, 240, 0.85); color: var(--ink); }
+.lesson-book-tabs button.is-on {
+  border-color: #8a6424;
+  background: linear-gradient(#f3dd9a, #d6ad58);
+  color: #2a1c0c;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(90, 60, 20, 0.2);
+}
+.lesson-book-tabs button:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 2px; }
+.lesson-book-tab-num {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: rgba(156, 59, 46, 0.12);
+  color: var(--terracotta);
+  font-size: 0.8rem;
+}
+.lesson-book-tabs button.is-on .lesson-book-tab-num { background: rgba(255, 255, 255, 0.5); }
+
+/* ---- Panels ---- */
+.lesson-book-panel {
+  max-width: var(--lb-max);
+  margin: 20px auto 0;
+  animation: lb-in 0.25s ease-out;
+}
+@keyframes lb-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.lb-card {
+  padding: 1.15rem 1.35rem 1.25rem;
+  border: 1px solid rgba(184, 148, 88, 0.6);
+  border-radius: 14px;
+  background: rgba(255, 251, 242, 0.88);
+  box-shadow: 0 6px 18px rgba(80, 56, 24, 0.1);
+}
+.lb-card h2 {
+  margin: 0 0 0.55rem;
+  font-size: 1.25rem;
+  letter-spacing: 0.03em;
+}
+.lb-card h3 { margin: 0.9rem 0 0.4rem; font-size: 1.05rem; }
+.lb-card p {
+  margin: 0 0 0.7rem;
+  font-size: 1.14rem;
+  line-height: 1.55;
+}
+.lb-card p:last-child { margin-bottom: 0; }
+
+.lb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.45rem 1.2rem;
+  border: 1px solid #8a6424;
+  border-radius: 999px;
+  background: linear-gradient(#f3dd9a, #c4963c);
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.lb-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.lb-btn:disabled { opacity: 0.4; cursor: default; }
+.lb-btn.is-quiet { background: rgba(255, 250, 240, 0.8); border-color: rgba(138, 100, 36, 0.5); }
+.lb-btn:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 3px; }
+
+/* Overview */
+.lb-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.lb-overview-main { display: grid; gap: 14px; }
+.lb-overview-side { display: grid; gap: 14px; position: sticky; top: 72px; }
+.lb-map ol { margin: 0 0 1rem; padding: 0; list-style: none; counter-reset: lb; display: grid; gap: 0.55rem; }
+.lb-map li {
+  counter-increment: lb;
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  column-gap: 0.5rem;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+.lb-map li::before {
+  content: counter(lb);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--terracotta);
+  color: #fff6e6;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+}
+.lb-map li strong { font-family: var(--font-display); font-size: 0.92rem; font-weight: 500; }
+.lb-map li span { color: var(--ink-soft); font-style: italic; }
+.lb-quest { border-left: 4px solid var(--terracotta); }
+
+/* Concepts */
+.lb-concepts {
+  display: grid;
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.lb-topics {
+  position: sticky;
+  top: 72px;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lb-topics button {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(184, 148, 88, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 250, 240, 0.55);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.lb-topics button:hover { background: rgba(255, 250, 240, 0.9); }
+.lb-topics button.is-on {
+  border-color: #8a6424;
+  background: #fffaf0;
+  box-shadow: inset 4px 0 0 var(--gold), 0 3px 10px rgba(80, 56, 24, 0.12);
+}
+.lb-topic-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  border: 1px solid rgba(156, 59, 46, 0.5);
+  color: var(--terracotta);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+}
+.lb-topics button.is-on .lb-topic-num { background: var(--terracotta); color: #fff6e6; border-color: var(--terracotta); }
+.lb-topic-text { display: grid; gap: 0.05rem; }
+.lb-topic-text strong { font-family: var(--font-display); font-size: 0.88rem; font-weight: 500; letter-spacing: 0.02em; }
+.lb-topic-text small { font-size: 0.95rem; font-style: italic; color: var(--ink-soft); line-height: 1.25; }
+
+.lb-topic { min-height: 360px; }
+.lb-topic h2 { font-size: 1.6rem; }
+.lb-topic-kicker {
+  margin: 0 0 0.25rem !important;
+  font-family: var(--font-display);
+  font-size: 0.74rem !important;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* An equation, set like an inscription. */
+.lb-equation {
+  margin: 1rem 0;
+  text-align: center;
+}
+.lb-equation-main {
+  display: inline-block;
+  padding: 0.7rem 1.4rem;
+  border: 1px solid #b08a4a;
+  border-radius: 10px;
+  background:
+    linear-gradient(#fffaf0, #fbefd6);
+  box-shadow: inset 0 0 0 4px rgba(240, 212, 138, 0.35);
+  font-family: var(--font-classic, Georgia, serif);
+  font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+  letter-spacing: 0.02em;
+  color: #2a1c0c;
+}
+.lb-equation-main.is-small { font-size: 1.1rem; padding: 0.45rem 0.9rem; }
+.lb-equation figcaption {
+  margin-top: 0.45rem;
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.lb-remember {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.6rem 0.85rem;
+  border-left: 4px solid var(--laurel);
+  border-radius: 0 8px 8px 0;
+  background: rgba(47, 107, 69, 0.08);
+}
+.lb-remember span,
+.lb-answer span,
+.lb-formula-example span {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--laurel);
+}
+.lb-topic-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 1.2rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(184, 148, 88, 0.4);
+}
+
+/* Equations */
+.lb-sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.lb-formula { display: flex; flex-direction: column; gap: 0.6rem; }
+.lb-formula h2 { margin: 0; font-size: 1.05rem; color: var(--terracotta); }
+.lb-formula .lb-equation-main { align-self: center; font-size: clamp(1.1rem, 2vw, 1.35rem); text-align: center; }
+.lb-terms { display: grid; gap: 0.3rem; margin: 0.2rem 0 0; }
+.lb-terms div { display: grid; grid-template-columns: 4.6rem 1fr; gap: 0.5rem; align-items: baseline; }
+.lb-terms dt { font-weight: 700; font-size: 1.08rem; text-align: right; }
+.lb-terms dd { margin: 0; font-size: 1.05rem; line-height: 1.3; }
+.lb-terms em { margin-left: 0.4rem; font-size: 0.95rem; color: var(--ink-soft); }
+.lb-formula-example {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  margin-top: auto !important;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(184, 148, 88, 0.6);
+  font-size: 1.05rem !important;
+}
+
+/* Examples */
+.lb-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+}
+.lb-example { display: flex; flex-direction: column; align-items: flex-start; }
+.lb-example-q { font-weight: 600; }
+.lb-steps { margin: 0.2rem 0 0.8rem; padding-left: 1.3rem; display: grid; gap: 0.35rem; }
+.lb-steps li { font-size: 1.08rem; line-height: 1.45; }
+.lb-answer {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  align-self: stretch;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(47, 107, 69, 0.1);
+  font-weight: 700;
+}
+.lb-examples-end { grid-column: 1 / -1; text-align: center; padding-top: 6px; }
+
+/* Practice */
+.lb-practice {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.lb-practice-main { display: grid; gap: 14px; min-width: 0; }
+.lb-practice-side { display: grid; gap: 12px; }
+.lb-telling-notes { margin: 0.4rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; font-size: 1.05rem; line-height: 1.45; color: var(--ink-soft); }
+.lb-results { border: 2px solid var(--laurel); }
+/* Keep the circuit drawing at a readable size, not stretched across the page. */
+.lb-board .learn-schematic { max-width: 620px; display: block; margin: 0 auto; }
+.lb-board .learn-board { border-radius: 14px; }
+.lb-more {
+  border: 1px solid rgba(184, 148, 88, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 250, 240, 0.6);
+  padding: 0.55rem 0.8rem;
+}
+.lb-more summary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+.lb-more[open] summary { margin-bottom: 0.6rem; }
+.lb-more .study-panel + .study-panel { margin-top: 0.6rem; }
+
+/* ---- Phones and narrow screens ---- */
+@media (max-width: 860px) {
+  .lesson-book { padding: 12px 12px 40px; }
+  .lesson-book-head { grid-template-columns: 1fr; gap: 8px; }
+  .lesson-book-back { justify-self: start; }
+  .lesson-book-head .learn-progress { display: none; }
+  .lesson-book-tabs { justify-content: flex-start; }
+  .lb-overview,
+  .lb-concepts,
+  .lb-practice { grid-template-columns: 1fr; }
+  .lb-overview-side,
+  .lb-topics { position: static; }
+  /* Topics become a row of chips you can swipe. */
+  .lb-topics { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .lb-topics li { flex: none; }
+  .lb-topics button { width: auto; }
+  .lb-topic-text small { display: none; }
+  .lb-sheet,
+  .lb-examples { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-book-panel { animation: none; }
+}

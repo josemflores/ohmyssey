@@ -653,6 +653,7 @@ export class Level2Scene extends Phaser.Scene {
   }
 
   enterHall() {
+    this.game.events.emit('audioDoorOpen');
     this.inputLocked = true;
     this.feet.setVelocity(0, 0);
     this.moveTo(HALL_AREA, HALL_SPAWN, 'n', () => {
@@ -779,6 +780,7 @@ export class Level2Scene extends Phaser.Scene {
     }
 
     const moving = this.feet.body.speed > 8;
+    this.game.events.emit('audioStep', time, moving, this.feet.body.speed > (WALK_SPEED + RUN_SPEED) / 2);
     const groundY = this.feet.y + this.feet.body.halfHeight;
     const hx = Math.round(this.feet.x);
     const hy = Math.round(groundY);
