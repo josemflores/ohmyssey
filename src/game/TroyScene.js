@@ -689,7 +689,22 @@ export class TroyScene extends Phaser.Scene {
         this.endFight(true, 'The group falls.');
         return;
       }
-      this.counterAt(0);
+      // A right answer lands and the Trojans get no swing back: it is
+      // Odysseus's turn again. Only a miss opens him up to their counter.
+      if (correct) this.heroTurn();
+      else this.counterAt(0);
+    });
+  }
+
+  heroTurn() {
+    const fight = this.fight;
+    if (!fight || !this.fighting) return;
+    fight.note = '';
+    this.game.events.emit('fightTurn', {
+      side: 'hero',
+      heroHp: this.heroHp,
+      foes: this.foeView(),
+      note: '',
     });
   }
 
@@ -705,12 +720,7 @@ export class TroyScene extends Phaser.Scene {
     if (!fight || !this.fighting) return;
     const living = fight.foes.map((foe, index) => index).filter((index) => fight.foes[index].hp > 0);
     if (step >= living.length) {
-      this.game.events.emit('fightTurn', {
-        side: 'hero',
-        heroHp: this.heroHp,
-        foes: this.foeView(),
-        note: fight.note || '',
-      });
+      this.heroTurn();
       return;
     }
     const index = living[step];
