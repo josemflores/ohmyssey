@@ -136,8 +136,8 @@ export const INTERACTABLES = [
     type: 'place',
   },
   // Just south of the horse wheels (the horse prop is x 480, baseY 228).
-  // Press E here to climb into the belly. The button inside the horse is
-  // onTrapDoor() in HorseScene.js — that one is left empty on purpose.
+  // Press E here to climb into the belly. Coming back out is onTrapDoor()
+  // in HorseScene.js.
   {
     id: 'horse_hatch',
     x: 480,

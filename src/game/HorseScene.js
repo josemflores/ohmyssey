@@ -82,7 +82,8 @@ export class HorseScene extends Phaser.Scene {
   create() {
     if (!this.textures.exists('feet')) buildWorldTextures(this);
     if (!this.textures.exists('belly-floor')) {
-      this.textures.addCanvas('belly-floor', paintBelly());
+      const floor = this.textures.addCanvas('belly-floor', paintBelly());
+      floor.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     if (!this.textures.exists('belly-dark')) {
       this.textures.addCanvas('belly-dark', paintDark());
@@ -245,8 +246,9 @@ export class HorseScene extends Phaser.Scene {
     this.nearest = dist <= TRAP.radius ? TRAP : null;
     if (this.nearest) {
       this.prompt.setVisible(true);
-      this.prompt.setPosition(hx, hy - 48);
-      this.prompt.setDepth(sort + 4);
+      this.prompt.setPosition(hx, hy - 36);
+      // Above the black vignette, or the label sits in the dark and disappears.
+      this.prompt.setDepth(15000);
     } else {
       this.prompt.setVisible(false);
     }
