@@ -298,6 +298,12 @@ export default function TroyWorld({ onSail }) {
   useChoiceKeys(Boolean(quiz && quiz.status === 'open'), quiz?.question.choices.length || 4, pickAnswer);
   useChoiceKeys(Boolean(fight && fight.phase === 'question' && fight.question), fight?.question?.choices.length || 4, pickFight);
   useChoiceKeys(Boolean(gateAsk && !gateAsk.wrong), gateChoices.length, pickGate);
+  // In the battle menu, 1 and 2 are the attacks and 3 is Flee.
+  useChoiceKeys(
+    Boolean(fight && fight.phase === 'menu' && !gateAsk),
+    MOVES.length + 1,
+    (index) => (index < MOVES.length ? attack(MOVES[index].id) : flee()),
+  );
 
   const arrived = place === 'horse'
     ? 'Inside the horse. WASD to move. Press E at the hatch.'
@@ -440,21 +446,28 @@ export default function TroyWorld({ onSail }) {
               </div>
             )}
             {fight.phase === 'enemy' && (
-              <button type="button" className="battle-continue" onClick={enemyContinue}>
+              <button type="button" className="battle-continue q-action" onClick={enemyContinue}>
                 Continue
               </button>
             )}
             {fight.phase === 'menu' && (
-              <div className="battle-commands">
-                {MOVES.map((move) => (
-                  <button key={move.id} type="button" className="battle-command" onClick={() => attack(move.id)}>
-                    <span>{move.label}</span>
-                    <small>{move.hint}</small>
+              <div className="battle-commands q-card q-menu">
+                <p className="q-eyebrow">Ω · Your move</p>
+                {MOVES.map((move, index) => (
+                  <button key={move.id} type="button" className="battle-command q-command" onClick={() => attack(move.id)}>
+                    <span className="q-command-key" aria-hidden="true">{index + 1}</span>
+                    <span className="q-command-text">
+                      <span className="q-command-label">{move.label}</span>
+                      <small>{move.hint} question · {move.damage} damage</small>
+                    </span>
                   </button>
                 ))}
-                <button type="button" className="battle-command" onClick={flee}>
-                  <span>Flee</span>
-                  <small>Leave the fight</small>
+                <button type="button" className="battle-command q-command is-quiet" onClick={flee}>
+                  <span className="q-command-key" aria-hidden="true">{MOVES.length + 1}</span>
+                  <span className="q-command-text">
+                    <span className="q-command-label">Flee</span>
+                    <small>Leave the fight</small>
+                  </span>
                 </button>
               </div>
             )}

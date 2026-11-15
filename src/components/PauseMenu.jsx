@@ -91,7 +91,8 @@ export default function PauseMenu({ levelName, onHome, onReset, onGoto }) {
   if (!open) {
     return (
       <button className="pause-tab" type="button" onClick={() => setOpen(true)} aria-label="Pause menu (Esc)">
-        Esc · Menu
+        <kbd>Esc</kbd>
+        <span className="pause-tab-word">Menu</span>
       </button>
     );
   }

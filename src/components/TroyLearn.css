@@ -7,33 +7,47 @@
   flex-direction: column;
   gap: 8px;
 }
+/* Parchment pills, like the login card's buttons. */
 .troy-learn-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  min-width: 148px;
-  min-height: 40px;
-  padding: 0.35rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid rgba(230, 194, 122, 0.75);
-  background: rgba(8, 14, 24, 0.82);
-  color: #f6ead2;
-  font: inherit;
-  font-size: 0.92rem;
-  letter-spacing: 0.03em;
+  min-width: 168px;
+  min-height: 44px;
+  padding: 0.3rem 0.4rem 0.3rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #8a6424;
+  background-color: var(--parchment);
+  background-image: linear-gradient(rgba(255, 250, 240, 0.9), rgba(234, 215, 178, 0.9));
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(240, 212, 138, 0.22), 0 6px 14px rgba(0, 0, 0, 0.45);
 }
 .troy-learn-btn kbd {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #8a6424;
+  background: radial-gradient(circle at 35% 30%, #f6dfa0, #c4963c);
+  color: #2a1c0c;
   font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  color: #f0d48a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
 }
-.troy-learn-btn:hover,
+.troy-learn-btn:hover {
+  background-image: linear-gradient(#f6e3a8, #d9b064);
+}
 .troy-learn-btn:focus-visible {
-  background: rgba(20, 28, 40, 0.94);
-  outline: 2px solid #f0d48a;
+  outline: 3px solid var(--gold-bright);
   outline-offset: 2px;
 }
 .troy-learn-shade {
