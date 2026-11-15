@@ -16,16 +16,16 @@ export function routeReport() {
 
   const reach = reachable(solid, SPAWN.x, SPAWN.y);
   const want = [
-    ['the gate', 480, 304],
-    ['the plaza beside the horse', 432, 176],
-    ['the west beach', 176, 448],
-    ['the east beach', 800, 448],
+    ['the gate', 480, 400],
+    ['the plaza beside the horse', 400, 180],
+    ['the west beach', 176, 500],
+    ['the east beach', 800, 500],
   ];
   const blocked = [
     ['the open sea', 480, 640],
-    ['the great wall', 192, 304],
+    ['the great wall', 192, 400],
     ['the temple', 480, 110],
-    ['the horse', 480, 220],
+    ['the horse', 480, 210],
     ['a house', 120, 120],
   ];
 

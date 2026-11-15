@@ -10,7 +10,7 @@ There is no walk cycle yet. The game bobs that idle frame. See `ANIM_CONFIG` in 
 
 ## Scenery
 
-The beach, wall, temple, houses, horse, props, and both armies are drawn in code (`src/game/textures.js` and `src/game/warriorArt.js`). No downloaded tileset. Greeks wear teal. Trojans wear crimson.
+The beach, wall, temple, houses, horse, and props are drawn in code (`src/game/textures.js`). No downloaded tileset. The two armies are stand-in sheets from `src/game/warriorArt.js` until the PixelLab warrior sheets are ready. Put those pngs in `public/assets/sprites/` and set each team's `path` in `src/game/warriorConfig.js`. Frame order matches Odysseus. Set `walk` there if the sheet has extra step rows after the idle eight. Greeks wear teal. Trojans wear crimson.
 
 ## Fonts
 

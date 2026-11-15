@@ -19,6 +19,7 @@ import {
   buildMap,
 } from './map.js';
 import { Battle } from './battle.js';
+import { WARRIOR_CONFIG } from './warriorConfig.js';
 import { routeReport } from './routeCheck.js';
 import { buildWorldTextures } from './textures.js';
 
@@ -42,6 +43,15 @@ export class TroyScene extends Phaser.Scene {
       this.load.spritesheet('odysseus-walk', walk.path, {
         frameWidth: walk.frameWidth,
         frameHeight: walk.frameHeight,
+      });
+    }
+
+    // Real PixelLab sheets, when their paths are filled in. See warriorConfig.js.
+    for (const team of Object.values(WARRIOR_CONFIG.teams)) {
+      if (!team.path) continue;
+      this.load.spritesheet(team.key, team.path, {
+        frameWidth: WARRIOR_CONFIG.frameWidth,
+        frameHeight: WARRIOR_CONFIG.frameHeight,
       });
     }
   }
@@ -75,17 +85,18 @@ export class TroyScene extends Phaser.Scene {
     }
 
     this.glints = createGlints(this);
-    // Cool moonlight over the warm ground. Lamps are drawn later, above this.
-    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0xc5d4ee, 1);
+    // Deep blue moonlight, about half the brightness of the pale stone underneath.
+    // Lamps and people are drawn later, above this grade.
+    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0x6a7c9e, 1);
     moon.setBlendMode(Phaser.BlendModes.MULTIPLY);
-    moon.setDepth(6000);
+    moon.setDepth(5000);
     for (const lamp of LAMPS) addLamp(this, lamp.x, lamp.y);
 
     this.vignette = this.add.image(0, 0, 'vignette')
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(15000)
-      .setAlpha(0.35);
+      .setAlpha(0.62);
     const fitVignette = () => {
       this.vignette.setDisplaySize(this.scale.width, this.scale.height);
     };
@@ -103,8 +114,13 @@ export class TroyScene extends Phaser.Scene {
     // A smaller bias so the short feet-box does not get shoved off thin gaps.
     this.physics.world.TILE_BIAS = 4;
 
+    this.heroRim = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
+    this.heroRim.setOrigin(0.5, 1);
+    this.heroRim.setTint(0xd0e6ff);
+    this.heroRim.setScale(1.07);
     this.hero = this.add.sprite(SPAWN.x, SPAWN.y, ANIM_CONFIG.textureKey, ANIM_CONFIG.facingFrames.n);
     this.hero.setOrigin(0.5, 1);
+    this.heroShadow = this.add.ellipse(SPAWN.x, SPAWN.y, 18, 6, 0x0c1424, 0.55);
 
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
@@ -184,8 +200,17 @@ export class TroyScene extends Phaser.Scene {
     const moving = this.feet.body.speed > 8;
     const groundY = this.feet.y + this.feet.body.halfHeight;
     const bob = poseHero(this.hero, this.facing, moving, time);
-    this.hero.setPosition(Math.round(this.feet.x), Math.round(groundY + bob));
-    this.hero.setDepth(groundY);
+    const hx = Math.round(this.feet.x);
+    const hy = Math.round(groundY + bob);
+    this.hero.setPosition(hx, hy);
+    this.heroRim.setPosition(hx, hy);
+    this.heroRim.setFrame(this.hero.frame.name);
+    this.heroShadow.setPosition(hx + 4, Math.round(groundY) + 1);
+    // Above the moonlight so he stays readable. y still decides who is in front.
+    const sort = 7000 + groundY;
+    this.heroShadow.setDepth(sort - 2);
+    this.heroRim.setDepth(sort - 1);
+    this.hero.setDepth(sort);
 
     const dt = delta / 1000;
     for (const glint of this.glints) {
@@ -256,8 +281,12 @@ function poseHero(hero, facing, moving, time) {
 }
 
 function addSolidProp(scene, group, prop) {
-  const shadow = scene.add.ellipse(prop.x, prop.baseY - 1, prop.bodyW * 0.9, 6, 0x3a2c18, 0.28);
-  shadow.setDepth(prop.baseY - 2);
+  // Moonlight comes from the upper left, so shadows fall down and to the right.
+  const wide = prop.id === 'column' ? 10 : prop.bodyW * 0.85;
+  const tall = prop.id === 'column' ? 4 : 6;
+  const shadow = scene.add.ellipse(prop.x + 5, prop.baseY + 2, wide, tall, 0x1a2438, 0.55);
+  // Above the moonlight grade, under the people, so the shadow stays visible.
+  shadow.setDepth(5200);
   scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(prop.baseY);
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');
@@ -267,15 +296,17 @@ function addSolidProp(scene, group, prop) {
 }
 
 function addLamp(scene, x, y) {
-  const glow = scene.add.circle(x, y, 7, 0xffc27a, 0.16);
+  // Soft pool on the ground, above the blue grade and below the people.
+  const glow = scene.add.image(x, y, 'lamp-glow');
   glow.setBlendMode(Phaser.BlendModes.ADD);
-  glow.setDepth(8200);
-  const core = scene.add.circle(x, y, 1.5, 0xffe7b0, 0.9);
-  core.setDepth(8300);
+  glow.setDepth(5400);
+  glow.setAlpha(0.85);
+  const core = scene.add.circle(x, y, 1.5, 0xffe0a0, 0.95);
+  core.setDepth(5450);
   scene.tweens.add({
     targets: glow,
-    alpha: 0.12,
-    duration: 900,
+    alpha: 0.65,
+    duration: 1400,
     yoyo: true,
     repeat: -1,
     ease: 'Sine.easeInOut',

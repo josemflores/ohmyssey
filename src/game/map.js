@@ -33,6 +33,7 @@ export const T = {
   pave: 13,
   paveAlt: 14,
   weed: 15,
+  roadSide: 16,
 };
 
 // Odysseus can walk these. Every other index is solid.
@@ -47,15 +48,17 @@ export const WALKABLE = new Set([
   T.pave,
   T.paveAlt,
   T.weed,
+  T.roadSide,
 ]);
 
 // Opening in the great wall, in tile columns, inclusive.
 export const GATE = { left: 26, right: 33 };
 // The wall itself, in tile rows, inclusive. North of this is the city.
-export const WALL = { top: 17, bottom: 20 };
+// The wall sits lower so the plaza is deep enough for the horse and two ranks.
+export const WALL = { top: 23, bottom: 26 };
 
-// Beach, center, just south of the gate. He starts facing the city.
-export const SPAWN = { x: 480, y: 432 };
+// Beach, on the road, just south of the gate. He starts facing the city.
+export const SPAWN = { x: 480, y: 470 };
 
 // id must match a picture in textures.js.
 // baseY is the bottom of the picture (the ground contact).
@@ -69,35 +72,31 @@ export const PROPS = [
   { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
   { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
 
-  // Columns block at the base only. The shaft is tall art he can walk behind.
-  { id: 'column', x: 360, baseY: 168, bodyW: 12, bodyH: 8, insetBottom: 0 },
-  { id: 'column', x: 600, baseY: 168, bodyW: 12, bodyH: 8, insetBottom: 0 },
-  { id: 'column', x: 404, baseY: 208, bodyW: 12, bodyH: 8, insetBottom: 0 },
-  { id: 'column', x: 556, baseY: 208, bodyW: 12, bodyH: 8, insetBottom: 0 },
-  { id: 'column', x: 300, baseY: 214, bodyW: 12, bodyH: 8, insetBottom: 0 },
-  { id: 'column', x: 660, baseY: 214, bodyW: 12, bodyH: 8, insetBottom: 0 },
+  // Columns stand by the temple, north of the battle line, so the ranks stay clear.
+  { id: 'column', x: 400, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
+  { id: 'column', x: 560, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
+  { id: 'column', x: 436, baseY: 112, bodyW: 12, bodyH: 8, insetBottom: 0 },
+  { id: 'column', x: 524, baseY: 112, bodyW: 12, bodyH: 8, insetBottom: 0 },
+  { id: 'column', x: 340, baseY: 136, bodyW: 12, bodyH: 8, insetBottom: 0 },
+  { id: 'column', x: 620, baseY: 136, bodyW: 12, bodyH: 8, insetBottom: 0 },
 
-  // Just inside the gate, in the middle of the road.
-  // The picture is a bit wider than this box; the box is the belly and the wheels.
-  { id: 'horse', x: 480, baseY: 248, bodyW: 52, bodyH: 36, insetBottom: 6 },
+  // Imposing horse just north of where the two ranks will stand.
+  // The solid box is only the wheeled platform.
+  { id: 'horse', x: 480, baseY: 228, bodyW: 72, bodyH: 30, insetBottom: 4 },
 
-  { id: 'rubble', x: 268, baseY: 188, bodyW: 28, bodyH: 14, insetBottom: 2 },
-  { id: 'rubble', x: 692, baseY: 180, bodyW: 28, bodyH: 14, insetBottom: 2 },
-  { id: 'rubble', x: 292, baseY: 112, bodyW: 26, bodyH: 14, insetBottom: 2 },
-  { id: 'rubble', x: 668, baseY: 116, bodyW: 26, bodyH: 14, insetBottom: 2 },
-  { id: 'rubble', x: 276, baseY: 404, bodyW: 30, bodyH: 16, insetBottom: 2 },
-  { id: 'rubble', x: 700, baseY: 412, bodyW: 30, bodyH: 16, insetBottom: 2 },
+  { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
+  { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
+  { id: 'rubble', x: 120, baseY: 530, bodyW: 28, bodyH: 12, insetBottom: 2 },
+  { id: 'rubble', x: 860, baseY: 530, bodyW: 28, bodyH: 12, insetBottom: 2 },
 
-  // Unlit bowls. The city is not burning. A few lamps live in LAMPS.
-  { id: 'brazier', x: 196, baseY: 476, bodyW: 14, bodyH: 10, insetBottom: 0 },
-  { id: 'brazier', x: 760, baseY: 468, bodyW: 14, bodyH: 10, insetBottom: 0 },
-  { id: 'brazier', x: 352, baseY: 228, bodyW: 14, bodyH: 10, insetBottom: 0 },
-  { id: 'brazier', x: 608, baseY: 228, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  // Unlit bowls on the beach. A few lamps live in LAMPS.
+  { id: 'brazier', x: 200, baseY: 500, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 760, baseY: 490, bodyW: 14, bodyH: 10, insetBottom: 0 },
 
   { id: 'cypress', x: 250, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 710, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 150, baseY: 368, bodyW: 10, bodyH: 8, insetBottom: 0 },
-  { id: 'cypress', x: 810, baseY: 372, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 140, baseY: 500, bodyW: 10, bodyH: 8, insetBottom: 0 },
+  { id: 'cypress', x: 840, baseY: 505, bodyW: 10, bodyH: 8, insetBottom: 0 },
 ];
 
 // Pictures with no collision of their own. They stand on tiles that are
@@ -109,9 +108,10 @@ export const DECOR = [
 
 // A few dim lamps only. The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [
-  { x: 400, y: 330 },
-  { x: 560, y: 330 },
-  { x: 480, y: 146 },
+  { x: 400, y: 340 },
+  { x: 560, y: 340 },
+  // Beside the temple, not on the horse's head.
+  { x: 390, y: 118 },
 ];
 
 function earthKind(x, y) {
@@ -129,13 +129,13 @@ export function buildMap() {
     grid.push(row);
   }
 
-  // Pale limestone in the plaza. The road is painted after this, on top.
-  fillRect(grid, 14, 3, 32, 14, (x, y) => ((x + y) % 9 === 0 ? T.paveAlt : T.pave));
+  // Pale limestone in the plaza, up to the wall. The road is painted after this.
+  fillRect(grid, 12, 3, 36, 20, (x, y) => ((x + y) % 2 === 0 ? T.paveAlt : T.pave));
 
   // Beach, then the surf, then the sea. Only the blue water is solid.
-  fillRect(grid, 0, 23, COLS, 10, (x, y) => ((x * 3 + y) % 8 === 0 ? T.sandAlt : T.sand));
-  fillRect(grid, 0, 33, COLS, 2, () => T.wet);
-  fillRect(grid, 0, 35, COLS, 5, () => T.water);
+  fillRect(grid, 0, 27, COLS, 7, (x, y) => ((x * 3 + y) % 8 === 0 ? T.sandAlt : T.sand));
+  fillRect(grid, 0, 34, COLS, 2, () => T.wet);
+  fillRect(grid, 0, 36, COLS, 4, () => T.water);
   fillRect(grid, 0, 40, COLS, 5, () => T.waterDeep);
 
   // Back wall of this district.
@@ -154,16 +154,20 @@ export function buildMap() {
   }
 
   // One road, the same width as the gate, from the temple steps to the beach.
-  for (let y = 5; y <= 31; y += 1) {
+  for (let y = 5; y <= 33; y += 1) {
     if (y >= WALL.top && y <= WALL.bottom) continue;
     for (let x = GATE.left; x <= GATE.right; x += 1) grid[y][x] = T.road;
+    // Sandy or dusty edge so the road does not meet the ground in a hard line.
+    for (const x of [GATE.left - 1, GATE.right + 1]) {
+      if (x > 0 && x < COLS && WALKABLE.has(grid[y][x])) grid[y][x] = T.roadSide;
+    }
   }
 
   // Dry weeds along the foot of the wall, and a few cracks in the paving.
   for (let x = 2; x < COLS - 2; x += 1) {
     if (x >= GATE.left - 1 && x <= GATE.right + 1) continue;
-    if (x % 4 === 0) grid[16][x] = T.weed;
-    if (x % 5 === 2) grid[21][x] = T.weed;
+    if (x % 4 === 0) grid[22][x] = T.weed;
+    if (x % 5 === 2 && grid[27]) grid[27][x] = T.weed;
   }
   const cracks = [[20, 8], [36, 7], [24, 12], [40, 11], [18, 27], [44, 26]];
   for (const [x, y] of cracks) {
@@ -171,14 +175,15 @@ export function buildMap() {
   }
 
   // Solid rocks: map edges on land, plus a few boulders off the path.
-  for (let y = 0; y < 35; y += 1) {
+  for (let y = 0; y < 36; y += 1) {
+    if (y >= WALL.top && y <= WALL.bottom) continue;
     grid[y][0] = T.rock;
     grid[y][COLS - 1] = T.rock;
   }
   const rocks = [
-    [4, 26], [6, 30], [54, 27], [52, 31],
-    [8, 8], [51, 9], [12, 13], [48, 14],
-    [5, 37], [18, 41], [42, 40], [55, 38],
+    [6, 30], [54, 31],
+    [8, 8], [51, 9], [12, 12], [48, 13],
+    [6, 38], [20, 42], [42, 41], [54, 39],
   ];
   for (const [x, y] of rocks) grid[y][x] = T.rock;
 

@@ -45,33 +45,40 @@ function feet(ctx, x, y, p, step, left, right) {
   fill(ctx, x + right - kick, y + 27, 3, 4, p.bronzeDark);
 }
 
+function block(ctx, x, y, w, h, color, line) {
+  fill(ctx, x - 1, y - 1, w + 2, h + 2, line);
+  fill(ctx, x, y, w, h, color);
+}
+
 function drawSouth(ctx, x, y, p, step) {
-  fill(ctx, x + 22, y + 8, 2, 18, p.spear);
-  fill(ctx, x + 21, y + 5, 4, 4, p.tip);
-  fill(ctx, x + 8, y + 15, 16, 13, p.line);
-  fill(ctx, x + 9, y + 16, 14, 11, p.cloak);
+  // Front: face, shield on the left, spear on the right.
+  fill(ctx, x + 22, y + 6, 2, 20, p.line);
+  fill(ctx, x + 22, y + 7, 1, 18, p.spear);
+  block(ctx, x + 21, y + 4, 4, 4, p.tip, p.line);
+  block(ctx, x + 9, y + 16, 14, 11, p.cloak, p.line);
   fill(ctx, x + 9, y + 16, 14, 3, p.cloakDark);
-  fill(ctx, x + 10, y + 7, 12, 9, p.line);
-  fill(ctx, x + 11, y + 8, 10, 7, p.bronze);
-  fill(ctx, x + 14, y + 1, 4, 8, p.crest);
-  fill(ctx, x + 13, y + 12, 6, 4, p.skin);
-  fill(ctx, x + 3, y + 16, 8, 10, p.line);
-  fill(ctx, x + 4, y + 17, 6, 8, p.shield);
-  fill(ctx, x + 6, y + 19, 3, 3, p.bronze);
+  block(ctx, x + 11, y + 8, 10, 8, p.bronze, p.line);
+  block(ctx, x + 14, y + 1, 4, 8, p.crest, p.line);
+  block(ctx, x + 13, y + 12, 6, 4, p.skin, p.line);
+  fill(ctx, x + 14, y + 13, 1, 1, p.line);
+  fill(ctx, x + 17, y + 13, 1, 1, p.line);
+  block(ctx, x + 3, y + 16, 7, 9, p.shield, p.line);
+  fill(ctx, x + 5, y + 18, 3, 3, p.bronze);
   feet(ctx, x, y, p, step, 11, 17);
 }
 
 function drawNorth(ctx, x, y, p, step) {
-  fill(ctx, x + 8, y + 8, 2, 18, p.spear);
-  fill(ctx, x + 7, y + 5, 4, 4, p.tip);
-  fill(ctx, x + 10, y + 14, 14, 14, p.line);
-  fill(ctx, x + 11, y + 15, 12, 12, p.cloak);
-  fill(ctx, x + 11, y + 15, 12, 3, p.cloakDark);
-  fill(ctx, x + 12, y + 8, 10, 8, p.bronze);
-  fill(ctx, x + 14, y + 1, 4, 9, p.crest);
-  fill(ctx, x + 20, y + 16, 7, 9, p.shield);
-  fill(ctx, x + 22, y + 18, 3, 3, p.bronze);
-  feet(ctx, x, y, p, step, 12, 18);
+  // Back: the cloak covers the body. No face. Crest seen from behind.
+  fill(ctx, x + 8, y + 6, 2, 20, p.line);
+  fill(ctx, x + 8, y + 7, 1, 18, p.spear);
+  block(ctx, x + 7, y + 4, 4, 4, p.tip, p.line);
+  block(ctx, x + 8, y + 12, 16, 15, p.cloak, p.line);
+  fill(ctx, x + 10, y + 16, 12, 2, p.cloakDark);
+  fill(ctx, x + 15, y + 14, 2, 8, p.cloakDark);
+  block(ctx, x + 11, y + 6, 10, 7, p.bronze, p.line);
+  block(ctx, x + 14, y + 0, 4, 8, p.crest, p.line);
+  block(ctx, x + 22, y + 16, 6, 8, p.shield, p.line);
+  feet(ctx, x, y, p, step, 11, 18);
 }
 
 function drawEast(ctx, x, y, p, step) {
