@@ -25,13 +25,12 @@ import {
 } from './map.js';
 import {
   createQuestions,
-  createScatter,
+  createRelief,
   FOE_HIT,
   FOE_MAX,
   FULL_HIT,
   HERO_MAX,
   RUN_SPEED,
-  WALK_FIGHT_SECONDS,
   WALK_SPEED,
   WEAK_HIT,
 } from './patrol.js';
@@ -173,14 +172,11 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, this.blockers);
 
-    addBeachArmy(this);
     this.questions = createQuestions();
-    this.walkFight = 0;
-    this.scatter = createScatter(this, {
-      ground,
-      blockers: this.blockers,
-      fromHorse: this.arrive,
-    });
+    // Empty streets until the gate opens. The army and the sentries come in then.
+    this.relief = createRelief(this);
+    this.fightCooldown = 0;
+    this.engagedFoe = null;
     this.heroHp = this.game.registry.get('heroHp') ?? HERO_MAX;
     this.fighting = false;
     this.fight = null;
@@ -272,15 +268,13 @@ export class TroyScene extends Phaser.Scene {
       this.feet.setVelocity(0, 0);
       this.game.registry.set('gateOpen', true);
       this.game.events.emit('questDone');
-      const cam = this.cameras.main;
-      const cover = this.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 1)
-        .setOrigin(0, 0)
-        .setScrollFactor(0)
-        .setDepth(30000)
-        .setAlpha(0);
-      cover.setDisplaySize(cam.width, cam.height);
-      this.tweens.add({ targets: cover, alpha: 1, duration: 900 });
-      cam.fadeOut(900, 0, 0, 0);
+      this.game.events.emit('notice', 'The gate is open. The army is coming through.');
+      openGateDoors(this);
+      this.relief.start();
+      // Hold him just long enough to see the doors go, then let him move.
+      this.time.delayedCall(700, () => {
+        if (!this.fighting) this.inputLocked = false;
+      });
       return;
     }
     this.game.events.emit('interact', {
@@ -380,9 +374,10 @@ export class TroyScene extends Phaser.Scene {
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
 
-    this.scatter.update(dt);
+    this.relief.update(dt);
+    if (this.fightCooldown > 0) this.fightCooldown -= dt;
     this.maybeHintRun(moving);
-    if (!this.fighting && !locked && moving) this.maybeRandomFight(dt);
+    if (!this.fighting && !locked) this.maybeMeetFoe();
     aimArrow(this);
   }
 
@@ -393,10 +388,12 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.emit('runHint');
   }
 
-  maybeRandomFight(dt) {
-    this.walkFight += dt;
-    if (this.walkFight < WALK_FIGHT_SECONDS) return;
-    this.walkFight = 0;
+  // No sentries exist until the army has come through the gate.
+  maybeMeetFoe() {
+    if (this.fightCooldown > 0) return;
+    const foe = this.relief.nearestFoe(this.feet.x, this.feet.y, 64);
+    if (!foe) return;
+    this.engagedFoe = foe;
     this.beginFight();
   }
 
@@ -466,9 +463,14 @@ export class TroyScene extends Phaser.Scene {
   }
 
   endFight(won, note) {
+    const foe = this.engagedFoe;
+    this.engagedFoe = null;
     this.fighting = false;
     this.inputLocked = false;
     this.fight = null;
+    this.fightCooldown = 1.2;
+    if (won) this.relief.retire(foe);
+    else this.relief.separate(foe, this.feet);
     this.game.events.emit('fightEnd', { won, note });
   }
 
@@ -522,10 +524,10 @@ function aimArrow(scene) {
   if (!arrow) {
     arrow = document.createElement('div');
     arrow.id = 'gate-arrow';
-    arrow.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><polygon points="3,5 21,12 3,19" fill="#f0d48a" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    arrow.innerHTML = '<svg viewBox="0 0 64 64" width="84" height="84" aria-hidden="true"><polygon points="4,10 58,32 4,54 18,32" fill="#f0d48a" stroke="#1a1208" stroke-width="3" stroke-linejoin="round"/></svg>';
     host.appendChild(arrow);
   }
-  if (scene.questDone) {
+  if (scene.questDone || scene.nearest?.id === 'gate') {
     arrow.style.display = 'none';
     return;
   }
@@ -547,18 +549,25 @@ function aimArrow(scene) {
   const onScreen = sx > 40 && sy > 40 && sx < w - 40 && sy < h - 40;
   let x;
   let y;
-  if (onScreen) {
+  const nearGate = onScreen && Math.hypot(dx, dy) < 220;
+  if (nearGate) {
+    // Above his head, still aimed down at the doors, so it does not cover him.
+    x = sx;
+    y = Math.max(78, sy - 280);
+  } else if (onScreen) {
     const len = Math.hypot(dx, dy) || 1;
-    x = sx - (dx / len) * 56;
-    y = sy - (dy / len) * 56;
+    x = sx - (dx / len) * 130;
+    y = sy - (dy / len) * 130;
   } else {
-    const hw = cx - 56;
-    const hh = cy - 88;
+    const hw = Math.max(72, cx - 96);
+    const hh = Math.max(72, cy - 220);
     const scale = Math.min(hw / Math.abs(dx || 0.001), hh / Math.abs(dy || 0.001));
     x = cx + dx * scale;
     y = cy + dy * scale;
   }
-  const angle = Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
+  const angle = nearGate
+    ? Math.PI / 2
+    : Math.atan2((sy + oy) - (y + oy), (sx + ox) - (x + ox));
   arrow.style.display = 'block';
   arrow.style.transform = `translate(${Math.round(x + ox)}px, ${Math.round(y + oy)}px) rotate(${angle}rad)`;
 }
@@ -583,6 +592,7 @@ function nearestInteractable(x, y, scene) {
   let bestDist = Infinity;
   for (const spot of INTERACTABLES) {
     if (spot.id === 'horse_hatch' && scene.game.registry.get('leftHorse')) continue;
+    if (spot.id === 'gate' && scene.questDone) continue;
     const radius = spot.radius ?? INTERACT_RADIUS;
     const dist = Math.hypot(spot.x - x, spot.y - y);
     if (dist <= radius && dist < bestDist) {
@@ -620,10 +630,13 @@ function publishDebug(scene) {
       feet.body.reset(x, y);
     },
     sentries() {
-      return 0;
+      return scene.relief.foeCount();
     },
     greeks() {
-      return scene.scatter.count();
+      return scene.relief.greekCount();
+    },
+    get reliefPhase() {
+      return scene.relief.phase();
     },
     lookAt(x, y, zoom) {
       const cam = scene.cameras.main;
@@ -680,23 +693,22 @@ function addRect(scene, group, x, y, w, h) {
   return blocker;
 }
 
-function addBeachArmy(scene) {
-  const key = WARRIOR_CONFIG.teams.greek.key;
-  const tex = scene.textures.get(key);
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  const frame = WARRIOR_CONFIG.facingFrames.n;
-  // Two ranks pressed against the doors, centered on the gate.
-  for (let row = 0; row < 2; row += 1) {
-    for (let col = 0; col < 7; col += 1) {
-      const x = 480 + (col - 3) * 42;
-      const y = 678 + row * 34;
-      const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
-      const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
-      const sort = 7000 + y;
-      shadow.setDepth(sort - 2);
-      sprite.setDepth(sort);
-    }
-  }
+function openGateDoors(scene) {
+  const door = scene.gateDoor;
+  if (!door) return;
+  door.blocker.destroy();
+  const src = door.sprite;
+  const x = src.x;
+  const y = src.y;
+  const depth = src.depth;
+  src.setVisible(false);
+  // One picture holds both leaves. Crop each half, then slide them apart.
+  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(depth);
+  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(depth);
+  left.setCrop(0, 0, 64, 72);
+  right.setCrop(64, 0, 64, 72);
+  scene.tweens.add({ targets: left, x: x - 78, duration: 700, ease: 'Cubic.easeOut' });
+  scene.tweens.add({ targets: right, x: x + 78, duration: 700, ease: 'Cubic.easeOut' });
 }
 
 function addSolidProp(scene, group, prop) {
@@ -706,6 +718,7 @@ function addSolidProp(scene, group, prop) {
   const shadow = scene.add.ellipse(prop.x + 5, prop.baseY + 2, wide, tall, 0x1a2438, 0.5);
   // Above the moonlight grade, under the people, so the shadow stays visible.
   shadow.setDepth(5200);
+  let sprite = null;
   if (prop.id === 'horse') {
     // Wheels in the south frame end at pixel 122 of 128. Other facings stay loaded.
     const horse = scene.add.sprite(prop.x, prop.baseY, 'horse', 0);
@@ -713,13 +726,14 @@ function addSolidProp(scene, group, prop) {
     horse.setDepth(7000 + prop.baseY);
   } else {
     // Same band as the horse and the people, so a roof covers whoever is behind it.
-    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
+    sprite = scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(7000 + prop.baseY);
   }
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');
   blocker.setDisplaySize(prop.bodyW, prop.bodyH);
   blocker.refreshBody();
   blocker.setVisible(false);
+  if (prop.id === 'gate-door') scene.gateDoor = { sprite, blocker };
 }
 
 function addLamp(scene, group, lamp) {

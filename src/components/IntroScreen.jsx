@@ -35,7 +35,7 @@ const CARDS = [
   {
     kicker: 'The gate',
     title: 'The hatch',
-    text: 'Answer the question on the trap door, then lead your men out. The gate stands open…',
+    text: 'Answer the question on the trap door and slip out. The city gate is shut. Open it, and the army comes through.',
     art: 'gate',
   },
 ];
