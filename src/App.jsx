@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import IntroScreen from './components/IntroScreen.jsx';
 import Level2World from './components/Level2World.jsx';
+import LessonsTip from './components/LessonsTip.jsx';
 import LoginScreen from './components/LoginScreen.jsx';
 import PauseMenu from './components/PauseMenu.jsx';
 import TroyLearn from './components/TroyLearn.jsx';
@@ -10,7 +11,8 @@ import VoyageScreen from './components/VoyageScreen.jsx';
 import { applySettings, loadSettings } from './lib/settings.js';
 
 // The playable path for the hackathon demo:
-//   login → story intro → Troy → journey map → a short sail → Ithaca
+//   login → story intro → a word on Lessons → Troy → journey map → a short
+//   sail → Ithaca
 //
 // Dev mode and ?level2 open Ithaca directly. They skip the map and the sail.
 // ?voyage still plays the long card sequence. ?journeymap opens the map.
@@ -45,7 +47,8 @@ export default function App() {
   return (
     <div className="app-shell">
       {screen === 'login' && <LoginScreen onEnter={() => setScreen('intro')} />}
-      {screen === 'intro' && <IntroScreen onBegin={() => setScreen('world')} />}
+      {screen === 'intro' && <IntroScreen onBegin={() => setScreen('tip')} />}
+      {screen === 'tip' && <LessonsTip onDone={() => setScreen('world')} />}
       {screen === 'world' && (
         <>
           <TroyWorld

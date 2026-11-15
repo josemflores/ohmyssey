@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadLevelData } from '../learn/loadLevels.js';
 import { loadLearnProgress, recordWin } from '../learn/storage.js';
 import AthenaChat from './AthenaChat.jsx';
-import LearnLevel from './learn/LearnLevel.jsx';
+import LessonBook from './learn/LessonBook.jsx';
 import './TroyLearn.css';
 
 export const ATHENA_EVENT = 'ohmyssey:athena';
@@ -278,7 +278,7 @@ export default function TroyLearn() {
 
       {mode === 'lessons' && lesson && (
         <div className="troy-learn-lesson">
-          <LearnLevel
+          <LessonBook
             key={`${lesson.id}-${progress.difficulty}`}
             level={lesson}
             levels={MENU.map((item) => levelById(item.id)).filter(Boolean)}
