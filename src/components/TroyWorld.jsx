@@ -4,6 +4,13 @@ import { createTroyGame } from '../game/createTroyGame.js';
 import { hatchQuestionAfter } from '../game/hatchQuestions.js';
 import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
 import './TroyWorld.css';
+import {
+  ChoiceLabel,
+  KeysHint,
+  QuestionHeader,
+  choicesClass,
+  useChoiceKeys,
+} from './QuestionCard.jsx';
 
 const MOVES = [ATTACKS.light, ATTACKS.heavy];
 
@@ -284,6 +291,14 @@ export default function TroyWorld({ onSail }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [talk, quiz]);
 
+  const gateChoices = gateAsk && Array.isArray(gateAsk.choices) && gateAsk.choices.length >= 4
+    ? gateAsk.choices
+    : GATE_FALLBACK.choices;
+  // Keys 1–4 answer whichever question card is open.
+  useChoiceKeys(Boolean(quiz && quiz.status === 'open'), quiz?.question.choices.length || 4, pickAnswer);
+  useChoiceKeys(Boolean(fight && fight.phase === 'question' && fight.question), fight?.question?.choices.length || 4, pickFight);
+  useChoiceKeys(Boolean(gateAsk && !gateAsk.wrong), gateChoices.length, pickGate);
+
   const arrived = place === 'horse'
     ? 'Inside the horse. WASD to move. Press E at the hatch.'
     : 'Troy at night. WASD to move.';
@@ -316,10 +331,10 @@ export default function TroyWorld({ onSail }) {
         </div>
       )}
       {quiz && (
-        <div className="troy-talk troy-quiz" role="dialog" aria-label="Hatch question">
-          <p className="troy-talk-id">The hatch</p>
-          <p className="troy-talk-line">{quiz.question.prompt}</p>
-          <div className="troy-quiz-choices">
+        <div className="troy-talk troy-quiz q-card" role="dialog" aria-label="Hatch question">
+          <QuestionHeader eyebrow="Ω · Inside the horse" title="The Hatch" />
+          <p className="q-prompt">{quiz.question.prompt}</p>
+          <div className={choicesClass(quiz.question.choices)}>
             {quiz.question.choices.map((choice, index) => {
               const show = quiz.status !== 'open';
               const correct = index === quiz.question.answer;
@@ -330,28 +345,29 @@ export default function TroyWorld({ onSail }) {
                 <button
                   key={choice}
                   type="button"
-                  className={`troy-quiz-choice${mark}`}
+                  className={`troy-quiz-choice q-choice${mark}`}
                   data-correct={correct ? '1' : '0'}
                   disabled={quiz.status !== 'open'}
                   onClick={() => pickAnswer(index)}
                 >
-                  {choice}
+                  <ChoiceLabel index={index}>{choice}</ChoiceLabel>
                 </button>
               );
             })}
           </div>
+          {quiz.status === 'open' && <KeysHint count={quiz.question.choices.length} />}
           {quiz.status === 'wrong' && (
             <>
-              <p className="troy-quiz-note">{quiz.question.hint} The hatch stays shut until an answer is right.</p>
-              <button type="button" className="btn btn-quiet troy-quiz-next" onClick={anotherQuestion}>
+              <p className="troy-quiz-note q-note is-wrong">{quiz.question.hint} The hatch stays shut until an answer is right.</p>
+              <button type="button" className="troy-quiz-next q-action" onClick={anotherQuestion}>
                 Another question
               </button>
             </>
           )}
           {quiz.status === 'right' && (
             <>
-              <p className="troy-quiz-note">Correct. The hatch is open.</p>
-              <button type="button" className="btn btn-quiet troy-quiz-close" onClick={closeQuiz}>
+              <p className="troy-quiz-note q-note is-right">Correct. The hatch is open.</p>
+              <button type="button" className="troy-quiz-close q-action" onClick={closeQuiz}>
                 Close
               </button>
             </>
@@ -410,16 +426,17 @@ export default function TroyWorld({ onSail }) {
           <div className="battle-dock">
             {fight.note && <p className="battle-note">{fight.note}</p>}
             {fight.phase === 'question' && fight.question && (
-              <div className="battle-question">
-                {fight.attack && <p className="battle-ask">{fight.attack}</p>}
-                <p>{fight.question.prompt}</p>
-                <div className="battle-choices">
+              <div className="battle-question q-card">
+                <QuestionHeader eyebrow="Ω · Battle at Troy" title={fight.attack || 'Strike'} />
+                <p className="q-prompt">{fight.question.prompt}</p>
+                <div className={`battle-choices ${choicesClass(fight.question.choices)}`}>
                   {fight.question.choices.map((choice, index) => (
-                    <button key={choice} type="button" className="battle-choice" onClick={() => pickFight(index)}>
-                      {choice}
+                    <button key={choice} type="button" className="battle-choice q-choice" onClick={() => pickFight(index)}>
+                      <ChoiceLabel index={index}>{choice}</ChoiceLabel>
                     </button>
                   ))}
                 </div>
+                <KeysHint count={fight.question.choices.length} />
               </div>
             )}
             {fight.phase === 'enemy' && (
@@ -446,28 +463,27 @@ export default function TroyWorld({ onSail }) {
       )}
       {gateAsk && (
         <div className="gate-ask" role="dialog" aria-label="The gate">
-          <div className="battle-question">
-            <p className="battle-ask">The gate</p>
-            <p>{gateAsk.prompt || GATE_FALLBACK.prompt}</p>
-            <div className="battle-choices">
-              {(Array.isArray(gateAsk.choices) && gateAsk.choices.length >= 4
-                ? gateAsk.choices
-                : GATE_FALLBACK.choices).map((choice, index) => (
+          <div className="battle-question q-card">
+            <QuestionHeader eyebrow="Ω · The walls of Troy" title="The Gate" />
+            <p className="q-prompt">{gateAsk.prompt || GATE_FALLBACK.prompt}</p>
+            <div className={`battle-choices ${choicesClass(gateChoices)}`}>
+              {gateChoices.map((choice, index) => (
                 <button
                   key={choice}
                   type="button"
-                  className="battle-choice"
+                  className="battle-choice q-choice"
                   disabled={gateAsk.wrong}
                   onClick={() => pickGate(index)}
                 >
-                  {choice}
+                  <ChoiceLabel index={index}>{choice}</ChoiceLabel>
                 </button>
               ))}
             </div>
+            {!gateAsk.wrong && <KeysHint count={gateChoices.length} />}
             {gateAsk.wrong && (
               <>
-                <p className="battle-note">{gateAsk.hint} The gate stays shut.</p>
-                <button type="button" className="battle-continue" onClick={dismissGate}>
+                <p className="battle-note q-note is-wrong">{gateAsk.hint} The gate stays shut.</p>
+                <button type="button" className="battle-continue q-action" onClick={dismissGate}>
                   Again
                 </button>
               </>

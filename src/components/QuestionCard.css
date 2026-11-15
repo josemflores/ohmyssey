@@ -1,0 +1,248 @@
+/*
+ * Question cards: the hatch riddle, the gate, and battle questions.
+ * Same parchment as the login card: dotted paper, a double gold rule,
+ * Cinzel for titles, a meander under the title, and Cormorant Garamond
+ * (a classical serif) for the question and answers.
+ * Loaded after TroyWorld.css, so these rules win over the old dark boxes.
+ */
+
+:root {
+  --font-classic: "Cormorant Garamond", "EB Garamond", Garamond, Georgia, serif;
+}
+
+.q-card {
+  position: relative;
+  color: var(--ink);
+  text-align: center;
+  background-color: var(--parchment);
+  background-image: radial-gradient(rgba(90, 60, 20, 0.06) 0.7px, transparent 0.7px);
+  background-size: 8px 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 4px rgba(246, 234, 210, 0.75),
+    inset 0 0 0 5px rgba(196, 163, 106, 0.75);
+}
+
+/* The old dark boxes painted every paragraph cream. On parchment, ink. */
+.gate-ask .q-card p,
+.battle-screen .q-card p,
+.troy-talk.q-card p { color: var(--ink); }
+.gate-ask .q-card p.q-eyebrow,
+.battle-screen .q-card p.q-eyebrow,
+.troy-talk.q-card p.q-eyebrow { color: var(--gold); }
+.gate-ask .q-card p.q-keys,
+.battle-screen .q-card p.q-keys,
+.troy-talk.q-card p.q-keys { color: var(--ink-soft); }
+
+/* Numbers in the classical face: lining figures, so 1 never reads as I. */
+.q-card .q-prompt,
+.q-card .q-choice,
+.q-card .q-note {
+  font-variant-numeric: lining-nums;
+  font-feature-settings: "lnum" 1;
+}
+
+/* Each place sets its own size and position; the look is shared. */
+.troy-talk.troy-quiz.q-card {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  width: min(560px, calc(100% - 32px));
+  padding: 1.15rem 1.4rem 1.1rem;
+  background-color: var(--parchment);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.gate-ask .battle-question.q-card {
+  width: min(600px, 92vw);
+  padding: 1.15rem 1.4rem 1.2rem;
+  background-color: var(--parchment);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.battle-dock .battle-question.q-card {
+  align-self: center;
+  width: min(600px, 94vw);
+  padding: 1rem 1.3rem 1.1rem;
+}
+
+.q-eyebrow {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.q-title {
+  margin: 0.1rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 3.2vw, 1.9rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.q-rule {
+  height: 14px;
+  max-width: 220px;
+  margin: 0.45rem auto 0.7rem;
+  background: url('/assets/ui/meander.svg') center repeat-x;
+  background-size: 36px 12px;
+  opacity: 0.85;
+}
+
+/* The question itself. Overrides the light-on-dark paragraph colors. */
+.q-card .q-prompt,
+.gate-ask .q-card p.q-prompt,
+.battle-screen .q-card p.q-prompt {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: clamp(1.18rem, 2.4vw, 1.38rem);
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.q-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin: 0 0 0.2rem;
+}
+/* Long sentence answers read better one per row. */
+.q-choices.is-long { grid-template-columns: 1fr; }
+
+.q-card .q-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 50px;
+  padding: 0.5rem 0.9rem 0.5rem 0.55rem;
+  border: 1px solid #b89458;
+  border-radius: 999px;
+  background: linear-gradient(#fffaf0, #f3e4c4);
+  color: var(--ink);
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: 1.12rem;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(138, 100, 36, 0.25);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.q-card .q-choice:hover:not(:disabled) {
+  background: linear-gradient(#f6e3a8, #d9b064);
+  border-color: #8a6424;
+  box-shadow: 0 0 0 3px rgba(240, 212, 138, 0.4), 0 3px 0 rgba(138, 100, 36, 0.3);
+}
+.q-card .q-choice:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+.q-card .q-choice:focus-visible {
+  outline: 3px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+.q-card .q-choice:disabled { cursor: default; opacity: 1; }
+
+/* Greek letter, like a numbered seal. */
+.q-letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f6dfa0, #c4963c);
+  border: 1px solid #8a6424;
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.q-card .q-choice.is-right {
+  background: linear-gradient(#e6f2d6, #b9d6a0);
+  border-color: var(--laurel);
+}
+.q-card .q-choice.is-right .q-letter { background: var(--laurel); color: #f6ead2; border-color: #1d4a2e; }
+.q-card .q-choice.is-wrong {
+  background: linear-gradient(#f6d8cf, #e3a998);
+  border-color: var(--terracotta);
+}
+.q-card .q-choice.is-wrong .q-letter { background: var(--terracotta); color: #f6ead2; border-color: #6a2418; }
+
+/* Feedback and follow-up buttons inside the card. */
+.q-card .q-note,
+.gate-ask .q-card p.q-note {
+  margin: 0.8rem 0 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border-left: 3px solid var(--gold);
+  background: rgba(255, 250, 240, 0.75);
+  color: var(--ink);
+  font-family: var(--font-classic);
+  font-weight: 600;
+  font-size: 1.08rem;
+  text-align: left;
+}
+.q-card .q-note.is-right { border-left-color: var(--laurel); }
+.q-card .q-note.is-wrong { border-left-color: var(--terracotta); }
+.q-card .q-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  min-height: 46px;
+  margin-top: 0.15rem;
+  padding: 0.5rem 1.4rem;
+  border: 1px solid #8a6424;
+  border-radius: 999px;
+  background: linear-gradient(#f3dd9a, #c4963c);
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(240, 212, 138, 0.28), 0 8px 14px rgba(40, 24, 8, 0.18);
+}
+.q-card .q-action:hover { filter: brightness(1.06); }
+.q-card .q-action:focus-visible { outline: 3px solid var(--gold-bright); outline-offset: 3px; }
+
+.q-keys {
+  margin: 0.55rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.q-keys kbd {
+  display: inline-block;
+  min-width: 1.3em;
+  padding: 0 0.3em;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fffaf0;
+  font: inherit;
+}
+
+@media (max-width: 560px) {
+  .q-choices { grid-template-columns: 1fr; }
+  .q-card .q-choice { min-height: 46px; font-size: 1.05rem; }
+}
+
+/* While a question is up, the Athena / Lessons buttons step aside. */
+body:has(.q-card) .troy-learn-hud { display: none; }
+
+@media (max-width: 560px), (max-height: 640px) {
+  .q-keys { display: none; }
+  .q-card .q-rule { margin: 0.3rem auto 0.5rem; }
+  .q-title { font-size: 1.35rem; }
+  .battle-dock .battle-question.q-card { padding: 0.8rem 0.9rem 0.85rem; }
+  .q-card .q-prompt,
+  .battle-screen .q-card p.q-prompt { margin-bottom: 0.6rem; font-size: 1.12rem; }
+  .q-choices { gap: 0.4rem; }
+}
