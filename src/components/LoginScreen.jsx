@@ -11,20 +11,14 @@ import './NightBackdrop.css';
 import './LoginScreen.css';
 
 const SIGN_IN_MS = 1200;
-const PASSWORD_MIN = 4;
-const PASSWORD_MAX = 64;
 
-// Demo gate. The username is remembered in this browser.
-// The password is checked only so the form can complain, then thrown away.
+// Demo gate. The only thing kept is a display name in this browser.
 export default function LoginScreen({ onEnter }) {
   const [remembered] = useState(() => storedPlayerName());
   const [username, setUsername] = useState(remembered);
-  const [password, setPassword] = useState('');
   const [nameError, setNameError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
   const [pending, setPending] = useState('');
   const usernameRef = useRef(null);
-  const passwordRef = useRef(null);
   const lock = useRef(false);
   const timer = useRef(null);
 
@@ -41,15 +35,9 @@ export default function LoginScreen({ onEnter }) {
     event.preventDefault();
     if (lock.current) return;
     const nextNameError = playerNameError(username);
-    const nextPasswordError = optionalPasswordError(password);
     setNameError(nextNameError);
-    setPasswordError(nextPasswordError);
     if (nextNameError) {
       usernameRef.current?.focus();
-      return;
-    }
-    if (nextPasswordError) {
-      passwordRef.current?.focus();
       return;
     }
     lock.current = true;
@@ -62,7 +50,6 @@ export default function LoginScreen({ onEnter }) {
     if (lock.current) return;
     lock.current = true;
     setPending('guest');
-    setPassword('');
     rememberPlayer(GUEST_NAME);
     onEnter();
   }
@@ -71,9 +58,6 @@ export default function LoginScreen({ onEnter }) {
   const usernameDescribedBy = nameError
     ? 'login-username-hint login-username-error'
     : 'login-username-hint';
-  const passwordDescribedBy = passwordError
-    ? 'login-password-hint login-password-error'
-    : 'login-password-hint';
 
   return (
     <NightBackdrop ship>
@@ -120,32 +104,6 @@ export default function LoginScreen({ onEnter }) {
               </p>
             )}
           </div>
-          <div className="login-field">
-            <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              ref={passwordRef}
-              type="password"
-              value={password}
-              autoComplete="off"
-              spellCheck="false"
-              enterKeyHint="go"
-              aria-invalid={passwordError ? 'true' : 'false'}
-              aria-describedby={passwordDescribedBy}
-              disabled={busy}
-              maxLength={80}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                if (passwordError) setPasswordError('');
-              }}
-            />
-            <p id="login-password-hint" className="login-hint">Optional. Not saved.</p>
-            {passwordError && (
-              <p id="login-password-error" className="login-error" role="alert">
-                {passwordError}
-              </p>
-            )}
-          </div>
           <div className="login-actions">
             <button className="btn login-submit" type="submit" disabled={busy}>
               {pending === 'sign-in' ? 'Signing in…' : 'Log in'}
@@ -164,21 +122,12 @@ export default function LoginScreen({ onEnter }) {
             {pending === 'sign-in' ? 'Signing in' : ''}
           </p>
           <p className="login-note">
-            Only your name stays in this browser. The password is not saved, and nothing is sent away.
+            Only your display name stays in this browser. Nothing is sent away.
           </p>
         </form>
       </main>
     </NightBackdrop>
   );
-}
-
-function optionalPasswordError(value) {
-  if (value.trim() === '') return '';
-  if (value.trim().length < PASSWORD_MIN) {
-    return 'Leave the password blank, or use at least 4 characters.';
-  }
-  if (value.length > PASSWORD_MAX) return 'Keep the password under 64 characters.';
-  return '';
 }
 
 function Torch() {

@@ -1,6 +1,6 @@
 /**
  * Display name for the demo gate.
- * The password never comes through here and is never written to storage.
+ * The login form does not collect a password.
  *
  * ohmyssey.player is a plain string, 2–20 characters.
  * getPlayerName() is what other screens should greet with.
