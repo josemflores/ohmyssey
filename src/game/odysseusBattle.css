@@ -2,14 +2,17 @@
    wrapper still handles lunges, recoil, damage flashes, and turn timing.
    East is facing number 2 in the generated strips. */
 .battle-screen .battle-sprite.battle-hero {
-  background-image: url('/assets/sprites/odysseus_idle_animation.png');
-  background-size: calc(var(--sp) * 16) var(--sp);
-  background-position: calc(var(--sp) * -4) 0;
+  /* Single-facing strips from art/scripts/build_battle_strips.py. The full
+     8-facing sheets, scaled to battle size, were wider than the biggest
+     texture a browser will draw on a 2x screen, so he vanished mid-attack. */
+  background-image: url('/assets/battle/odysseus_idle_e.png');
+  background-size: calc(var(--sp) * 2) var(--sp);
+  background-position: 0 0;
   animation: odysseus-idle 0.5s steps(1) infinite alternate;
 }
 @keyframes odysseus-idle {
-  from { background-position-x: calc(var(--sp) * -4); }
-  to { background-position-x: calc(var(--sp) * -5); }
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--sp) * -1); }
 }
 
 /* Attack cells are twice as large to fit the sword. The pseudo-element
@@ -23,36 +26,37 @@
   content: '';
   position: absolute;
   inset: -50%;
-  background-image: url('/assets/sprites/odysseus_attack.png');
+  background-image: url('/assets/battle/odysseus_attack_e.png');
   background-repeat: no-repeat;
-  background-size: calc(var(--sp) * 96) calc(var(--sp) * 2);
-  background-position: calc(var(--sp) * -24) 0;
+  background-size: calc(var(--sp) * 12) calc(var(--sp) * 2);
+  background-position: 0 0;
+  image-rendering: pixelated;
   animation: odysseus-attack 0.68s steps(5) forwards;
 }
 .battle-screen.is-jab .battle-hero::before { animation-duration: 0.5s; }
 .battle-screen.is-heavy .battle-hero::before { animation-duration: 0.98s; }
 .battle-screen.is-whiff .battle-hero::before { animation-duration: 0.54s; }
 @keyframes odysseus-attack {
-  from { background-position-x: calc(var(--sp) * -24); }
-  to { background-position-x: calc(var(--sp) * -34); }
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--sp) * -10); }
 }
 
 /* The generator's hurt row faces south. Play the standing recoil and recovery
    only, rather than showing its fall-to-the-ground frames on every hit. */
 .battle-screen.is-counter .battle-sprite.battle-hero {
-  background-image: url('/assets/sprites/odysseus_hit.png');
-  background-size: calc(var(--sp) * 24) var(--sp);
+  background-image: url('/assets/battle/odysseus_hit_e.png');
+  background-size: calc(var(--sp) * 3) var(--sp);
   animation: odysseus-hit 0.64s steps(2) forwards;
 }
 @keyframes odysseus-hit {
-  from { background-position-x: calc(var(--sp) * -6); }
-  to { background-position-x: calc(var(--sp) * -8); }
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--sp) * -2); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .battle-screen .battle-sprite.battle-hero { animation: none; }
   .battle-screen:is(.is-jab, .is-strike, .is-heavy, .is-whiff) .battle-hero::before {
     animation: none;
-    background-position-x: calc(var(--sp) * -32);
+    background-position-x: calc(var(--sp) * -8);
   }
 }

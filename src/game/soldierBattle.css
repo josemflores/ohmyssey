@@ -5,40 +5,42 @@
 
 /* Idle: two breathing frames per facing. West is frames 12 and 13. */
 .battle-screen .battle-sprite.battle-trojan {
-  background-image: url('/assets/sprites/npcs/trojan_lpc/trojan_idle_animation.png');
-  background-size: calc(var(--foe) * 16) var(--foe);
-  background-position: calc(var(--foe) * -12) 0;
+  /* Single-facing strips (art/scripts/build_battle_strips.py), so no
+     texture gets too wide for the browser to draw on a 2x screen. */
+  background-image: url('/assets/battle/trojan_idle_w.png');
+  background-size: calc(var(--foe) * 2) var(--foe);
+  background-position: 0 0;
 }
 .battle-screen .battle-member:not(.is-down) .battle-sprite.battle-trojan {
   animation: trojan-idle 0.5s steps(1) infinite alternate;
 }
 @keyframes trojan-idle {
-  from { background-position-x: calc(var(--foe) * -12); }
-  to { background-position-x: calc(var(--foe) * -13); }
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--foe) * -1); }
 }
 
 /* Attack: when the Trojan hits back (is-counter), the target thrusts his
    spear. Six frames per facing, so west starts at frame 36. The wrapper's
    foe-counter lunge still carries him toward Odysseus. */
 .battle-screen.is-counter .battle-member.is-target .battle-sprite.battle-trojan {
-  background-image: url('/assets/sprites/npcs/trojan_lpc/trojan_attack.png');
-  background-size: calc(var(--foe) * 48) var(--foe);
-  background-position: calc(var(--foe) * -36) 0;
+  background-image: url('/assets/battle/trojan_attack_w.png');
+  background-size: calc(var(--foe) * 6) var(--foe);
+  background-position: 0 0;
   animation:
     trojan-attack 0.64s steps(5) forwards,
     foe-counter 0.64s ease-in-out;
 }
 @keyframes trojan-attack {
-  from { background-position-x: calc(var(--foe) * -36); }
-  to { background-position-x: calc(var(--foe) * -41); }
+  from { background-position-x: 0; }
+  to { background-position-x: calc(var(--foe) * -5); }
 }
 
 /* Hurt: when Odysseus lands a blow, the Trojan flinches (frames 0-2 of the
    hit strip), turns red, and is knocked back by the existing foe-hit move. */
 .battle-screen:is(.is-jab, .is-strike) .battle-member.is-target:not(.is-down) .battle-sprite.battle-trojan,
 .battle-screen.is-heavy .battle-member:is(.is-target, .is-splash):not(.is-down) .battle-sprite.battle-trojan {
-  background-image: url('/assets/sprites/npcs/trojan_lpc/trojan_hit.png');
-  background-size: calc(var(--foe) * 24) var(--foe);
+  background-image: url('/assets/battle/trojan_hit.png');
+  background-size: calc(var(--foe) * 3) var(--foe);
   background-position: 0 0;
   animation:
     trojan-hit 0.55s steps(2) forwards,
@@ -254,7 +256,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 118px;
+    width: calc(var(--foe) + 8px);
   }
   .troy .battle-screen .battle-member .battle-sprite { order: 0; margin-top: 0; }
   .troy .battle-screen .battle-member .battle-hp-track { order: 1; width: 78%; height: 5px; margin: 6px auto 0; }

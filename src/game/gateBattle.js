@@ -22,7 +22,7 @@
 
 import Phaser from 'phaser';
 import { soldierAnim, soldierWalk, facingToward, addBreathing } from './soldierAnimations.js';
-import { PROPS } from './map.js';
+import { MAP_H, MAP_W, PROPS } from './map.js';
 import { addTorch, igniteHouse } from './burning.js';
 
 // Where each pair fights: on the two flanks just inside the wall, leaving the
@@ -218,24 +218,29 @@ const DOOR_OFFSET = { house: 9, houseAlt: 0 };
 
 // Send the torch-bearers. They start on the beach right behind the duelists,
 // run in through the gate, stop at their door, and the house catches fire.
-function sendTorchBearers(scene, westX, eastX) {
+function sendTorchBearers(scene, westX, eastX, avoid) {
   let lastMs = 0;
+  scene.torchBearers = [];
   BURN_HOUSES.forEach((target, index) => {
     const prop = PROPS.find((p) => p.x === target.x && p.baseY === target.baseY);
     if (!prop) return;
     const west = prop.x < GATE_X;
     const lane = west ? -10 : 10;
     const door = { x: prop.x + (DOOR_OFFSET[prop.id] || 0), y: prop.baseY + 12 };
-    const man = addSoldier(scene, 'greek', west ? westX : eastX, 712 + (index % 2) * 14, 'greek-hoplite');
+    // Along the wet sand south of the oak, in through the gate, then a route
+    // on open ground to his door: around houses, trees, lamps and the
+    // duelists' spots, never through them.
+    const startAt = { x: west ? westX : eastX, y: 730 + (index % 2) * 13 };
+    const man = addSoldier(scene, 'greek', startAt.x, startAt.y, 'greek-hoplite');
     man.torch = addTorch(scene, man);
-    // Through the gate, then up the open middle of the street, then across
-    // to the door at the height of the house front.
-    const path = [
-      { x: GATE_X + lane, y: 690 },
-      { x: GATE_X + lane, y: INSIDE_Y },
-      { x: GATE_X + lane, y: door.y },
-      door,
-    ];
+    const gateIn = { x: GATE_X + lane, y: INSIDE_Y };
+    const beach = [{ x: GATE_X + lane, y: startAt.y }, gateIn];
+    const onward = routePath(avoid, gateIn, door);
+    let path = onward ? [...beach, ...onward] : [...beach, { x: GATE_X + lane, y: door.y }, door];
+    if (!pathClear(avoid, startAt, beach)) {
+      man.sprite.setPosition(GATE_X + lane, startAt.y);
+      path = path.slice(1);
+    }
     const delay = 500 + index * 150;
     runPath(scene, man, path, delay, () => {
       man.facing = 'n';
@@ -252,6 +257,7 @@ function sendTorchBearers(scene, westX, eastX) {
       });
     });
     lastMs = Math.max(lastMs, delay + pathMs(man.sprite, path));
+    scene.torchBearers.push(man);
   });
   return lastMs;
 }
@@ -273,6 +279,71 @@ function lineClear(boxes, from, to) {
     const t = i / Math.max(1, steps);
     const a = feetBox(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
     if (boxes.some((r) => a.x < r.x + r.w && a.x + a.w > r.x && a.y < r.y + r.h && a.y + a.h > r.y)) return false;
+  }
+  return true;
+}
+
+// A route on open ground from `from` to `to`, for men whose way is not a
+// straight line (the torch-bearers). Breadth-first search over an 8px grid
+// of the map, where a cell is open when a feet-sized box there touches
+// nothing solid; then the zig-zag is pulled tight into a few straight legs.
+// Returns the points to walk (not including `from`), or null.
+const GRID = 8;
+function routePath(boxes, from, to) {
+  const cols = Math.floor(MAP_W / GRID);
+  const rows = Math.floor(MAP_H / GRID);
+  const open = (c, r) => {
+    if (c < 1 || r < 1 || c >= cols - 1 || r >= rows - 1) return false;
+    const a = feetBox(c * GRID, r * GRID);
+    return !boxes.some((b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y);
+  };
+  const sc = Math.round(from.x / GRID);
+  const sr = Math.round(from.y / GRID);
+  const tc = Math.round(to.x / GRID);
+  const tr = Math.round(to.y / GRID);
+  const prev = new Int32Array(cols * rows).fill(-1);
+  const start = sr * cols + sc;
+  prev[start] = start;
+  const queue = [start];
+  let found = -1;
+  for (let head = 0; head < queue.length; head += 1) {
+    const key = queue[head];
+    const c = key % cols;
+    const r = (key - c) / cols;
+    if (Math.abs(c - tc) <= 1 && Math.abs(r - tr) <= 1) { found = key; break; }
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nc = c + dc;
+      const nr = r + dr;
+      const nk = nr * cols + nc;
+      if (prev[nk] !== -1 || !open(nc, nr)) continue;
+      prev[nk] = key;
+      queue.push(nk);
+    }
+  }
+  if (found < 0) return null;
+  const cells = [];
+  for (let k = found; k !== start; k = prev[k]) cells.push({ x: (k % cols) * GRID, y: Math.floor(k / cols) * GRID });
+  cells.reverse();
+  if (lineClear(boxes, cells[cells.length - 1] || from, to)) cells.push(to);
+  // Pull tight: from each point, jump to the farthest point still in plain view.
+  const legs = [];
+  let at = from;
+  let i = 0;
+  while (i < cells.length) {
+    let j = cells.length - 1;
+    while (j > i && !lineClear(boxes, at, cells[j])) j -= 1;
+    legs.push(cells[j]);
+    at = cells[j];
+    i = j + 1;
+  }
+  return legs;
+}
+
+function pathClear(boxes, from, points) {
+  let at = from;
+  for (const to of points) {
+    if (!lineClear(boxes, at, to)) return false;
+    at = to;
   }
   return true;
 }
@@ -325,7 +396,10 @@ export function startGateBattle(scene) {
     const rank = west ? index : index - WEST_COUNT;
     // Each file comes along the beach from its own side, from out of view.
     const beachX = west ? westX : eastX;
-    const greek = addSoldier(scene, 'greek', beachX, 704 + (rank % 3) * 16, 'greek-hoplite');
+    // Along the wet sand, south of the oak outside the gate (map.js), then
+    // north up the road. Each leg is checked against everything solid.
+    const beachY = 730 + (rank % 3) * 13;
+    const greek = addSoldier(scene, 'greek', beachX, beachY, 'greek-hoplite');
     const tSpot = { x: trojanX, y: spot.y };
     const tFrom = trojanStart(boxes, tSpot, viewTop);
     const trojan = addSoldier(scene, 'trojan', tFrom.x, tFrom.y, 'trojan-soldier');
@@ -333,11 +407,17 @@ export function startGateBattle(scene) {
     const pair = { greek, trojan, ready: 0 };
     // Along the beach to the road, up the middle of the gate, then off to
     // the duel spot.
-    const greekPath = [
-      { x: GATE_X + lane, y: 690 },
+    let greekPath = [
+      { x: GATE_X + lane, y: beachY },
       { x: GATE_X + lane, y: INSIDE_Y },
       { x: greekX, y: spot.y },
     ];
+    if (!pathClear(boxes, { x: beachX, y: beachY }, greekPath)) {
+      // Something new is in the way on the beach: start him on the road
+      // itself, out of view to the south, and fade him in. Never through it.
+      greek.sprite.setPosition(GATE_X + lane, beachY);
+      greekPath = greekPath.slice(1);
+    }
     const greekDelay = 150 + rank * 130;
     runPath(scene, greek, greekPath, greekDelay, () => arrive(scene, pair, greek, greekFacing));
     const trojanDelay = 150 + index * 30;
@@ -351,7 +431,11 @@ export function startGateBattle(scene) {
   });
   // The torch-bearers follow the duelists in. The camera does not wait for
   // them (they run deep into the city), so their time is not in lastMs.
-  sendTorchBearers(scene, westX, eastX);
+  // Every duelist's spot counts as solid for their route.
+  const duelBoxes = DUEL_SPOTS.flatMap((spot) => [-HALF_GAP, HALF_GAP].map((dx) => ({
+    x: spot.x + dx - 11, y: spot.y - 14, w: 22, h: 16,
+  })));
+  sendTorchBearers(scene, westX, eastX, [...boxes, ...duelBoxes]);
   scene.gateBattle = pairs;
   scene.gateBattleMs = lastMs;
   return pairs;
