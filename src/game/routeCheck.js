@@ -30,7 +30,7 @@ export function routeReport() {
     ['the great wall', 192, wallY],
     ['the temple', 480, 136],
     ['the horse', 480, 210],
-    ['a house', 120, 150],
+    ['a house', 120, 120],
   ];
 
   for (const [name, x, y] of want) {

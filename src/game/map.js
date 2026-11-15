@@ -65,6 +65,11 @@ export const WALL = { top: 37, bottom: 40 };
 // Beach, on the road, just south of the gate. The voyage starts in the horse.
 export const SPAWN = { x: 480, y: 694 };
 
+// The painted house is 60×64. The solid box is that whole picture, so his
+// feet stop at the walls and the roof instead of walking through them.
+const HOUSE_W = 60;
+const HOUSE_H = 64;
+
 // id must match a picture in textures.js.
 // baseY is the bottom of the picture (the ground contact).
 // The solid box sits on that ground and is `insetBottom` pixels shorter,
@@ -73,15 +78,17 @@ export const PROPS = [
   // Steps and the column bases. The roof above this can draw over him.
   { id: 'temple', x: 480, baseY: 148, bodyW: 96, bodyH: 36, insetBottom: 0 },
 
-  { id: 'house', x: 120, baseY: 156, bodyW: 52, bodyH: 16, insetBottom: 0 },
-  { id: 'houseAlt', x: 214, baseY: 250, bodyW: 52, bodyH: 16, insetBottom: 0 },
-  { id: 'house', x: 840, baseY: 156, bodyW: 52, bodyH: 16, insetBottom: 0 },
-  { id: 'houseAlt', x: 746, baseY: 250, bodyW: 52, bodyH: 16, insetBottom: 0 },
+  { id: 'house', x: 120, baseY: 156, bodyW: HOUSE_W, bodyH: HOUSE_H, insetBottom: 0 },
+  { id: 'houseAlt', x: 214, baseY: 250, bodyW: HOUSE_W, bodyH: HOUSE_H, insetBottom: 0 },
+  { id: 'house', x: 840, baseY: 156, bodyW: HOUSE_W, bodyH: HOUSE_H, insetBottom: 0 },
+  { id: 'houseAlt', x: 746, baseY: 250, bodyW: HOUSE_W, bodyH: HOUSE_H, insetBottom: 0 },
 
   // Three fences across the plaza. Each one leaves a gap on the zigzag.
   ...fence(392, 11, 19),
   ...fence(488, 41, 49),
-  ...fence(552, 25, 35),
+  // Far enough south of the row above that the two pictures do not touch.
+  // A full-height house on the old line sat on that row and closed the lane.
+  ...fence(576, 25, 35),
 
   // Columns stand by the temple, north of the horse.
   { id: 'column', x: 400, baseY: 124, bodyW: 12, bodyH: 8, insetBottom: 0 },
@@ -183,9 +190,8 @@ export const LAMPS = [
 function fence(baseY, gapTileLeft, gapTileRight) {
   const row = [];
   let n = 0;
-  // 62px apart, each house blocks 56 of that. The 6px crack is narrower than
-  // his feet, so it is not a path. The box is the ground floor, flush with
-  // the picture, so the roof can draw over him and the lane beside it is open.
+  // 62px apart, each house fills its 60px picture. The 2px crack is narrower
+  // than his feet, so the opening left in the row is the only way through.
   for (let x = 40; x <= 920; x += 62) {
     const centerTile = x / TILE;
     if (centerTile > gapTileLeft && centerTile < gapTileRight) continue;
@@ -193,8 +199,8 @@ function fence(baseY, gapTileLeft, gapTileRight) {
       id: n % 2 === 0 ? 'house' : 'houseAlt',
       x,
       baseY,
-      bodyW: 56,
-      bodyH: 16,
+      bodyW: HOUSE_W,
+      bodyH: HOUSE_H,
       insetBottom: 0,
     });
     // A tree behind every other roof, so the row is not one flat wall.
