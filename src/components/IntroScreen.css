@@ -1,4 +1,12 @@
-.intro { width: min(540px, 100%); }
+.intro { width: min(620px, 100%); }
+
+/* The story card sits above the waves. A slightly shorter night pad lets the
+   painting stay near 38vh tall and still leave the title, text, and buttons
+   on a laptop screen. */
+.night:has(.intro) .night-content {
+  padding-top: 1.1rem;
+  padding-bottom: 5.4rem;
+}
 
 .intro-card {
   position: relative;
@@ -23,7 +31,34 @@
   font-size: clamp(1.5rem, 3vw, 2rem);
   margin-bottom: 0.35rem;
 }
-.intro-art { width: min(240px, 70%); height: auto; display: block; margin: 0.2rem auto 0.4rem; }
+.intro-frame {
+  position: relative;
+  width: min(100%, calc(38vh * 4 / 3), calc((100vh - 27rem) * 4 / 3));
+  aspect-ratio: 4 / 3;
+  margin: 0.3rem auto 0.4rem;
+  border: 1px solid #c4963c;
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(28, 16, 8, 0.32);
+  overflow: hidden;
+  background: #16100c;
+}
+.intro-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+  transform-origin: center center;
+  animation: intro-kenburns 10s linear forwards;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+@keyframes intro-kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
 .intro-text {
   margin: 0 auto;
   max-width: 34rem;
@@ -116,6 +151,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .intro-slide, .intro-timer span { animation: none; }
+  .intro-slide, .intro-timer span, .intro-art { animation: none; }
   .intro-timer { display: none; }
 }
