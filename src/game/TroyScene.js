@@ -43,7 +43,10 @@ import { buildWorldTextures } from './textures.js';
 // The LPC figure fills about 25 of the 32px cell. 4/3 brings him in line
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
-const HERO_SCALE = 4 / 3;
+// Odysseus is drawn at the same 1x as the Greek and Trojan soldiers. They
+// all share the same 32x32 LPC body, so 4/3 made him a head taller than
+// everyone else in the horse and in Troy.
+const HERO_SCALE = 1;
 
 // How long each battle picture plays before the turn strip moves on.
 const TROJAN_HP = 8;
@@ -1204,41 +1207,30 @@ function openGateDoors(scene) {
   }
   // The Greeks open the gate quietly; nothing is broken. One picture holds
   // the two stone jambs and the two wooden leaves (128 px wide: jamb 0-8,
-  // leaves 8-64 and 64-120, jamb 120-128). The jambs stay put. Each leaf
-  // turns on its hinge beside its jamb and folds back against the wall,
-  // which from above reads as it narrowing toward the hinge.
-  const frameLeft = x - 64;
+  // leaves 8-64 and 64-120, jamb 120-128). Each leaf slides sideways into
+  // a pocket in the wall: it moves outward while the part that has passed
+  // the jamb is cropped away, so it disappears behind the stone. The jambs
+  // are drawn on top to cover the seam. Flat 2D, nothing tips toward us.
+  const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
+  const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
   for (const [cropX, cropW] of [[0, 8], [120, 8]]) {
-    scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420).setCrop(cropX, 0, cropW, 72);
+    scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7421).setCrop(cropX, 0, cropW, 72);
   }
-  const left = scene.add.image(frameLeft + 8, y, 'gate-door')
-    .setOrigin(8 / 128, 1)
-    .setDepth(7421)
-    .setCrop(8, 0, 56, 72);
-  const right = scene.add.image(frameLeft + 120, y, 'gate-door')
-    .setOrigin(120 / 128, 1)
-    .setDepth(7421)
-    .setCrop(64, 0, 56, 72);
-  [left, right].forEach((leaf, index) => {
-    scene.tweens.add({
-      targets: leaf,
-      scaleX: 0.14,
-      delay: index * 90,
-      duration: 1100,
-      ease: 'Sine.easeInOut',
-    });
-    // The leaf darkens a little as it turns edge-on, away from the moon.
-    scene.tweens.addCounter({
-      from: 255,
-      to: 150,
-      delay: index * 90,
-      duration: 1100,
-      ease: 'Sine.easeInOut',
-      onUpdate: (tween) => {
-        const v = Math.round(tween.getValue());
-        leaf.setTint(Phaser.Display.Color.GetColor(v, v, v));
-      },
-    });
+  const LEAF = 56;
+  // Leave a thin edge of each leaf showing in the opening, like a door
+  // standing in its pocket.
+  const SLIDE = LEAF - 4;
+  const place = (d) => {
+    left.setX(x - d).setCrop(8 + d, 0, LEAF - d, 72);
+    right.setX(x + d).setCrop(64, 0, LEAF - d, 72);
+  };
+  place(0);
+  scene.tweens.addCounter({
+    from: 0,
+    to: SLIDE,
+    duration: 1300,
+    ease: 'Sine.easeInOut',
+    onUpdate: (tween) => place(Math.round(tween.getValue())),
   });
 }
 

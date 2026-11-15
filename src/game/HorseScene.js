@@ -28,7 +28,10 @@ const ROOM_W = 192;
 const ROOM_H = 144;
 const WALL = 18;
 const SPEED = 70;
-const HERO_SCALE = 4 / 3;
+// Odysseus is drawn at the same 1x as the Greek and Trojan soldiers. They
+// all share the same 32x32 LPC body, so 4/3 made him a head taller than
+// everyone else in the horse and in Troy.
+const HERO_SCALE = 1;
 
 // He wakes up in the middle of the belly.
 const SPAWN = { x: 96, y: 64 };
