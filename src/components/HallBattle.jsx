@@ -53,10 +53,11 @@ export const WAVES = [
 ];
 
 // How long each animation plays before the fight moves on (HallBattle.css).
-const ANIM_MS = { shot: 1200, volley: 1350, loose: 1100, counter: 760 };
-// Odysseus draws the string back to his cheek and lets go 0.56 s into the
-// shot (the release frame of odysseus_bow_shoot_e.png); the arrows fly then.
-const RELEASE_MS = 560;
+const ANIM_MS = { shot: 1350, volley: 1500, loose: 1250, counter: 760 };
+// Odysseus brings the bow up from his side, draws the string back to his
+// cheek and lets go 0.64 s into the shot (the release frame of
+// odysseus_bow_shoot_e.png); the arrows fly then.
+const RELEASE_MS = 640;
 const ENTER_MS = 2000;
 
 function foesFor(wave) {

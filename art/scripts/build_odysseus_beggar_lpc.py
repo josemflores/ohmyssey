@@ -149,11 +149,15 @@ BOW_LAYERS = [
     {"id": "bow-fg", "path": "weapon/ranged/bow/recurve/universal/foreground/shoot/medium.png"},
     {"id": "arrow", "path": "weapon/ranged/bow/arrow/shoot/arrow.png"},
 ]
-# LPC shoot frames: 0-3 raise the bow, 4 arrow nocked, 5-8 draw to full,
-# 9 release, 10-12 lower it again.
-BOW_IDLE = [12, 11]
-# Nock, draw back, draw, draw, full draw, hold, release, lower.
-BOW_SHOOT = [4, 5, 6, 7, 8, 8, 9, 11]
+# LPC shoot frames: 0 the bow held low at his side, 1-3 raise it, 4 arrow
+# nocked, 5-8 draw to full, 9 release, 10-12 hold it up after the shot.
+# Battle idle: the bow at his side (frame 0, no arrow), breathing.
+# Battle attack, (frame, arrow on the string?): bring the bow up, nock, draw
+# back to the cheek, release (the 8th cell, index 7), then lower it back to
+# his side. HallBattle.css plays these 12 cells; RELEASE_MS in
+# HallBattle.jsx is when the 8th one shows.
+BOW_SHOOT = [(1, True), (2, True), (3, True), (4, True), (6, True), (7, True), (8, True),
+             (9, False), (10, False), (2, False), (1, False), (0, False)]
 
 
 def visible_part(layer: Image.Image, full: Image.Image, skip: Image.Image) -> Image.Image:
@@ -244,21 +248,34 @@ def bow_frame(col: int, row: int, arrow: bool = True) -> Image.Image:
     return archer_frame(beggar_shoot_layers(), ids.index("body"), ids.index("head"), col, row, arrow)
 
 
-def king_bow_frame(col: int, row: int) -> Image.Image:
+def king_bow_frame(col: int, row: int, arrow: bool = True) -> Image.Image:
     """The king with the bow (the fight in the hall)."""
     ids = [l["id"] for l in lpc.LAYERS if not l["id"].startswith("sword")]
-    return archer_frame(king_shoot_layers(), ids.index("body"), ids.index("head"), col, row)
+    return archer_frame(king_shoot_layers(), ids.index("body"), ids.index("head"), col, row, arrow)
+
+
+def breathe(frame: Image.Image, waist: int = 19) -> Image.Image:
+    """The second idle frame: everything above the waist sinks one pixel."""
+    out = frame.copy()
+    top = frame.crop((0, 0, OUT, waist))
+    out.paste((0, 0, 0, 0), (0, 0, OUT, waist))
+    out.alpha_composite(top, (0, 1))
+    return out
 
 
 def build_bow_sheets() -> None:
-    """For the fight in the hall: odysseus_bow_idle_e.png (2 frames) and
-    odysseus_bow_shoot_e.png (8 frames: nock, draw back
-    to full, hold, release, lower), 32x32, facing east. In battle he is the king again, so
+    """For the fight in the hall: odysseus_bow_idle_e.png (2 frames, the bow
+    held at his side) and odysseus_bow_shoot_e.png (12 frames: bring the bow
+    up, nock, draw, release, lower it again), 32x32, facing east. In battle he is the king again, so
     these use his armoured LPC look, not the beggar's rags."""
     east = lpc.LPC_ROWS["right"]
     BOW_DIR.mkdir(parents=True, exist_ok=True)
-    for name, cols in (("odysseus_bow_idle_e", BOW_IDLE), ("odysseus_bow_shoot_e", BOW_SHOOT)):
-        sheet = strip([king_bow_frame(c, east) for c in cols])
+    rest = king_bow_frame(0, east, arrow=False)
+    sheets = {
+        "odysseus_bow_idle_e": strip([rest, breathe(rest)]),
+        "odysseus_bow_shoot_e": strip([king_bow_frame(c, east, a) for c, a in BOW_SHOOT]),
+    }
+    for name, sheet in sheets.items():
         sheet.save(BOW_DIR / f"{name}.png")
         print(f"wrote {(BOW_DIR / f'{name}.png').relative_to(lpc.ROOT)} {sheet.size}")
     # All 13 LPC shoot frames, with and without the arrow, for the cutscene
