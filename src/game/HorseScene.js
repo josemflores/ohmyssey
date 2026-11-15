@@ -9,6 +9,7 @@
 
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
+import { loadSoldierActions, createSoldierActions, playSoldierIdle } from './soldierAnimations.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import { firstHatchQuestion } from './hatchQuestions.js';
 import { buildWorldTextures } from './textures.js';
@@ -87,6 +88,7 @@ export class HorseScene extends Phaser.Scene {
 
   preload() {
     loadHeroActions(this);
+    loadSoldierActions(this);
     // Skip a sheet that is already loaded so a later visit does not wipe it.
     if (!this.textures.exists(ANIM_CONFIG.textureKey)) {
       this.load.spritesheet(ANIM_CONFIG.textureKey, ANIM_CONFIG.path, {
@@ -112,6 +114,7 @@ export class HorseScene extends Phaser.Scene {
 
   create() {
     createHeroActions(this);
+    createSoldierActions(this);
     if (!this.textures.exists('feet')) buildWorldTextures(this);
     if (!this.textures.exists('belly-floor')) {
       const floor = this.textures.addCanvas('belly-floor', paintBelly());
@@ -167,6 +170,8 @@ export class HorseScene extends Phaser.Scene {
       const sprite = this.add.sprite(man.x, man.y, greek.key, frame);
       sprite.setOrigin(0.5, 1);
       sprite.setDepth(7000 + man.y);
+      // The three Greeks wait in the dark, breathing (soldierAnimations.js).
+      playSoldierIdle(sprite, 'greek', man.facing);
       const shadow = this.add.ellipse(man.x + 3, man.y + 1, 16, 5, 0x1a0c08, 0.45);
       shadow.setDepth(7000 + man.y - 2);
       const block = this.posts.create(man.x, man.y - 12, 'blank');

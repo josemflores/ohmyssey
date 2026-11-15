@@ -690,7 +690,7 @@ export class TroyScene extends Phaser.Scene {
       if (!this.fighting) return;
       if (down) {
         // Game over. Odysseus stops where he is; React shows the
-        // "The Odyssey has fallen" screen with Return to Menu and Restart.
+        // "Odysseus has Fallen" screen with Return to Menu and Restart.
         this.inputLocked = true;
         this.game.events.emit('gameOver');
         return;

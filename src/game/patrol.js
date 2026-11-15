@@ -9,6 +9,7 @@ import { HATCH_QUESTIONS } from './hatchQuestions.js';
 import { shuffleChoices } from '../learn/encounters/questions.js';
 import { MAP_W } from './map.js';
 import { WARRIOR_CONFIG } from './warriorConfig.js';
+import { soldierAnim } from './soldierAnimations.js';
 
 export const WALK_SPEED = 80;
 export const RUN_SPEED = 136;
@@ -134,8 +135,25 @@ function pose(man) {
   const groundY = man.body.y + man.body.height / 2;
   const x = Math.round(man.body.x);
   const y = Math.round(groundY);
-  man.sprite.setFrame(frame);
-  man.rim.setFrame(frame);
+  const standing = man.lastX === x && man.lastY === y;
+  man.lastX = x;
+  man.lastY = y;
+  const idle = soldierAnim(man.team, 'idle', man.facing);
+  if (standing && man.sprite.scene.anims.exists(idle)) {
+    // Standing still: breathe in place. The rim is a copy, so it breathes too.
+    if (man.sprite.anims.currentAnim?.key !== idle || !man.sprite.anims.isPlaying) {
+      man.sprite.play(idle);
+      man.rim.play(idle);
+    }
+  } else {
+    // Moving: back to the still picture for his facing.
+    if (man.sprite.anims.isPlaying) man.sprite.anims.stop();
+    if (man.rim.anims.isPlaying) man.rim.anims.stop();
+    if (man.sprite.texture.key !== man.key) man.sprite.setTexture(man.key);
+    if (man.rim.texture.key !== man.key) man.rim.setTexture(man.key);
+    man.sprite.setFrame(frame);
+    man.rim.setFrame(frame);
+  }
   man.sprite.setPosition(x, y);
   man.rim.setPosition(x, y);
   man.shadow.setPosition(x + 3, y + 1);
@@ -162,7 +180,9 @@ function makeSoldier(scene, key, x, y, facing, extra) {
   rim.setTint(0xc5dcff);
   rim.setScale(1.08);
   const shadow = scene.add.ellipse(x, y, 14, 5, 0x0c1424, 0.5);
-  return { body, sprite, rim, shadow, facing, ...extra };
+  // team picks the idle animation (soldierAnimations.js); key is the still sheet.
+  const team = key === WARRIOR_CONFIG.teams.greek.key ? 'greek' : 'trojan';
+  return { body, sprite, rim, shadow, facing, key, team, ...extra };
 }
 
 // Spawned on the beach road, inside the gate mouth (x 416–544, y under 768).

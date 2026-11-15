@@ -34,7 +34,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
   const [fight, setFight] = useState(null);
   const [questDone, setQuestDone] = useState(false);
   const [complete, setComplete] = useState(false);
-  // Odysseus ran out of HP. Shows "The Odyssey has fallen".
+  // Odysseus ran out of HP. Shows "Odysseus has Fallen".
   const [gameOver, setGameOver] = useState(false);
   const [gateAsk, setGateAsk] = useState(null);
   const [runHint, setRunHint] = useState(false);
@@ -520,7 +520,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
         <div className="game-over" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
           <div className="game-over-card q-card">
             <p className="q-eyebrow">Ω · Troy</p>
-            <h2 id="game-over-title" className="game-over-title">The Odyssey has fallen</h2>
+            <h2 id="game-over-title" className="game-over-title">Odysseus has Fallen</h2>
             <div className="q-rule" aria-hidden="true" />
             <div className="game-over-actions">
               {/* Back to the sign-in screen, like Home in the Esc menu. */}
