@@ -280,6 +280,13 @@ export class TroyScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    // A monster question covers the city. Feet and the standoff both wait.
+    if (document.body.dataset.encounter === 'open' || this.encounterOpen) {
+      this.feet.setVelocity(0, 0);
+      if (this.input.keyboard) this.input.keyboard.enabled = false;
+      return;
+    }
+
     // While a box is open he stands still. Keys do nothing until it closes.
     const locked = this.inputLocked;
     const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);

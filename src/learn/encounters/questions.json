@@ -1,0 +1,550 @@
+[
+  {
+    "id": "troy-voltage",
+    "level": 1,
+    "prompt": "On the beach at Troy, the battery's voltage is best described as…",
+    "choices": [
+      "The push that drives charge around the loop",
+      "How fast the wooden horse rolled",
+      "The number of open switches",
+      "The color of the LED"
+    ],
+    "answerIndex": 0,
+    "explanation": "Voltage is the electric push, measured in volts. A 9 V battery pushes harder than a 1.5 V cell.",
+    "flavor": "Athena calls the battery the wind in the sail."
+  },
+  {
+    "id": "troy-current",
+    "level": 1,
+    "prompt": "Current in the beach lamp is…",
+    "choices": [
+      "Charge flowing around a closed loop",
+      "Heat stored in the sand",
+      "The length of the wire",
+      "How bright the moon is"
+    ],
+    "answerIndex": 0,
+    "explanation": "Current is moving charge, measured in amperes. It flows only when the path back to the battery is closed.",
+    "flavor": "Like men at the gate: one gap, and nobody gets through."
+  },
+  {
+    "id": "troy-resistance",
+    "level": 1,
+    "prompt": "Resistance is…",
+    "choices": [
+      "How strongly a part opposes current",
+      "Another name for voltage",
+      "A second battery hidden in the horse",
+      "What an open switch is called"
+    ],
+    "answerIndex": 0,
+    "explanation": "Resistance, in ohms, opposes current. More ohms means less current when the voltage stays the same."
+  },
+  {
+    "id": "troy-unit-volt",
+    "level": 1,
+    "prompt": "Which unit measures voltage?",
+    "choices": ["Volt (V)", "Ampere (A)", "Ohm (Ω)", "Farad (F)"],
+    "answerIndex": 0,
+    "explanation": "Voltage is measured in volts. The beach battery is 9 V."
+  },
+  {
+    "id": "troy-unit-amp",
+    "level": 1,
+    "prompt": "Which unit measures current?",
+    "choices": ["Ampere (A)", "Volt (V)", "Ohm (Ω)", "Meter"],
+    "answerIndex": 0,
+    "explanation": "Current is measured in amperes. A small LED wants only a few thousandths of an ampere."
+  },
+  {
+    "id": "troy-unit-ohm",
+    "level": 1,
+    "prompt": "The symbol Ω printed on a resistor means…",
+    "choices": [
+      "Ohms, the unit of resistance",
+      "Volts, the unit of voltage",
+      "That the switch is open",
+      "Odysseus's crest"
+    ],
+    "answerIndex": 0,
+    "explanation": "Ω is the Greek letter omega, used for ohms. 330 Ω opposes current more than 100 Ω.",
+    "flavor": "Omega was a Greek letter long before it was a resistor mark."
+  },
+  {
+    "id": "troy-ohms-law",
+    "level": 1,
+    "prompt": "Ohm's law links voltage V, current I, and resistance R as…",
+    "choices": ["V = I × R", "V = I + R", "V = I − R", "R = V × I"],
+    "answerIndex": 0,
+    "explanation": "Voltage equals current times resistance. The other useful forms are I = V / R and R = V / I."
+  },
+  {
+    "id": "troy-calc-6-2",
+    "level": 1,
+    "prompt": "A 6 V battery is connected across a 2 Ω resistor. How much current flows?",
+    "choices": ["3 A", "12 A", "4 A", "8 A"],
+    "answerIndex": 0,
+    "explanation": "I = V / R = 6 / 2 = 3 A. Multiplying 6 × 2 is not the current."
+  },
+  {
+    "id": "troy-calc-12-4",
+    "level": 1,
+    "prompt": "12 V across a 4 Ω resistor. What is the current?",
+    "choices": ["3 A", "48 A", "16 A", "8 A"],
+    "answerIndex": 0,
+    "explanation": "I = 12 / 4 = 3 A."
+  },
+  {
+    "id": "troy-calc-9-3",
+    "level": 1,
+    "prompt": "The 9 V beach battery feeds a 3 Ω coil. What current flows?",
+    "choices": ["3 A", "27 A", "6 A", "12 A"],
+    "answerIndex": 0,
+    "explanation": "I = 9 / 3 = 3 A.",
+    "flavor": "Three amperes, counted like spears in a rank."
+  },
+  {
+    "id": "troy-more-ohms",
+    "level": 1,
+    "prompt": "You swap in a larger resistor and leave the battery alone. The current…",
+    "choices": ["Decreases", "Increases", "Stays exactly the same", "Reverses direction"],
+    "answerIndex": 0,
+    "explanation": "I = V / R. A bigger resistance in the denominator makes a smaller current."
+  },
+  {
+    "id": "troy-more-volts",
+    "level": 1,
+    "prompt": "Same resistor, but the battery voltage is higher. The current…",
+    "choices": ["Increases", "Decreases", "Drops to zero", "Turns into resistance"],
+    "answerIndex": 0,
+    "explanation": "I = V / R. Raising the voltage while resistance stays put raises the current."
+  },
+  {
+    "id": "troy-series-path",
+    "level": 1,
+    "prompt": "Parts wired in series share…",
+    "choices": [
+      "One single path for the current",
+      "A separate path for each part",
+      "No path at all",
+      "Only the positive terminal"
+    ],
+    "answerIndex": 0,
+    "explanation": "Series means one loop. The same current goes through each part in turn.",
+    "flavor": "One file of soldiers through the gate, not three gates at once."
+  },
+  {
+    "id": "troy-parallel-path",
+    "level": 1,
+    "prompt": "Parts wired in parallel have…",
+    "choices": [
+      "More than one path for the current",
+      "Exactly one path",
+      "No connection to the battery",
+      "To be open, or current cannot flow"
+    ],
+    "answerIndex": 0,
+    "explanation": "Parallel branches split the current. Each branch is its own path between the same two points."
+  },
+  {
+    "id": "troy-series-add",
+    "level": 1,
+    "prompt": "A 2 Ω resistor and a 3 Ω resistor are in series. The total resistance is…",
+    "choices": ["5 Ω", "1 Ω", "6 Ω", "2 Ω"],
+    "answerIndex": 0,
+    "explanation": "Resistances in series add: 2 + 3 = 5 Ω."
+  },
+  {
+    "id": "troy-open-switch",
+    "level": 1,
+    "prompt": "The switch on the beach lamp is open. What is the current?",
+    "choices": [
+      "0. The loop is broken.",
+      "The full short-circuit current",
+      "It depends only on the LED color",
+      "Infinite"
+    ],
+    "answerIndex": 0,
+    "explanation": "An open switch is a gap. With no closed path, the current is zero and the lamp stays dark."
+  },
+  {
+    "id": "troy-closed-switch",
+    "level": 1,
+    "prompt": "You close the switch and the loop is complete. Current…",
+    "choices": [
+      "Can flow",
+      "Must stay zero",
+      "Jumps out of the wire into the sand",
+      "Flows only if the LED is backwards"
+    ],
+    "answerIndex": 0,
+    "explanation": "A closed switch is just another piece of the wire. Charge can make the round trip."
+  },
+  {
+    "id": "troy-led-backwards",
+    "level": 1,
+    "prompt": "The red LED is installed backwards. What happens?",
+    "choices": [
+      "It stays dark. An LED conducts one way.",
+      "It shines twice as bright",
+      "It becomes a battery",
+      "The resistor turns into a switch"
+    ],
+    "answerIndex": 0,
+    "explanation": "An LED is a diode. Current passes from anode to cathode. Reverse it and the lamp stays dark.",
+    "flavor": "The gate opens inward. The wrong way, it holds."
+  },
+  {
+    "id": "troy-led-resistor",
+    "level": 1,
+    "prompt": "Why put a resistor in series with the LED?",
+    "choices": [
+      "To limit the current so the LED does not burn",
+      "To make the current as large as possible",
+      "To open the circuit on purpose",
+      "To store charge like a second battery"
+    ],
+    "answerIndex": 0,
+    "explanation": "A small red LED wants a few milliamps up to a few tens of milliamps. The resistor sets that current."
+  },
+  {
+    "id": "troy-battery-loop",
+    "level": 1,
+    "prompt": "A battery lights the lamp only if…",
+    "choices": [
+      "The wire leaves one terminal and returns to the other",
+      "Both wires touch only the positive terminal",
+      "The positive terminal is buried in sand",
+      "The switch is left open"
+    ],
+    "answerIndex": 0,
+    "explanation": "Current is a round trip: out of one terminal, through the parts, and back into the other."
+  },
+  {
+    "id": "troy-empty-slot",
+    "level": 1,
+    "prompt": "One slot in the loop is empty. The current is…",
+    "choices": [
+      "Zero, because the loop is open",
+      "9 A, the same number as the battery voltage",
+      "Set by the LED color alone",
+      "Whatever the last resistor was"
+    ],
+    "answerIndex": 0,
+    "explanation": "An empty slot is a gap, the same as an open switch. No closed path means no current."
+  },
+  {
+    "id": "troy-short",
+    "level": 1,
+    "prompt": "A plain wire ties one battery terminal straight to the other, with no lamp. That is…",
+    "choices": [
+      "A short circuit, and the current is huge",
+      "An open circuit",
+      "A safe way to store the cell",
+      "A parallel LED"
+    ],
+    "answerIndex": 0,
+    "explanation": "Almost no resistance makes I = V / R very large. The wire and the battery heat up. Don't do this.",
+    "flavor": "Even the Trojans did not set fire to their own gate on purpose."
+  },
+  {
+    "id": "troy-series-current",
+    "level": 1,
+    "prompt": "In the series beach lamp (battery, switch, resistor, LED), the current through the resistor and the LED is…",
+    "choices": ["The same", "Double in the LED", "Zero in the resistor", "Split in half"],
+    "answerIndex": 0,
+    "explanation": "There is only one path, so the same current passes through every part in the loop."
+  },
+  {
+    "id": "troy-find-r",
+    "level": 1,
+    "prompt": "You want 2 A from a 10 V battery. What resistance does that take?",
+    "choices": ["5 Ω", "20 Ω", "12 Ω", "8 Ω"],
+    "answerIndex": 0,
+    "explanation": "R = V / I = 10 / 2 = 5 Ω."
+  },
+  {
+    "id": "troy-led-anode",
+    "level": 1,
+    "prompt": "The long leg of a typical LED is the…",
+    "choices": [
+      "Anode, and it should face the positive side",
+      "Cathode, and it should face the positive side",
+      "Resistor lead",
+      "Switch"
+    ],
+    "answerIndex": 0,
+    "explanation": "The longer lead is the anode. Aim it toward the positive side of the battery so current can pass."
+  },
+  {
+    "id": "troy-milliamp",
+    "level": 1,
+    "prompt": "A current of 0.003 A is the same as…",
+    "choices": ["3 mA", "3 A", "300 mA", "0.3 mA"],
+    "answerIndex": 0,
+    "explanation": "Milli means one thousandth. 0.003 A = 3 mA. The beach LED wants milliamps, not whole amperes.",
+    "flavor": "Three thousandths of an ampere is enough to mark a path in the dark."
+  },
+  {
+    "id": "ithaca-three-parts",
+    "level": 2,
+    "prompt": "A simple circuit, like the lamp in the hall at Ithaca, needs…",
+    "choices": [
+      "A source, a closed path, and a load",
+      "Only a battery, with no loop",
+      "Three open switches and nothing else",
+      "A capacitor in place of every wire"
+    ],
+    "answerIndex": 0,
+    "explanation": "The source pushes, the load uses the energy, and a closed path lets the charge return.",
+    "flavor": "Home is a hearth, a door, and a way back in."
+  },
+  {
+    "id": "ithaca-band-black",
+    "level": 2,
+    "prompt": "On a resistor color band, black means the digit…",
+    "choices": ["0", "1", "5", "9"],
+    "answerIndex": 0,
+    "explanation": "The digit colors start at black = 0, then brown = 1, red = 2."
+  },
+  {
+    "id": "ithaca-band-brown",
+    "level": 2,
+    "prompt": "The first color band is brown. Its digit is…",
+    "choices": ["1", "0", "2", "10"],
+    "answerIndex": 0,
+    "explanation": "Brown is 1. A band that starts brown-black begins with the digits 1 and 0."
+  },
+  {
+    "id": "ithaca-band-red",
+    "level": 2,
+    "prompt": "Red, read as a digit band, means…",
+    "choices": ["2", "0", "3", "20"],
+    "answerIndex": 0,
+    "explanation": "Red is 2. The easy start of the code is black 0, brown 1, red 2."
+  },
+  {
+    "id": "ithaca-band-digits",
+    "level": 2,
+    "prompt": "On a four-band resistor, the first two bands are…",
+    "choices": [
+      "The two digits of the resistance",
+      "The tolerance and the year it was made",
+      "Always gold",
+      "The voltage rating"
+    ],
+    "answerIndex": 0,
+    "explanation": "Read the first two bands as digits. The third band says how many zeros to add. The last band is the tolerance.",
+    "flavor": "Read them the way you read a name cut in a lintel: left to right, from the end where the bands begin."
+  },
+  {
+    "id": "ithaca-band-gold",
+    "level": 2,
+    "prompt": "A gold band at the end of a resistor usually means…",
+    "choices": [
+      "The tolerance is about ±5%",
+      "The resistance is 0 Ω",
+      "The part is a capacitor",
+      "The resistor must be installed backwards"
+    ],
+    "answerIndex": 0,
+    "explanation": "Gold as the last band means the value is good to about ±5%. It is not one of the digit colors."
+  },
+  {
+    "id": "ithaca-band-1k",
+    "level": 2,
+    "prompt": "A resistor reads brown, black, red, and gold. Its value is about…",
+    "choices": ["1 kΩ", "10 Ω", "100 Ω", "1 Ω"],
+    "answerIndex": 0,
+    "explanation": "Brown and black are the digits 1 and 0. Red means two more zeros: 1000 Ω, which is 1 kΩ. Gold is ±5%."
+  },
+  {
+    "id": "ithaca-kilo",
+    "level": 2,
+    "prompt": "1 kΩ is the same as…",
+    "choices": ["1000 Ω", "100 Ω", "10 Ω", "1 Ω"],
+    "answerIndex": 0,
+    "explanation": "Kilo means one thousand. 1 kΩ = 1000 Ω, and 2 kΩ = 2000 Ω."
+  },
+  {
+    "id": "ithaca-series-k",
+    "level": 2,
+    "prompt": "The hall lamp has a 1 kΩ resistor in series with a 2 kΩ resistor. The total is…",
+    "choices": ["3 kΩ", "2 kΩ", "1 kΩ", "3 Ω"],
+    "answerIndex": 0,
+    "explanation": "Series resistors add, prefixes and all. 1 kΩ + 2 kΩ = 3 kΩ, which is 3000 Ω."
+  },
+  {
+    "id": "ithaca-parallel-half",
+    "level": 2,
+    "prompt": "Two equal resistors are wired in parallel. The total resistance is…",
+    "choices": [
+      "Half of one of them",
+      "The sum of both",
+      "Zero",
+      "Double one of them"
+    ],
+    "answerIndex": 0,
+    "explanation": "Two equal paths share the current. Two 2 kΩ resistors in parallel act like 1 kΩ."
+  },
+  {
+    "id": "ithaca-series-same-current",
+    "level": 2,
+    "prompt": "In a series circuit, the current through each part is…",
+    "choices": [
+      "The same",
+      "Biggest in the last part only",
+      "Zero whenever the switch is closed",
+      "Split by the color of the bands"
+    ],
+    "answerIndex": 0,
+    "explanation": "One path means one current. The voltage may differ from part to part. The current does not."
+  },
+  {
+    "id": "ithaca-parallel-voltage",
+    "level": 2,
+    "prompt": "In a parallel circuit, the voltage across each branch is…",
+    "choices": [
+      "The same",
+      "Always zero",
+      "A different battery for each branch",
+      "Equal to the current in amperes"
+    ],
+    "answerIndex": 0,
+    "explanation": "Parallel branches tie to the same two points, so each branch sees the same voltage."
+  },
+  {
+    "id": "ithaca-series-lamp-open",
+    "level": 2,
+    "prompt": "Three hall lamps are in series. One burns out and becomes an open. The other two…",
+    "choices": ["Go out", "Shine brighter", "Turn into batteries", "Stay just as they were"],
+    "answerIndex": 0,
+    "explanation": "The open lamp breaks the only path. Current in that series loop falls to zero, so the others go dark."
+  },
+  {
+    "id": "ithaca-parallel-lamp-open",
+    "level": 2,
+    "prompt": "Three hall lamps are in parallel. One burns out and becomes an open. The other two…",
+    "choices": ["Stay lit", "Must go out", "Reverse polarity", "Empty like capacitors"],
+    "answerIndex": 0,
+    "explanation": "Each lamp has its own path back to the source. Opening one branch leaves the other paths closed.",
+    "flavor": "One chair knocked over at the feast does not darken the whole hall."
+  },
+  {
+    "id": "ithaca-capacitor-stores",
+    "level": 2,
+    "prompt": "A capacitor is a part that…",
+    "choices": [
+      "Stores electric charge",
+      "Measures resistance in ohms",
+      "Is only another kind of switch",
+      "Makes voltage out of nothing"
+    ],
+    "answerIndex": 0,
+    "explanation": "A capacitor holds charge on two plates. How much it can store is its capacitance."
+  },
+  {
+    "id": "ithaca-capacitor-unit",
+    "level": 2,
+    "prompt": "Capacitance is measured in…",
+    "choices": ["Farads (F)", "Ohms (Ω)", "Amperes (A)", "Volts (V)"],
+    "answerIndex": 0,
+    "explanation": "The farad is the unit of capacitance. Real circuit parts are usually microfarads (µF) or smaller, because one farad is huge."
+  },
+  {
+    "id": "ithaca-capacitor-dc",
+    "level": 2,
+    "prompt": "A capacitor sits in a DC loop and has finished charging. It then behaves like…",
+    "choices": [
+      "An open circuit",
+      "A wire with no resistance",
+      "A battery that never runs down",
+      "A closed switch"
+    ],
+    "answerIndex": 0,
+    "explanation": "Once the plates are charged, steady DC current through the capacitor stops. It blocks DC after the charge settles."
+  },
+  {
+    "id": "ithaca-safety-short",
+    "level": 2,
+    "prompt": "The safe way to treat a battery on the bench is to…",
+    "choices": [
+      "Never tie its two terminals together with a plain wire",
+      "Short it, to see the biggest spark",
+      "Soak it so the label comes off",
+      "Wire the terminals together when you are done"
+    ],
+    "answerIndex": 0,
+    "explanation": "A short makes a huge current. The cell gets hot and can burst. Leave a load, such as a resistor, in the loop."
+  },
+  {
+    "id": "ithaca-safety-switch",
+    "level": 2,
+    "prompt": "You need to change a resistor. What do you do first?",
+    "choices": [
+      "Open the switch or disconnect the battery",
+      "Grab both bare wires at once",
+      "Add a second battery for light",
+      "Turn the resistor around and hope"
+    ],
+    "answerIndex": 0,
+    "explanation": "Open the source before you move parts, so your fingers do not become the path.",
+    "flavor": "Bar the door before you rearrange the hall."
+  },
+  {
+    "id": "ithaca-safety-water",
+    "level": 2,
+    "prompt": "Why keep water off the bench while a circuit is open and powered?",
+    "choices": [
+      "Water can carry current and give you a path for a shock",
+      "Water makes the resistance of air infinite",
+      "Wet resistors turn into capacitors",
+      "The color bands always wash off into gold"
+    ],
+    "answerIndex": 0,
+    "explanation": "Water, especially with salts from skin or a spill, can conduct. Dry your hands, and keep drinks away from the wires."
+  },
+  {
+    "id": "ithaca-fuse",
+    "level": 2,
+    "prompt": "A fuse in the hall circuit is there to…",
+    "choices": [
+      "Open the loop if the current gets too high",
+      "Add extra voltage",
+      "Store charge for the night",
+      "Make every lamp brighter"
+    ],
+    "answerIndex": 0,
+    "explanation": "A fuse is a thin link that melts and opens the circuit when the current is too high, before the wires overheat."
+  },
+  {
+    "id": "ithaca-led-facing",
+    "level": 2,
+    "prompt": "On the Ithaca lamp, the LED anode should face…",
+    "choices": [
+      "Toward the positive terminal of the source",
+      "Toward the negative terminal",
+      "Out of the circuit entirely",
+      "Into the body of the resistor"
+    ],
+    "answerIndex": 0,
+    "explanation": "Current enters the anode. Point the anode toward the positive side, and keep a resistor in the loop."
+  },
+  {
+    "id": "ithaca-milliamp",
+    "level": 2,
+    "prompt": "A 12 V supply feeds a 4 kΩ resistor. The current is…",
+    "choices": ["3 mA", "3 A", "48 A", "16 mA"],
+    "answerIndex": 0,
+    "explanation": "I = V / R = 12 V / 4000 Ω = 0.003 A = 3 mA. With kilo-ohms, 12 / 4 = 3, and the unit is milliamps."
+  },
+  {
+    "id": "ithaca-cells-series",
+    "level": 2,
+    "prompt": "Two 1.5 V cells in series, each positive tied to the next negative, make…",
+    "choices": ["3 V", "1.5 V", "0 V", "1.5 Ω"],
+    "answerIndex": 0,
+    "explanation": "Voltages in series add when the cells point the same way. 1.5 V + 1.5 V = 3 V.",
+    "flavor": "Two oars, pulling the same direction, move the boat."
+  }
+]
