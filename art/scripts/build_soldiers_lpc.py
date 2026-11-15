@@ -9,8 +9,9 @@ Who looks like what:
             sword. He is the only one with a cape, a beard, or a sword.
   Greeks    the same legion helmet and plate cuirass as Odysseus, but in
             bronze, with a dull maroon crest, a spear, and a Spartan shield.
-  Trojans   one color only (teal, light to dark), a different helmet (barbuta
-            with a ridge crest), spear and shield in the same teal.
+  Trojans   one color only, head to toe, skin included: every pixel is
+            redrawn in a teal ramp by how light it is. A different helmet
+            (barbuta with a ridge crest), spear and shield.
 
 Output (all 32x32 frames, origin bottom-center, in public/assets/sprites/npcs):
 
@@ -119,6 +120,30 @@ def trojan_layers() -> list[dict]:
 
 TEAMS = {"greek": greek_layers, "trojan": trojan_layers}
 
+# Teams drawn in a single color. The ramp runs darkest to lightest.
+MONOCHROME = {"trojan": TEAL}
+
+
+def monochrome(image: Image.Image, ramp_colors: list[str]) -> Image.Image:
+    """Repaint every visible pixel with the ramp shade that matches its lightness.
+
+    Outlines (darkest) get the darkest teal, skin and highlights (lightest)
+    get the lightest, so the shapes still read but there is only one hue.
+    """
+    shades = [lpc.hex_rgb(c) for c in ramp_colors]
+    image = image.copy()
+    pixels = image.load()
+    width, height = image.size
+    for y in range(height):
+        for x in range(width):
+            r, g, b, a = pixels[x, y]
+            if a == 0:
+                continue
+            light = 0.299 * r + 0.587 * g + 0.114 * b  # 0 (black) to 255 (white)
+            index = min(len(shades) - 1, int(light / 256 * len(shades) * 1.25))
+            pixels[x, y] = (*shades[index], a)
+    return image
+
 # Columns and rows of each LPC animation sheet.
 SHAPE = {"walk": (9, 4), "idle": (2, 4), "thrust": (8, 4), "hurt": (6, 1)}
 
@@ -148,7 +173,7 @@ def _fetch(rel: str, dest: Path) -> None:
     urllib.request.urlretrieve(lpc.LPC_RAW + rel, dest)
 
 
-def frame(team_layers: list[dict], sheets: list[Image.Image], action: str, col: int, row: int) -> Image.Image:
+def compose_frame(team_layers: list[dict], sheets: list[Image.Image], action: str, col: int, row: int) -> Image.Image:
     """Stack every layer's cell for one frame, then shrink it to 32x32."""
     canvas = Image.new("RGBA", (SRC, SRC))
     for layer, sheet in zip(team_layers, sheets):
@@ -191,6 +216,13 @@ def build_team(team: str) -> dict[str, Image.Image]:
 
     def facing_rows():
         return [lpc.LPC_ROWS[direction] for _name, direction in lpc.FACINGS]
+
+    ramp_colors = MONOCHROME.get(team)
+
+    def frame(*args):
+        # Build one frame, then repaint it in one color if this team is monochrome.
+        image = compose_frame(*args)
+        return monochrome(image, ramp_colors) if ramp_colors else image
 
     out["idle"] = strip([frame(layers, sheets["walk"], "walk", 0, row) for row in facing_rows()])
     out["idle_animation"] = strip(

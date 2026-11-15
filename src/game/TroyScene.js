@@ -9,7 +9,8 @@
 
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
-import { loadSoldierActions, createSoldierActions, playSoldierIdle, soldierAnim } from './soldierAnimations.js';
+import { loadSoldierActions, createSoldierActions, createSoldierWalks, playSoldierIdle } from './soldierAnimations.js';
+import { startGateBattle } from './gateBattle.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -131,6 +132,7 @@ export class TroyScene extends Phaser.Scene {
   create() {
     createHeroActions(this);
     createSoldierActions(this);
+    createSoldierWalks(this);
     const report = routeReport();
     if (!report.ok) {
       console.warn(`Troy layout problem:\n${report.problems.join('\n')}`);
@@ -450,60 +452,12 @@ export class TroyScene extends Phaser.Scene {
     }
 
     this.relief.update(dt);
-    this.updateWaitingGreeks(dt);
     this.watchBoat();
     if (this.fightCooldown > 0) this.fightCooldown -= dt;
     this.maybeHintRun(moving);
     if (!this.fighting && !locked && this.questDone) this.maybeMeetGroup(moving);
     if (!this.fighting && !locked) this.maybeMeetFoe();
     aimArrow(this);
-  }
-
-  updateWaitingGreeks(dt) {
-    const men = this.waitingGreeks;
-    if (!men || this.gateFalling) return;
-    const hero = this.feet;
-    const passed = hero.y < 490;
-    const speed = 62;
-    for (const man of men) {
-      if (!man.arrived) continue;
-      let tx = man.homeX;
-      let ty = man.homeY;
-      if (passed) {
-        tx = hero.x + man.ox;
-        ty = hero.y + 52;
-      }
-      if (this.nearGroup(tx, ty, 44)) continue;
-      const dx = tx - man.sprite.x;
-      const dy = ty - man.sprite.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 4) {
-        // Standing still: breathe in place, facing the way he is looking.
-        const idle = soldierAnim('greek', 'idle', passed ? 'n' : 's');
-        if (man.sprite.anims.currentAnim?.key !== idle || !man.sprite.anims.isPlaying) {
-          if (this.anims.exists(idle)) man.sprite.play(idle);
-          else man.sprite.setFrame(passed ? HOPLITE_FRAME.n : HOPLITE_FRAME.s);
-        }
-        man.shadow.setPosition(man.sprite.x + 3, man.sprite.y + 1);
-        continue;
-      }
-      // Walking again: stop breathing and go back to the walk sheet.
-      if (man.sprite.anims.isPlaying) man.sprite.anims.stop();
-      if (man.sprite.texture.key !== man.key) man.sprite.setTexture(man.key);
-      const step = Math.min(speed * dt, dist);
-      man.sprite.x += (dx / dist) * step;
-      man.sprite.y += (dy / dist) * step;
-      man.sprite.setFrame(hopliteFrame(dx, dy));
-      man.shadow.setPosition(man.sprite.x + 3, man.sprite.y + 1);
-      const depth = 7600 + man.sprite.y;
-      man.shadow.setDepth(depth - 2);
-      man.sprite.setDepth(depth);
-    }
-  }
-
-  nearGroup(x, y, radius) {
-    if (!this.cityGroups) return false;
-    return this.cityGroups.some((group) => !group.gone && Math.hypot(group.x - x, group.y - y) < radius);
   }
 
   maybeHintRun(moving) {
@@ -1172,7 +1126,8 @@ function playGateFall(scene, onDone) {
   cam.pan(480, 636, 320, 'Sine.easeOut');
   cam.shake(260, 0.008);
   openGateDoors(scene);
-  surgeArmy(scene);
+  // The Greeks run in through the gate and pair off with Trojans (gateBattle.js).
+  startGateBattle(scene);
 
   const flash = scene.add.rectangle(0, 0, cam.width, cam.height, 0xfff6e0, 1)
     .setOrigin(0, 0)
@@ -1193,89 +1148,6 @@ function playGateFall(scene, onDone) {
     cam.startFollow(scene.feet, true, 0.16, 0.16);
     if (onDone) onDone();
   });
-}
-
-// Flanks just inside the gate. The road through the middle stays open.
-const GREEK_HOLD = [
-  { x: 348, y: 524 },
-  { x: 376, y: 548 },
-  { x: 348, y: 500 },
-  { x: 376, y: 524 },
-  { x: 404, y: 548 },
-  { x: 332, y: 548 },
-  { x: 360, y: 572 },
-  { x: 584, y: 524 },
-  { x: 612, y: 548 },
-  { x: 584, y: 500 },
-  { x: 612, y: 524 },
-  { x: 556, y: 548 },
-  { x: 640, y: 524 },
-  { x: 600, y: 572 },
-];
-
-// Hoplite sheet rows: S, SW, W, NW, N, NE, E, SE. Four frames each.
-const HOPLITE_FRAME = {
-  s: 0, sw: 4, w: 8, nw: 12, n: 16, ne: 20, e: 24, se: 28,
-};
-
-function hopliteFrame(dx, dy) {
-  const ax = Math.abs(dx);
-  const ay = Math.abs(dy);
-  if (ay >= ax * 1.6) return dy < 0 ? HOPLITE_FRAME.n : HOPLITE_FRAME.s;
-  if (ax >= ay * 1.6) return dx < 0 ? HOPLITE_FRAME.w : HOPLITE_FRAME.e;
-  if (dx < 0 && dy < 0) return HOPLITE_FRAME.nw;
-  if (dx > 0 && dy < 0) return HOPLITE_FRAME.ne;
-  if (dx < 0) return HOPLITE_FRAME.sw;
-  return HOPLITE_FRAME.se;
-}
-
-function surgeArmy(scene) {
-  const hoplite = scene.textures.exists('greek-hoplite');
-  const key = hoplite ? 'greek-hoplite' : WARRIOR_CONFIG.teams.greek.key;
-  const tex = scene.textures.get(key);
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  const frame = hoplite ? HOPLITE_FRAME.n : WARRIOR_CONFIG.facingFrames.n;
-  const men = [];
-  GREEK_HOLD.forEach((spot, index) => {
-    const x = 456 + (index % 7) * 8;
-    const y = 690 + Math.floor(index / 7) * 26;
-    const shadow = scene.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.5);
-    const sprite = scene.add.sprite(x, y, key, frame).setOrigin(0.5, 1);
-    const sort = 7700 + y;
-    shadow.setDepth(sort - 2);
-    sprite.setDepth(sort);
-    const man = {
-      sprite,
-      shadow,
-      key,
-      homeX: spot.x,
-      homeY: spot.y,
-      ox: spot.x - 480,
-      arrived: false,
-    };
-    men.push(man);
-    scene.tweens.add({
-      targets: sprite,
-      delay: 700 + index * 40,
-      duration: 1300,
-      x: spot.x,
-      y: spot.y,
-      ease: 'Cubic.easeOut',
-      onComplete: () => {
-        man.arrived = true;
-        if (hoplite) sprite.setFrame(HOPLITE_FRAME.s);
-      },
-    });
-    scene.tweens.add({
-      targets: shadow,
-      delay: 700 + index * 40,
-      duration: 1300,
-      x: spot.x + 3,
-      y: spot.y + 1,
-      ease: 'Cubic.easeOut',
-    });
-  });
-  scene.waitingGreeks = men;
 }
 
 function openGateDoors(scene) {

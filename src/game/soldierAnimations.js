@@ -66,6 +66,43 @@ export function createSoldierActions(scene) {
   }
 }
 
+// Walk cycles come from the 4x8 walk sheets that TroyScene loads as
+// 'greek-hoplite' and 'trojan-soldier'. Their rows are in a different order:
+// S, SW, W, NW, N, NE, E, SE, four frames each.
+const WALK_SHEETS = { greek: 'greek-hoplite', trojan: 'trojan-soldier' };
+const WALK_ROWS = ['s', 'sw', 'w', 'nw', 'n', 'ne', 'e', 'se'];
+
+// Animation key for a walk, e.g. 'greek-walk-n'. Call createSoldierWalks first.
+export function soldierWalk(team, facing) {
+  return `${team}-walk-${facing}`;
+}
+
+export function createSoldierWalks(scene) {
+  for (const [team, sheet] of Object.entries(WALK_SHEETS)) {
+    if (!scene.textures.exists(sheet)) continue;
+    WALK_ROWS.forEach((facing, row) => {
+      const key = soldierWalk(team, facing);
+      if (scene.anims.exists(key)) return;
+      scene.anims.create({
+        key,
+        frames: scene.anims.generateFrameNumbers(sheet, { start: row * 4, end: row * 4 + 3 }),
+        frameRate: 10,
+        repeat: -1,
+      });
+    });
+  }
+}
+
+// Which of the eight facings points along (dx, dy). Screen y grows downward.
+export function facingToward(dx, dy) {
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  if (ay >= ax * 1.6) return dy < 0 ? 'n' : 's';
+  if (ax >= ay * 1.6) return dx < 0 ? 'w' : 'e';
+  if (dy < 0) return dx < 0 ? 'nw' : 'ne';
+  return dx < 0 ? 'sw' : 'se';
+}
+
 // Start a soldier breathing in place. A small random delay keeps a group
 // from breathing in perfect lockstep.
 export function playSoldierIdle(sprite, team, facing = 's') {
