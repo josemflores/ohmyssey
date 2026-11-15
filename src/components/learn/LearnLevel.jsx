@@ -11,7 +11,17 @@ import FeedbackBanner from './FeedbackBanner.jsx';
 import PuzzleBoard from './PuzzleBoard.jsx';
 import { Inventory, Notebook, Objectives, ProgressPips } from './StudyPanels.jsx';
 
-export default function LearnLevel({ level, levels, difficulty, progress, onWin, onBack }) {
+export default function LearnLevel({
+  level,
+  levels,
+  difficulty,
+  progress,
+  onWin,
+  onBack,
+  backLabel = '← The map',
+  doneLabel = 'Back to the map',
+  kicker = '',
+}) {
   const tune = resolveTune(level, difficulty);
   const [board, setBoard] = useState(() => initialState(level, difficulty));
   const [misses, setMisses] = useState(0);
@@ -29,11 +39,11 @@ export default function LearnLevel({ level, levels, difficulty, progress, onWin,
     <main className="level-screen learn-screen">
       <header className="level-bar">
         <button className="btn btn-quiet" type="button" onClick={onBack}>
-          ← The map
+          {backLabel}
         </button>
         <div>
           <p className="eyebrow">
-            Island {level.specIndex != null ? level.specIndex + 1 : level.id} · {level.place} · {difficulty}
+            {kicker || `Island ${level.specIndex != null ? level.specIndex + 1 : level.id} · ${level.place} · ${difficulty}`}
           </p>
           <h1>{level.title}</h1>
           <p className="epithet">{level.epithet}</p>
@@ -84,7 +94,7 @@ export default function LearnLevel({ level, levels, difficulty, progress, onWin,
                 ))}
               </ol>
               <button className="btn btn-primary btn-large" type="button" onClick={onBack}>
-                Back to the map
+                {doneLabel}
               </button>
             </section>
           )}

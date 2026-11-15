@@ -1,0 +1,135 @@
+.troy-learn-hud {
+  position: fixed;
+  z-index: 4;
+  top: 96px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.troy-learn-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 148px;
+  min-height: 40px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(230, 194, 122, 0.75);
+  background: rgba(8, 14, 24, 0.82);
+  color: #f6ead2;
+  font: inherit;
+  font-size: 0.92rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+.troy-learn-btn kbd {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #f0d48a;
+}
+.troy-learn-btn:hover,
+.troy-learn-btn:focus-visible {
+  background: rgba(20, 28, 40, 0.94);
+  outline: 2px solid #f0d48a;
+  outline-offset: 2px;
+}
+.troy-learn-shade {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  overflow: auto;
+  background: rgba(7, 17, 28, 0.72);
+  padding: 4vh 12px 24px;
+}
+.troy-learn-sheet {
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+.troy-learn-menu {
+  padding: 1.1rem 1.1rem 1rem;
+  color: var(--ink);
+}
+.troy-learn-menu h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.35rem;
+}
+.troy-learn-lede {
+  color: var(--ink-soft);
+  margin-bottom: 0.8rem;
+}
+.troy-learn-choices {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+.troy-learn-choice {
+  display: grid;
+  text-align: left;
+  gap: 0.1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 240, 0.72);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.troy-learn-choice span {
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--gold);
+}
+.troy-learn-choice small { color: var(--ink-soft); }
+.troy-learn-choice:hover,
+.troy-learn-choice:focus-visible {
+  border-color: var(--gold);
+  outline: none;
+}
+.troy-learn-topics {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+}
+.troy-learn-topics button {
+  flex: 1;
+  min-height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(230, 194, 122, 0.55);
+  background: rgba(8, 14, 24, 0.72);
+  color: #f6ead2;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.troy-learn-topics button.is-on {
+  background: #f0d48a;
+  color: #1a1208;
+  border-color: #f0d48a;
+}
+.troy-learn-close { margin-top: 0.7rem; }
+.troy-learn-sheet .troy-learn-close {
+  color: #f6ead2;
+  border-color: rgba(230, 194, 122, 0.75);
+}
+.troy-learn-menu .troy-learn-close {
+  color: var(--ink);
+  border-color: rgba(36, 28, 20, 0.28);
+}
+.troy-learn-lesson {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  overflow: auto;
+  background: #e7d3aa;
+}
+
+@media (max-width: 640px) {
+  .troy-learn-hud { top: 88px; left: 10px; }
+  .troy-learn-btn { min-width: 132px; padding: 0.3rem 0.55rem; }
+  .troy-learn-shade { padding-top: 12px; }
+}
