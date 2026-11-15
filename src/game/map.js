@@ -80,9 +80,9 @@ export const PROPS = [
   { id: 'column', x: 340, baseY: 136, bodyW: 12, bodyH: 8, insetBottom: 0 },
   { id: 'column', x: 620, baseY: 136, bodyW: 12, bodyH: 8, insetBottom: 0 },
 
-  // Imposing horse just north of where the two ranks will stand.
-  // The solid box is only the wheeled platform.
-  { id: 'horse', x: 480, baseY: 228, bodyW: 72, bodyH: 30, insetBottom: 4 },
+  // PixelLab horse, south frame. The picture is 128px tall. The solid box
+  // is only the platform and wheels, so feet can pass behind the head.
+  { id: 'horse', x: 480, baseY: 228, bodyW: 66, bodyH: 30, insetBottom: 0 },
 
   { id: 'rubble', x: 220, baseY: 200, bodyW: 26, bodyH: 12, insetBottom: 2 },
   { id: 'rubble', x: 740, baseY: 190, bodyW: 26, bodyH: 12, insetBottom: 2 },
@@ -106,12 +106,14 @@ export const DECOR = [
   { id: 'tower', x: (GATE.right + 1) * TILE + 16, baseY: (WALL.bottom + 1) * TILE },
 ];
 
-// A few dim lamps only. The Greeks opened the gate quietly. Nothing is on fire.
+// Every entry is a real standing lamp. The glow is drawn on its flame.
+// The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [
-  { x: 400, y: 340 },
-  { x: 560, y: 340 },
-  // Beside the temple, not on the horse's head.
-  { x: 390, y: 118 },
+  // Flanking the ranks, not standing in them.
+  { x: 292, y: 300 },
+  { x: 668, y: 300 },
+  // On the paving beside the temple colonnade, not on the horse.
+  { x: 390, y: 150 },
 ];
 
 function earthKind(x, y) {

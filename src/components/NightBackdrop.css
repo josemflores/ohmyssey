@@ -62,21 +62,22 @@
   background: linear-gradient(180deg, rgba(232, 150, 70, 0.22), transparent 70%);
 }
 
-.ship {
+.night .ship {
   position: absolute;
-  left: 8%;
-  bottom: 58px;
-  width: min(280px, 42vw);
+  left: 5%;
+  bottom: -8px;
+  width: min(420px, 58vw);
   z-index: 2;
-  animation: ship-bob 5.5s ease-in-out infinite;
-  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.35));
+  animation: ship-bob 6.5s ease-in-out infinite;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
 }
 .lantern, .lantern-flame { animation: flicker 1.3s ease-in-out infinite; }
 .lantern { transform-origin: center; }
 
 @keyframes ship-bob {
-  0%, 100% { transform: translateY(0) rotate(-1.4deg); }
-  50% { transform: translateY(-10px) rotate(1.2deg); }
+  0%, 100% { transform: translate(0, 0) rotate(-0.7deg); }
+  50% { transform: translate(10px, -5px) rotate(0.7deg); }
 }
 @keyframes flicker {
   0%, 100% { opacity: 1; }
@@ -91,7 +92,6 @@
   right: 0;
   bottom: 0;
   height: 168px;
-  z-index: 1;
   pointer-events: none;
 }
 .wave {
@@ -103,9 +103,9 @@
   animation: wave-drift linear infinite;
 }
 .wave svg { width: 50%; height: 100%; display: block; }
-.wave-back { bottom: 78px; opacity: 0.95; }
-.wave-mid { bottom: 40px; }
-.wave-front { bottom: 0; height: 92px; }
+.wave-back { bottom: 78px; opacity: 0.95; z-index: 1; }
+.wave-mid { bottom: 40px; z-index: 1; }
+.wave-front { bottom: 0; height: 92px; z-index: 3; }
 
 @keyframes wave-drift {
   from { transform: translateX(0); }
@@ -160,6 +160,15 @@
   max-width: 280px;
   background: url('/assets/ui/meander.svg') center repeat-x;
   background-size: 40px 14px;
+}
+
+@media (max-width: 640px) {
+  .night .ship {
+    left: 2%;
+    width: min(300px, 78vw);
+    bottom: -4px;
+  }
+  .night-content { padding-bottom: 7.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

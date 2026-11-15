@@ -152,102 +152,6 @@ function paintTileset() {
   return canvas;
 }
 
-function paintHorse() {
-  // High top-down, facing north. Ellipses, not boxes: a tapered muzzle,
-  // a round skull, a curving neck, and a barrel of shaded planks.
-  const { canvas, ctx } = makeCanvas(96, 108);
-  const wood = '#c4894a';
-  const light = '#f6ddb0';
-  const shade = '#6e4322';
-  const dark = '#3a2412';
-  const line = '#1a0e08';
-
-  function oval(cx, cy, rx, ry, color) {
-    for (let y = Math.ceil(-ry); y <= ry; y += 1) {
-      const inside = 1 - (y * y) / (ry * ry);
-      if (inside <= 0) continue;
-      const half = Math.max(1, Math.round(rx * Math.sqrt(inside)));
-      fill(ctx, Math.round(cx - half), Math.round(cy + y), half * 2, 1, color);
-    }
-  }
-
-  // Wheeled platform. Left planks are lit, right planks sit in shadow.
-  fill(ctx, 10, 94, 76, 10, line);
-  fill(ctx, 12, 96, 72, 6, '#c49258');
-  fill(ctx, 12, 96, 18, 6, light);
-  fill(ctx, 62, 96, 22, 6, shade);
-  for (let i = 0; i < 3; i += 1) fill(ctx, 14, 97 + i * 2, 68, 1, i % 2 ? dark : '#e7c48a');
-  for (const wx of [8, 26, 60, 78]) {
-    fill(ctx, wx, 96, 11, 11, line);
-    fill(ctx, wx + 2, 98, 7, 7, '#4a3424');
-    fill(ctx, wx + 4, 100, 3, 3, light);
-  }
-
-  for (const lx of [22, 36, 54, 68]) {
-    fill(ctx, lx, 78, 7, 20, line);
-    fill(ctx, lx + 1, 79, 5, 16, dark);
-    fill(ctx, lx + 1, 79, 2, 16, shade);
-    fill(ctx, lx, 94, 7, 3, line);
-  }
-
-  // Tail curves off the rump so the rear is not a flat cut.
-  oval(18, 78, 5, 10, line);
-  oval(16, 80, 3, 8, dark);
-  fill(ctx, 14, 70, 6, 8, line);
-
-  // Barrel. Each row is a chord, and every few rows is a darker plank seam.
-  const bx = 48;
-  const by = 68;
-  const brx = 32;
-  const bry = 16;
-  for (let y = Math.ceil(-bry); y <= bry; y += 1) {
-    const inside = 1 - (y * y) / (bry * bry);
-    if (inside <= 0) continue;
-    const half = Math.max(1, Math.round(brx * Math.sqrt(inside)));
-    const row = by + y;
-    fill(ctx, bx - half, row, half * 2, 1, line);
-    const inner = Math.max(1, half - 1);
-    const seam = row % 5 === 0;
-    fill(ctx, bx - inner, row, inner * 2, 1, seam ? dark : wood);
-    if (!seam) {
-      fill(ctx, bx - inner, row, 7, 1, light);
-      fill(ctx, bx + inner - 9, row, 9, 1, shade);
-    }
-  }
-  // Hatch, sitting on the lit face of the barrel.
-  fill(ctx, 40, 62, 12, 12, line);
-  fill(ctx, 42, 64, 8, 8, '#24140c');
-  fill(ctx, 45, 67, 3, 3, '#e8c878');
-
-  // Neck widens toward the chest. The mane is the dark ridge on the left.
-  for (let y = 30; y <= 52; y += 1) {
-    const t = (y - 30) / 22;
-    const half = 7 + Math.round(t * 8);
-    fill(ctx, 48 - half - 1, y, half * 2 + 2, 1, line);
-    fill(ctx, 48 - half, y, half * 2, 1, wood);
-    fill(ctx, 48 + half - 5, y, 5, 1, shade);
-    fill(ctx, 48 - half - 6, y, 7, 1, y % 3 === 0 ? line : dark);
-  }
-
-  // Ears first, so they are the top of the silhouette, then the skull and muzzle.
-  oval(34, 14, 3, 9, line);
-  oval(34, 15, 2, 7, dark);
-  oval(62, 14, 3, 9, line);
-  oval(62, 15, 2, 7, dark);
-  oval(48, 24, 15, 11, line);
-  oval(48, 24, 13, 9, wood);
-  oval(54, 25, 7, 7, shade);
-  oval(40, 22, 5, 5, light);
-  oval(48, 10, 7, 9, line);
-  oval(48, 11, 5, 7, light);
-  oval(51, 11, 3, 6, wood);
-  fill(ctx, 45, 6, 6, 2, '#f8e6c4');
-  fill(ctx, 45, 14, 8, 2, dark);
-  fill(ctx, 56, 22, 4, 3, line);
-  fill(ctx, 57, 23, 2, 1, '#f4e6c0');
-  return canvas;
-}
-
 function paintTemple() {
   const { canvas, ctx } = makeCanvas(104, 80);
   // Steps, lit from the upper left. The shadow sits on the south edge.
@@ -353,6 +257,33 @@ function paintTower() {
   return canvas;
 }
 
+// Three frames, 16×28. Only the flame changes. Bronze standing lamp.
+function paintOilLamp() {
+  const { canvas, ctx } = makeCanvas(48, 28);
+  const flames = [
+    [[6, 1, 4, 2, '#fff4c8'], [7, 3, 2, 4, '#ffb04a'], [7, 0, 2, 2, '#fffbe8']],
+    [[7, 3, 2, 3, '#ffb04a'], [7, 2, 2, 2, '#ffe09a']],
+    [[8, 1, 3, 2, '#fff4c8'], [8, 3, 2, 4, '#ff9a3c'], [7, 2, 2, 2, '#ffe09a']],
+  ];
+  for (let frame = 0; frame < 3; frame += 1) {
+    const x = frame * 16;
+    fill(ctx, x + 2, 25, 12, 3, '#2a1c10');
+    fill(ctx, x + 3, 25, 10, 1, '#e2c48a');
+    fill(ctx, x + 7, 17, 2, 8, '#6a4424');
+    fill(ctx, x + 7, 17, 1, 8, '#e6c890');
+    fill(ctx, x + 3, 13, 10, 6, '#2a1c10');
+    fill(ctx, x + 4, 14, 8, 4, '#c48a42');
+    fill(ctx, x + 4, 14, 3, 2, '#f3d7a0');
+    fill(ctx, x + 10, 15, 2, 2, '#7a4e24');
+    fill(ctx, x + 6, 11, 4, 3, '#a87438');
+    fill(ctx, x + 7, 9, 2, 3, '#1c120c');
+    for (const [fx, fy, fw, fh, color] of flames[frame]) {
+      fill(ctx, x + fx, fy, fw, fh, color);
+    }
+  }
+  return canvas;
+}
+
 function paintLampGlow() {
   const { canvas, ctx } = makeCanvas(160, 160);
   const g = ctx.createRadialGradient(80, 80, 4, 80, 80, 78);
@@ -377,7 +308,6 @@ function paintVignette() {
 }
 
 const PROP_ART = {
-  horse: paintHorse,
   temple: paintTemple,
   house: () => paintHouse('#8c3a2a', '#b5523a'),
   houseAlt: () => paintHouse('#5c4634', '#7a5a40'),
@@ -395,12 +325,9 @@ function addCanvas(scene, key, canvas) {
   return tex;
 }
 
-function addSheet(scene, key, canvas) {
+function addSheet(scene, key, canvas, frameWidth = 32, frameHeight = 32) {
   if (scene.textures.exists(key)) scene.textures.remove(key);
-  const tex = scene.textures.addSpriteSheet(key, canvas, {
-    frameWidth: 32,
-    frameHeight: 32,
-  });
+  const tex = scene.textures.addSpriteSheet(key, canvas, { frameWidth, frameHeight });
   tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   return tex;
 }
@@ -413,6 +340,7 @@ export function buildWorldTextures(scene) {
   addCanvas(scene, 'feet-small', makeCanvas(12, 8).canvas);
   addCanvas(scene, 'vignette', paintVignette());
   addCanvas(scene, 'lamp-glow', paintLampGlow());
+  addSheet(scene, 'oil-lamp', paintOilLamp(), 16, 28);
   // Stand-in sheets. A team with WARRIOR_CONFIG path set is loaded in preload instead.
   if (!WARRIOR_CONFIG.teams.greek.path) {
     addSheet(scene, WARRIOR_CONFIG.teams.greek.key, paintWarriorSheet(TEAMS.greek));

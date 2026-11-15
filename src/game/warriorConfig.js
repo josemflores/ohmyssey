@@ -2,7 +2,9 @@
 //
 // Frame order matches Odysseus: south, south-east, east, north-east,
 // north, north-west, west, south-west. One frame each, left to right.
-// These sheets are idle only. The scene bobs a frame while a warrior moves.
+// Odysseus wears a red crest, so the Greek army is the red sheet and the
+// Trojan army is the teal sheet. These sheets are idle only. The scene bobs
+// a frame while a warrior moves.
 //
 // Leave a team's path null to fall back to the drawn stand-in in warriorArt.js.
 // A walk sheet, if one arrives later, adds rows AFTER the idle eight.
@@ -25,8 +27,8 @@ export const WARRIOR_CONFIG = {
   // null = idle frames only. { framesPerFacing, frameRate } turns on the walk.
   walk: null,
   teams: {
-    greek: { key: 'warrior-greek', path: '/assets/sprites/greek_idle.png' },
-    trojan: { key: 'warrior-trojan', path: '/assets/sprites/trojan_idle.png' },
+    greek: { key: 'soldier-red-greek', path: '/assets/sprites/soldier_red_greek.png' },
+    trojan: { key: 'soldier-teal-trojan', path: '/assets/sprites/soldier_teal_trojan.png' },
   },
 };
 

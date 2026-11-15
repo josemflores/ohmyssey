@@ -46,7 +46,7 @@ export class TroyScene extends Phaser.Scene {
       });
     }
 
-    // Real PixelLab sheets, when their paths are filled in. See warriorConfig.js.
+    // Real PixelLab sheets. See warriorConfig.js. Greek is red, Trojan is teal.
     for (const team of Object.values(WARRIOR_CONFIG.teams)) {
       if (!team.path) continue;
       this.load.spritesheet(team.key, team.path, {
@@ -54,6 +54,12 @@ export class TroyScene extends Phaser.Scene {
         frameHeight: WARRIOR_CONFIG.frameHeight,
       });
     }
+
+    // Eight facings. The plaza uses frame 0 (south). Native 128px, no rescale.
+    this.load.spritesheet('horse', '/assets/sprites/trojan_horse.png', {
+      frameWidth: 128,
+      frameHeight: 128,
+    });
   }
 
   create() {
@@ -64,6 +70,14 @@ export class TroyScene extends Phaser.Scene {
 
     buildWorldTextures(this);
     if (ANIM_CONFIG.walk) this.createWalkAnims();
+    this.anims.create({
+      key: 'lamp-flicker',
+      frames: this.anims.generateFrameNumbers('oil-lamp', { start: 0, end: 2 }),
+      frameRate: 5,
+      repeat: -1,
+    });
+    const horseTex = this.textures.get('horse');
+    if (horseTex) horseTex.setFilter(Phaser.Textures.FilterMode.NEAREST);
 
     const grid = buildMap();
     const map = this.make.tilemap({ data: grid, tileWidth: 16, tileHeight: 16 });
@@ -90,7 +104,7 @@ export class TroyScene extends Phaser.Scene {
     const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0x6a7c9e, 1);
     moon.setBlendMode(Phaser.BlendModes.MULTIPLY);
     moon.setDepth(5000);
-    for (const lamp of LAMPS) addLamp(this, lamp.x, lamp.y);
+    for (const lamp of LAMPS) addLamp(this, this.blockers, lamp);
 
     this.vignette = this.add.image(0, 0, 'vignette')
       .setOrigin(0, 0)
@@ -282,12 +296,19 @@ function poseHero(hero, facing, moving, time) {
 
 function addSolidProp(scene, group, prop) {
   // Moonlight comes from the upper left, so shadows fall down and to the right.
-  const wide = prop.id === 'column' ? 10 : prop.bodyW * 0.85;
-  const tall = prop.id === 'column' ? 4 : 6;
-  const shadow = scene.add.ellipse(prop.x + 5, prop.baseY + 2, wide, tall, 0x1a2438, 0.55);
+  const wide = prop.id === 'column' ? 10 : prop.id === 'horse' ? 72 : prop.bodyW * 0.85;
+  const tall = prop.id === 'column' ? 4 : prop.id === 'horse' ? 14 : 6;
+  const shadow = scene.add.ellipse(prop.x + 5, prop.baseY + 2, wide, tall, 0x1a2438, 0.5);
   // Above the moonlight grade, under the people, so the shadow stays visible.
   shadow.setDepth(5200);
-  scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(prop.baseY);
+  if (prop.id === 'horse') {
+    // Wheels in the south frame end at pixel 122 of 128. Other facings stay loaded.
+    const horse = scene.add.sprite(prop.x, prop.baseY, 'horse', 0);
+    horse.setOrigin(0.5, 122 / 128);
+    horse.setDepth(7000 + prop.baseY);
+  } else {
+    scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(prop.baseY);
+  }
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');
   blocker.setDisplaySize(prop.bodyW, prop.bodyH);
@@ -295,22 +316,30 @@ function addSolidProp(scene, group, prop) {
   blocker.setVisible(false);
 }
 
-function addLamp(scene, x, y) {
-  // Soft pool on the ground, above the blue grade and below the people.
-  const glow = scene.add.image(x, y, 'lamp-glow');
+function addLamp(scene, group, lamp) {
+  const { x, y } = lamp;
+  // Flame sits at the top of the 28px lamp. The pool is centred there.
+  const flameY = y - 24;
+  const glow = scene.add.image(x, flameY, 'lamp-glow');
   glow.setBlendMode(Phaser.BlendModes.ADD);
   glow.setDepth(5400);
-  glow.setAlpha(0.85);
-  const core = scene.add.circle(x, y, 1.5, 0xffe0a0, 0.95);
-  core.setDepth(5450);
+  glow.setAlpha(0.62);
+  glow.setScale(0.78);
+  const sprite = scene.add.sprite(x, y, 'oil-lamp', 0).setOrigin(0.5, 1);
+  sprite.setDepth(7000 + y);
+  sprite.play('lamp-flicker');
   scene.tweens.add({
     targets: glow,
-    alpha: 0.65,
-    duration: 1400,
+    alpha: 0.4,
+    duration: 480,
     yoyo: true,
     repeat: -1,
     ease: 'Sine.easeInOut',
   });
+  const blocker = group.create(x, y - 4, 'blank');
+  blocker.setDisplaySize(10, 8);
+  blocker.refreshBody();
+  blocker.setVisible(false);
 }
 
 function createGlints(scene) {
