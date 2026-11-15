@@ -5,7 +5,7 @@
 // so the room feels tight.
 //
 // The trap door shows "Press E" when he stands on it.
-// What that press DOES is onTrapDoor(), at the top of this file.
+// That press climbs back out. The function is onTrapDoor(), at the top of this file.
 
 import Phaser from 'phaser';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
@@ -50,14 +50,11 @@ const POSTS = [
 // Trap door button.
 //
 // This runs when he presses E while standing on the hatch.
-// Write your code in the body of this function.
-// `scene` is this room.
-//
-// To send him back outside, next to the horse, use:
-//   scene.scene.start('troy', { x: 480, y: 260 });
+// `scene` is this room. The last line sends him back outside,
+// next to the horse. Put your own code above that line.
 // ============================================================
 export function onTrapDoor(scene) {
-  // Your button goes here.
+  scene.scene.start('troy', { x: 480, y: 260 });
 }
 
 export class HorseScene extends Phaser.Scene {
