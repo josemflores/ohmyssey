@@ -95,11 +95,21 @@
    Scoped to .troy so other levels keep their own backdrops.
    --------------------------------------------------------------------------- */
 .troy .battle-screen {
+  background: #0c0806;
+  image-rendering: pixelated;
+}
+/* The picture sits in its own layer (.battle-backdrop in TroyWorld.jsx) so
+   the opening can pull the camera back from it. z-index -2: under the
+   embers (-1) and under everything else. */
+.troy .battle-screen .battle-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
   background:
     linear-gradient(180deg, rgba(4, 8, 16, 0.35) 0%, rgba(4, 8, 16, 0) 38%, rgba(4, 8, 16, 0.55) 100%),
     url('/assets/battle/troy_burning.png') 50% 62% / cover no-repeat;
-  image-rendering: pixelated;
 }
+
 
 /* Firelight that breathes, and embers drifting up across the whole screen.
    z-index -1 keeps it above the picture but under the fighters and cards. */
@@ -348,8 +358,8 @@
   margin: 0 -4%;
   background: linear-gradient(90deg, #120a06 0%, #1e120a 70%, #c8963c 96%, #f0d48a 100%);
   transform: skewX(-18deg);
-  animation: battle-intro-shard 0.62s cubic-bezier(0.6, 0, 0.3, 1) forwards;
-  animation-delay: calc(0.12s + var(--i) * 0.05s);
+  animation: battle-intro-shard 0.5s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+  animation-delay: calc(0.08s + var(--i) * 0.04s);
 }
 .battle-intro i:nth-child(even) { animation-name: battle-intro-shard-down; }
 @keyframes battle-intro-flash {
@@ -364,18 +374,104 @@
   from { transform: skewX(-18deg) translateY(0); }
   to { transform: skewX(-18deg) translateY(115%); }
 }
-/* Desktop only: on phones the stage is already scaled down by TroyWorld.css. */
-@media (min-width: 721px) {
-  .troy .battle-screen .battle-stage {
-    animation: battle-intro-stage 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-}
-@keyframes battle-intro-stage {
-  from { transform: scale(1.18); opacity: 0; }
-  35% { opacity: 1; }
-  to { transform: scale(1); opacity: 1; }
-}
 @media (prefers-reduced-motion: reduce) {
   .battle-intro { display: none; }
-  .troy .battle-screen .battle-stage { animation: none; }
+}
+
+/* The opening, beat by beat (times from when the battle screen appears).
+   .is-entering is on the screen for its first 2 seconds (TroyWorld.jsx),
+   so none of this replays when a blow re-draws a fighter.
+     0.00  flash, shards sweep away (above)
+     0.00  the camera pulls back: the backdrop zooms out from close up
+     0.35  Odysseus runs in from the left edge of the screen
+     0.55  the Trojans step in from the right
+     0.95  their HP bars and names appear, one Trojan at a time
+     1.25  Odysseus' status panel slides up
+     1.50  the command menu opens above him */
+.troy .battle-screen.is-entering .battle-backdrop {
+  animation: battle-pull-back 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes battle-pull-back {
+  from { transform: scale(1.35); filter: blur(2px) brightness(1.25); }
+  to { transform: scale(1); filter: none; }
+}
+@media (min-width: 721px) {
+  .troy .battle-screen.is-entering .battle-side:not(.is-foe) .battle-fighter {
+    animation: battle-run-in 0.55s cubic-bezier(0.25, 0.8, 0.3, 1) 0.35s both;
+  }
+  .troy .battle-screen.is-entering .battle-foes {
+    animation: battle-step-in 0.5s cubic-bezier(0.25, 0.8, 0.3, 1) 0.55s both;
+  }
+  .troy .battle-screen.is-entering .battle-member :is(.battle-hp-track, .battle-name, .battle-hp-num) {
+    animation: battle-ui-in 0.3s ease-out both;
+    animation-delay: 0.95s;
+  }
+  .troy .battle-screen.is-entering .battle-member:nth-child(2) :is(.battle-hp-track, .battle-name, .battle-hp-num) { animation-delay: 1.05s; }
+  .troy .battle-screen.is-entering .battle-member:nth-child(3) :is(.battle-hp-track, .battle-name, .battle-hp-num) { animation-delay: 1.15s; }
+  .troy .battle-screen.is-entering .battle-member:nth-child(4) :is(.battle-hp-track, .battle-name, .battle-hp-num) { animation-delay: 1.25s; }
+  .troy .battle-screen.is-entering .battle-side:not(.is-foe)::before,
+  .troy .battle-screen.is-entering .battle-side:not(.is-foe) > :is(.battle-name, .battle-hp-num, .battle-hp-track) {
+    animation: battle-panel-in 0.4s ease-out 1.25s both;
+  }
+  /* Only the menu. The question card is centered with a transform of its own. */
+  .troy .battle-screen.is-entering .battle-dock:has(.battle-commands) {
+    animation: battle-menu-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) 1.5s both;
+  }
+}
+@keyframes battle-run-in {
+  from { transform: translateX(-60vw); }
+  80% { transform: translateX(10px); }
+  to { transform: translateX(0); }
+}
+@keyframes battle-step-in {
+  from { transform: translateX(45vw); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes battle-ui-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes battle-panel-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes battle-menu-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Livelier idles in battle: on top of the two breathing frames, each
+   fighter rises and settles with his feet planted, and leans a hair. The
+   Trojans each keep their own rhythm. */
+.battle-screen .battle-sprite.battle-hero {
+  transform-origin: 50% 100%;
+  animation:
+    odysseus-idle 0.5s steps(1) infinite alternate,
+    battle-breathe 1.7s ease-in-out infinite;
+}
+.battle-screen .battle-member:not(.is-down) .battle-sprite.battle-trojan {
+  transform-origin: 50% 100%;
+  animation:
+    trojan-idle 0.5s steps(1) infinite alternate,
+    battle-breathe var(--breath, 1.5s) ease-in-out var(--breath-at, 0s) infinite;
+}
+/* Only variables here, so attack and hit animations keep their own timing. */
+.battle-screen .battle-member:nth-child(2) { --breath: 1.65s; --breath-at: -0.5s; }
+.battle-screen .battle-member:nth-child(3) { --breath: 1.4s; --breath-at: -1s; }
+.battle-screen .battle-member:nth-child(4) { --breath: 1.8s; --breath-at: -0.3s; }
+@keyframes battle-breathe {
+  0%, 100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+  30% { transform: translateY(-3px) scale(0.985, 1.03) rotate(-0.6deg); }
+  60% { transform: translateY(-1px) scale(1, 1.01) rotate(0.4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .troy .battle-screen.is-entering .battle-backdrop,
+  .troy .battle-screen.is-entering .battle-side:not(.is-foe) .battle-fighter,
+  .troy .battle-screen.is-entering .battle-foes,
+  .troy .battle-screen.is-entering .battle-member *,
+  .troy .battle-screen.is-entering .battle-side:not(.is-foe)::before,
+  .troy .battle-screen.is-entering .battle-side:not(.is-foe) > *,
+  .troy .battle-screen.is-entering .battle-dock { animation: none; }
+  .battle-screen .battle-sprite.battle-hero,
+  .battle-screen .battle-member:not(.is-down) .battle-sprite.battle-trojan { animation: none; }
 }

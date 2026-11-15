@@ -103,10 +103,29 @@ export function facingToward(dx, dy) {
   return dx < 0 ? 'sw' : 'se';
 }
 
+// A slow breath for a standing soldier, on top of his idle frames: he rises
+// a little taller and narrower and settles back, feet planted (origin is at
+// his feet). Each man gets his own pace and starting point so a crowd never
+// moves in lockstep. Safe to call more than once on the same sprite.
+export function addBreathing(sprite) {
+  if (!sprite || sprite.breathing) return;
+  sprite.breathing = sprite.scene.tweens.add({
+    targets: sprite,
+    scaleY: { from: sprite.scaleY, to: sprite.scaleY * 1.035 },
+    scaleX: { from: sprite.scaleX, to: sprite.scaleX * 0.98 },
+    duration: 900 + Math.random() * 500,
+    delay: Math.random() * 900,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.easeInOut',
+  });
+}
+
 // Start a soldier breathing in place. A small random delay keeps a group
 // from breathing in perfect lockstep.
 export function playSoldierIdle(sprite, team, facing = 's') {
   const key = soldierAnim(team, 'idle', facing);
   if (!sprite.scene.anims.exists(key)) return;
   sprite.play({ key, delay: Math.floor(Math.random() * 400) });
+  addBreathing(sprite);
 }

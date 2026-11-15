@@ -21,7 +21,7 @@
 // against the walls, houses, trees and lamps before he runs it.
 
 import Phaser from 'phaser';
-import { soldierAnim, soldierWalk, facingToward } from './soldierAnimations.js';
+import { soldierAnim, soldierWalk, facingToward, addBreathing } from './soldierAnimations.js';
 import { PROPS } from './map.js';
 import { addTorch, igniteHouse } from './burning.js';
 
@@ -95,6 +95,7 @@ function playWalk(man, facing) {
 function playIdle(man) {
   const key = soldierAnim(man.team, 'idle', man.facing);
   if (man.sprite.scene.anims.exists(key)) man.sprite.play(key, true);
+  addBreathing(man.sprite);
 }
 
 function pathMs(sprite, points) {

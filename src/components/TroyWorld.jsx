@@ -32,6 +32,10 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
   const [talk, setTalk] = useState(null);
   const [quiz, setQuiz] = useState(null);
   const [fight, setFight] = useState(null);
+  // True for the first moments of a fight, while its opening plays
+  // (Odysseus runs in, then the battle UI appears piece by piece).
+  const [entering, setEntering] = useState(false);
+  const enterTimer = useRef(null);
   const [questDone, setQuestDone] = useState(false);
   const [complete, setComplete] = useState(false);
   // Odysseus ran out of HP. Shows "Odysseus has Fallen".
@@ -112,6 +116,10 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
     }
     function onFightStart(payload) {
       setFight({ ...payload, phase: 'menu', note: '' });
+      setEntering(true);
+      clearTimeout(enterTimer.current);
+      // Matches the longest delay in the opening (soldierBattle.css).
+      enterTimer.current = setTimeout(() => setEntering(false), 2000);
     }
     function onFightQuestion(question) {
       setFight((current) => current && {
@@ -212,6 +220,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       game.events.off('gameOver');
       game.events.off('objective');
       objectiveTimers.current.forEach(clearTimeout);
+      clearTimeout(enterTimer.current);
       game.events.off('gateQuestion');
       game.events.off('gateWrong');
       game.events.off('gateClosed');
@@ -439,7 +448,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
       )}
       {fight && (
         <div
-          className={`battle-screen${fight.gate ? ' is-gate' : ''}${fight.anim ? ` is-${fight.anim}` : ''}${fight.shake ? ' is-shake' : ''}`}
+          className={`battle-screen${entering ? ' is-entering' : ''}${fight.gate ? ' is-gate' : ''}${fight.anim ? ` is-${fight.anim}` : ''}${fight.shake ? ' is-shake' : ''}`}
           role="dialog"
           aria-label="Battle"
         >
@@ -449,6 +458,7 @@ export default function TroyWorld({ onSail, onHome, onRestart }) {
           </ol>
           {/* Octopath-style opening: a flash and slanted shards that sweep
               away to reveal the fight (soldierBattle.css). Plays once. */}
+          <div className="battle-backdrop" aria-hidden="true" />
           <div className="battle-intro" aria-hidden="true">
             {[0, 1, 2, 3, 4, 5].map((i) => <i key={i} style={{ '--i': i }} />)}
           </div>

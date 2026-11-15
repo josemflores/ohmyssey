@@ -1133,13 +1133,18 @@ function poseHero(hero, facing, moving, time) {
   const idle = ANIM_CONFIG.facingFrames[facing];
 
   if (ANIM_CONFIG.walk) {
+    hero.setOrigin(0.5, 1);
     if (moving) {
       hero.anims.play(`walk-${facing}`, true);
-    } else {
-      hero.anims.play(`hero-idle-${facing}`, true);
+      hero.setScale(HERO_SCALE, HERO_SCALE);
+      return 0;
     }
-    hero.setOrigin(0.5, 1);
-    hero.setScale(HERO_SCALE, HERO_SCALE);
+    hero.anims.play(`hero-idle-${facing}`, true);
+    // Standing: a slow, deep breath on top of the idle frames. He grows a
+    // touch taller and narrower and back, with his feet planted (origin is
+    // at his feet).
+    const breath = (Math.sin(time / 520) + 1) / 2;
+    hero.setScale(HERO_SCALE * (1 - breath * 0.018), HERO_SCALE * (1 + breath * 0.03));
     return 0;
   }
 
