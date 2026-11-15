@@ -4,7 +4,7 @@
 // north, north-west, west, south-west. One frame each, left to right.
 // Both sheets are Universal LPC soldiers built by art/scripts/build_soldiers_lpc.py.
 // Greeks wear bronze armor like Odysseus' with a dull maroon crest, so his
-// dark iron and bright scarlet crest still stand out. Trojans are all one gray tone.
+// dark iron and bright scarlet crest still stand out. Trojans are all one purple tone.
 // These sheets are idle only. The scene bobs a frame while a warrior moves.
 // The breathing, spear-thrust, and hit animations are in soldierAnimations.js.
 //

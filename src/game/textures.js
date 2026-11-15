@@ -669,6 +669,52 @@ function paintOilLamp() {
   return canvas;
 }
 
+// Four frames of a roof fire, 16x24 each. Each frame is a flame shape in
+// layers (dark red, orange, yellow, a white-hot core) that leans differently,
+// so playing them in a loop makes the fire dance.
+function paintFire() {
+  const { canvas, ctx } = makeCanvas(64, 24);
+  const layers = [
+    [1.0, '#b8281a'],
+    [0.78, '#ec5a1e'],
+    [0.56, '#ff9e30'],
+    [0.34, '#ffd866'],
+    [0.16, '#fff6d4'],
+  ];
+  const leans = [0, 1.2, -0.8, 0.6];
+  const heights = [22, 20, 23, 19];
+  for (let frame = 0; frame < 4; frame += 1) {
+    const ox = frame * 16;
+    for (const [scale, color] of layers) {
+      const h = heights[frame] * scale;
+      for (let y = 0; y < h; y += 1) {
+        const t = y / h; // 0 at the base, 1 at the tip
+        const half = 6.5 * scale * (1 - t) ** 0.8;
+        const lean = leans[frame] * t * 4 + Math.sin(y * 0.9 + frame) * 0.6;
+        const x0 = Math.round(8 - half + lean);
+        const w = Math.max(1, Math.round(half * 2));
+        fill(ctx, ox + x0, 23 - y, w, 1, color);
+      }
+    }
+    // A loose spark above the flame.
+    dot(ctx, ox + 6 + frame * 2, 1 + (frame % 2), '#ffd866');
+  }
+  return canvas;
+}
+
+// A soft round puff of smoke, drawn in rings so it stays pixel art.
+function paintSmoke() {
+  const { canvas, ctx } = makeCanvas(16, 16);
+  const rings = [[7, '#3a3236'], [5, '#4a4046'], [3, '#5a5056']];
+  for (const [r, color] of rings) {
+    for (let y = -r; y <= r; y += 1) {
+      const half = Math.round(Math.sqrt(r * r - y * y));
+      fill(ctx, 8 - half, 8 + y, half * 2, 1, color);
+    }
+  }
+  return canvas;
+}
+
 function paintLampGlow() {
   const { canvas, ctx } = makeCanvas(160, 160);
   const g = ctx.createRadialGradient(80, 80, 4, 80, 80, 78);
@@ -730,6 +776,9 @@ export function buildWorldTextures(scene) {
   addCanvas(scene, 'vignette', paintVignette());
   addCanvas(scene, 'lamp-glow', paintLampGlow());
   addSheet(scene, 'oil-lamp', paintOilLamp(), 16, 28);
+  // Burning houses (burning.js).
+  addSheet(scene, 'fire', paintFire(), 16, 24);
+  addCanvas(scene, 'smoke', paintSmoke());
   // Stand-in sheets. A team with WARRIOR_CONFIG path set is loaded in preload instead.
   if (!WARRIOR_CONFIG.teams.greek.path) {
     addSheet(scene, WARRIOR_CONFIG.teams.greek.key, paintWarriorSheet(TEAMS.greek));

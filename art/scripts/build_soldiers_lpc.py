@@ -10,7 +10,7 @@ Who looks like what:
   Greeks    the same legion helmet and plate cuirass as Odysseus, but in
             bronze, with a dull maroon crest, a spear, and a Spartan shield.
   Trojans   one tone only, head to toe, skin included: every pixel is
-            redrawn in a gray ramp (ASH) by how light it is. A different helmet
+            redrawn in a purple ramp (MUREX) by how light it is. A different helmet
             (barbuta with a ridge crest), spear and shield.
 
 Output (all 32x32 frames, origin bottom-center, in public/assets/sprites/npcs):
@@ -120,12 +120,13 @@ def trojan_layers() -> list[dict]:
 
 TEAMS = {"greek": greek_layers, "trojan": trojan_layers}
 
-# Trojans in one neutral tone: plain grays, no hue at all, like a statue.
-# Lighter overall than Odysseus' near-black iron, so he still stands out.
-ASH = ["#1C1C1C", "#3A3A3A", "#5C5C5C", "#808080", "#A6A6A6", "#D0D0D0"]
+# Trojans in one tone of murex purple, the dye made in Troy's lower town.
+# Purple stands out from the gray-blue night paving, the bronze Greeks, and
+# Odysseus' near-black iron with its red crest.
+MUREX = ["#1a0a1e", "#3a1240", "#5e1e62", "#84307e", "#aa4c9a", "#d684c0"]
 
 # Teams drawn in a single color. The ramp runs darkest to lightest.
-MONOCHROME = {"trojan": ASH}
+MONOCHROME = {"trojan": MUREX}
 
 
 def monochrome(image: Image.Image, ramp_colors: list[str]) -> Image.Image:

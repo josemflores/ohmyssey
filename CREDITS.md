@@ -160,7 +160,7 @@ Cinzel and Source Sans 3 are loaded from Google Fonts, the same way the rest of 
 
 Everything in `public/assets/sprites/npcs/greek_lpc/` and `public/assets/sprites/npcs/trojan_lpc/` is composed from the same Universal LPC generator commit as Odysseus. Rebuild with `python3 art/scripts/build_soldiers_lpc.py` (needs Pillow). The script header lists every output sheet and its layout.
 
-Greeks: light skin, linen pants, leather sandals, a bronze plate cuirass, bronze bracers, a bronze legion helmet, a dull maroon legion crest, a bronze spear, and a Spartan shield. Trojans: the same body and head, a barbuta helmet, and a ridge crest, then every pixel (skin included) repainted in one gray ramp by lightness. The other recolors are palette swaps of the generator's rows.
+Greeks: light skin, linen pants, leather sandals, a bronze plate cuirass, bronze bracers, a bronze legion helmet, a dull maroon legion crest, a bronze spear, and a Spartan shield. Trojans: the same body and head, a barbuta helmet, and a ridge crest, then every pixel (skin included) repainted in one murex-purple ramp by lightness. The other recolors are palette swaps of the generator's rows.
 
 Layer credits, from the generator's CREDITS.csv:
 

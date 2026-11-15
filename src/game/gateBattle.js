@@ -12,12 +12,18 @@
 // a solid footprint once he reaches his spot, so Odysseus walks around the
 // fighting, not through it.
 //
+// 4. A squad of Greeks with torches runs to houses near the gate. Each one
+//    stops at a door, and a moment later that house goes up in flames
+//    (burning.js). They stay there, guarding the fire.
+//
 // Nobody appears out of thin air: the Greeks come along the beach from off
 // screen, and each Trojan starts out of view on a line that is checked
 // against the walls, houses, trees and lamps before he runs it.
 
 import Phaser from 'phaser';
 import { soldierAnim, soldierWalk, facingToward } from './soldierAnimations.js';
+import { PROPS } from './map.js';
+import { addTorch, igniteHouse } from './burning.js';
 
 // Where each pair fights: on the two flanks just inside the wall, leaving the
 // road up the middle open for Odysseus. Checked against the house footprints.
@@ -47,7 +53,7 @@ const WEST_COUNT = 7;
 // Gap between the two fighters of a pair, in pixels.
 const HALF_GAP = 11;
 // Running speed in pixels per second (Odysseus walks at 80).
-const RUN_SPEED = 120;
+const RUN_SPEED = 150;
 // The gate opening is x 416 to 544. The column runs up its middle.
 const GATE_X = 480;
 // A point just inside the wall, where the column turns off toward the duels.
@@ -73,10 +79,11 @@ function sortDepth(man) {
   man.sprite.setDepth(depth);
 }
 
-// Keep the shadow under his feet while a tween moves him.
+// Keep the shadow (and torch, if he has one) with him while a tween moves him.
 function follow(man) {
   man.shadow.setPosition(man.sprite.x + 3, man.sprite.y + 1);
   sortDepth(man);
+  if (man.torch) man.torch.follow();
 }
 
 function playWalk(man, facing) {
@@ -177,16 +184,75 @@ function startDuel(scene, pair) {
 function arrive(scene, pair, man, facing) {
   man.facing = facing;
   playIdle(man);
-  // A solid footprint at his feet (the lean in a thrust is only 3px).
-  if (scene.soldierBlockers) {
-    const block = scene.soldierBlockers.create(man.sprite.x, man.sprite.y - 6, 'blank');
-    block.setDisplaySize(18, 12);
-    block.refreshBody();
-    block.setVisible(false);
-    man.blocker = block;
-  }
+  standSolid(scene, man);
   pair.ready += 1;
   if (pair.ready === 2) startDuel(scene, pair);
+}
+
+// A solid footprint at his feet (the lean in a thrust is only 3px), so
+// Odysseus walks around him.
+function standSolid(scene, man) {
+  if (!scene.soldierBlockers) return;
+  const block = scene.soldierBlockers.create(man.sprite.x, man.sprite.y - 6, 'blank');
+  block.setDisplaySize(18, 12);
+  block.refreshBody();
+  block.setVisible(false);
+  man.blocker = block;
+}
+
+// Houses near the gate that the torch-bearers set alight, by their map
+// position (see PROPS in map.js). Each one gets its own Greek.
+const BURN_HOUSES = [
+  { x: 200, baseY: 520 },
+  { x: 800, baseY: 500 },
+  { x: 840, baseY: 560 },
+  { x: 700, baseY: 400 },
+  { x: 140, baseY: 340 },
+  { x: 640, baseY: 300 },
+];
+
+// Where the door is on each house picture, from its center: the 'house'
+// door is right of center, the 'houseAlt' door is in the middle.
+const DOOR_OFFSET = { house: 9, houseAlt: 0 };
+
+// Send the torch-bearers. They start on the beach right behind the duelists,
+// run in through the gate, stop at their door, and the house catches fire.
+function sendTorchBearers(scene, westX, eastX) {
+  let lastMs = 0;
+  BURN_HOUSES.forEach((target, index) => {
+    const prop = PROPS.find((p) => p.x === target.x && p.baseY === target.baseY);
+    if (!prop) return;
+    const west = prop.x < GATE_X;
+    const lane = west ? -10 : 10;
+    const door = { x: prop.x + (DOOR_OFFSET[prop.id] || 0), y: prop.baseY + 12 };
+    const man = addSoldier(scene, 'greek', west ? westX : eastX, 712 + (index % 2) * 14, 'greek-hoplite');
+    man.torch = addTorch(scene, man);
+    // Through the gate, then up the open middle of the street, then across
+    // to the door at the height of the house front.
+    const path = [
+      { x: GATE_X + lane, y: 690 },
+      { x: GATE_X + lane, y: INSIDE_Y },
+      { x: GATE_X + lane, y: door.y },
+      door,
+    ];
+    const delay = 500 + index * 150;
+    runPath(scene, man, path, delay, () => {
+      man.facing = 'n';
+      playIdle(man);
+      standSolid(scene, man);
+      // A beat at the door, then the torch goes in and the roof catches.
+      scene.time.delayedCall(450, () => {
+        if (man.torch) man.torch.drop();
+        man.torch = null;
+        igniteHouse(scene, prop);
+        // Step back and watch it burn, facing the street.
+        man.facing = 's';
+        playIdle(man);
+      });
+    });
+    lastMs = Math.max(lastMs, delay + pathMs(man.sprite, path));
+  });
+  return lastMs;
 }
 
 // Feet-sized box, the same size the footprints use.
@@ -271,9 +337,9 @@ export function startGateBattle(scene) {
       { x: GATE_X + lane, y: INSIDE_Y },
       { x: greekX, y: spot.y },
     ];
-    const greekDelay = 700 + rank * 240;
+    const greekDelay = 150 + rank * 130;
     runPath(scene, greek, greekPath, greekDelay, () => arrive(scene, pair, greek, greekFacing));
-    const trojanDelay = 500 + index * 40;
+    const trojanDelay = 150 + index * 30;
     runPath(scene, trojan, [tSpot], trojanDelay, () => arrive(scene, pair, trojan, trojanFacing));
     lastMs = Math.max(
       lastMs,
@@ -282,6 +348,9 @@ export function startGateBattle(scene) {
     );
     return pair;
   });
+  // The torch-bearers follow the duelists in. The camera does not wait for
+  // them (they run deep into the city), so their time is not in lastMs.
+  sendTorchBearers(scene, westX, eastX);
   scene.gateBattle = pairs;
   scene.gateBattleMs = lastMs;
   return pairs;
