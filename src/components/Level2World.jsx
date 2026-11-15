@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createLevel2Game } from '../game/level2/createLevel2Game.js';
+import { clearActiveGame, setActiveGame } from '../lib/activeGame.js';
 import './Level2World.css';
 
 // Level 2: Ithaca at night. Phaser draws the island and moves Odysseus;
@@ -15,6 +16,7 @@ export default function Level2World() {
   useEffect(() => {
     const game = createLevel2Game(host.current);
     gameRef.current = game;
+    setActiveGame(game);
     const onNear = (spot) => setNear(spot || null);
     const onTalk = (line) => setTalk(line);
     game.events.on('near', onNear);
@@ -24,6 +26,7 @@ export default function Level2World() {
       window.clearTimeout(timer);
       game.events.off('near', onNear);
       game.events.off('talk', onTalk);
+      clearActiveGame(game);
       game.destroy(true);
       gameRef.current = null;
     };
