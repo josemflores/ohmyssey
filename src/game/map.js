@@ -14,9 +14,11 @@ export const MAP_H = ROWS * TILE;
 export const FEET = { w: 16, h: 10 };
 
 // Tile indexes. They must match the painters in textures.js.
+// The ground colors are warm and light. A blue multiply in TroyScene
+// turns them into moonlight. Do not paint these tiles black.
 export const T = {
-  plaza: 0,
-  plazaAlt: 1,
+  earth: 0,
+  earthAlt: 1,
   sand: 2,
   sandAlt: 3,
   wet: 4,
@@ -27,18 +29,24 @@ export const T = {
   battlement: 9,
   wallFace: 10,
   rock: 11,
-  rubble: 12,
+  pebble: 12,
+  pave: 13,
+  paveAlt: 14,
+  weed: 15,
 };
 
 // Odysseus can walk these. Every other index is solid.
 export const WALKABLE = new Set([
-  T.plaza,
-  T.plazaAlt,
+  T.earth,
+  T.earthAlt,
   T.sand,
   T.sandAlt,
   T.wet,
   T.road,
-  T.rubble,
+  T.pebble,
+  T.pave,
+  T.paveAlt,
+  T.weed,
 ]);
 
 // Opening in the great wall, in tile columns, inclusive.
@@ -54,12 +62,12 @@ export const SPAWN = { x: 480, y: 432 };
 // The solid box sits on that ground and is `insetBottom` pixels shorter,
 // so a doorstep or a column shaft can stick out past the box.
 export const PROPS = [
-  { id: 'temple', x: 480, baseY: 148, bodyW: 88, bodyH: 52, insetBottom: 8, fire: true },
+  { id: 'temple', x: 480, baseY: 148, bodyW: 88, bodyH: 52, insetBottom: 8 },
 
-  { id: 'house', x: 120, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8, fire: true },
-  { id: 'houseAlt', x: 214, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8, fire: true },
-  { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8, fire: true },
-  { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8, fire: true },
+  { id: 'house', x: 120, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
+  { id: 'houseAlt', x: 214, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
+  { id: 'house', x: 840, baseY: 156, bodyW: 48, bodyH: 36, insetBottom: 8 },
+  { id: 'houseAlt', x: 746, baseY: 250, bodyW: 48, bodyH: 36, insetBottom: 8 },
 
   // Columns block at the base only. The shaft is tall art he can walk behind.
   { id: 'column', x: 360, baseY: 168, bodyW: 12, bodyH: 8, insetBottom: 0 },
@@ -80,10 +88,11 @@ export const PROPS = [
   { id: 'rubble', x: 276, baseY: 404, bodyW: 30, bodyH: 16, insetBottom: 2 },
   { id: 'rubble', x: 700, baseY: 412, bodyW: 30, bodyH: 16, insetBottom: 2 },
 
-  { id: 'brazier', x: 196, baseY: 476, bodyW: 14, bodyH: 10, insetBottom: 0, fire: true },
-  { id: 'brazier', x: 760, baseY: 468, bodyW: 14, bodyH: 10, insetBottom: 0, fire: true },
-  { id: 'brazier', x: 352, baseY: 228, bodyW: 14, bodyH: 10, insetBottom: 0, fire: true },
-  { id: 'brazier', x: 608, baseY: 228, bodyW: 14, bodyH: 10, insetBottom: 0, fire: true },
+  // Unlit bowls. The city is not burning. A few lamps live in LAMPS.
+  { id: 'brazier', x: 196, baseY: 476, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 760, baseY: 468, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 352, baseY: 228, bodyW: 14, bodyH: 10, insetBottom: 0 },
+  { id: 'brazier', x: 608, baseY: 228, bodyW: 14, bodyH: 10, insetBottom: 0 },
 
   { id: 'cypress', x: 250, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
   { id: 'cypress', x: 710, baseY: 132, bodyW: 10, bodyH: 8, insetBottom: 0 },
@@ -98,35 +107,33 @@ export const DECOR = [
   { id: 'tower', x: (GATE.right + 1) * TILE + 16, baseY: (WALL.bottom + 1) * TILE },
 ];
 
-// Lights along the outside of the wall, clear of the gate.
-export const WALL_TORCHES = [
-  { x: 150, y: 348 },
-  { x: 250, y: 348 },
-  { x: 710, y: 348 },
-  { x: 820, y: 348 },
+// A few dim lamps only. The Greeks opened the gate quietly. Nothing is on fire.
+export const LAMPS = [
+  { x: 400, y: 330 },
+  { x: 560, y: 330 },
+  { x: 480, y: 146 },
 ];
 
-export function fireSpots() {
-  const fromProps = PROPS.filter((prop) => prop.fire).map((prop) => ({
-    x: prop.x,
-    y: prop.baseY - 14,
-  }));
-  return fromProps.concat(WALL_TORCHES);
+function earthKind(x, y) {
+  const n = (x * 5 + y * 3) % 11;
+  if (n === 0) return T.earthAlt;
+  if (n === 4) return T.pebble;
+  return T.earth;
 }
 
 export function buildMap() {
   const grid = [];
   for (let y = 0; y < ROWS; y += 1) {
     const row = [];
-    for (let x = 0; x < COLS; x += 1) {
-      // Checker so the plaza is not one flat color.
-      row.push((x + y) % 2 === 0 ? T.plaza : T.plazaAlt);
-    }
+    for (let x = 0; x < COLS; x += 1) row.push(earthKind(x, y));
     grid.push(row);
   }
 
+  // Pale limestone in the plaza. The road is painted after this, on top.
+  fillRect(grid, 14, 3, 32, 14, (x, y) => ((x + y) % 9 === 0 ? T.paveAlt : T.pave));
+
   // Beach, then the surf, then the sea. Only the blue water is solid.
-  fillRect(grid, 0, 23, COLS, 10, (x, y) => ((x + y) % 2 === 0 ? T.sand : T.sandAlt));
+  fillRect(grid, 0, 23, COLS, 10, (x, y) => ((x * 3 + y) % 8 === 0 ? T.sandAlt : T.sand));
   fillRect(grid, 0, 33, COLS, 2, () => T.wet);
   fillRect(grid, 0, 35, COLS, 5, () => T.water);
   fillRect(grid, 0, 40, COLS, 5, () => T.waterDeep);
@@ -135,7 +142,7 @@ export function buildMap() {
   fillRect(grid, 0, 0, COLS, 1, () => T.battlement);
   fillRect(grid, 0, 1, COLS, 1, () => T.wallFace);
 
-  // The great wall, with a road where the gate is.
+  // The great wall, with the stone road continuing through the open gate.
   for (let y = WALL.top; y <= WALL.bottom; y += 1) {
     for (let x = 0; x < COLS; x += 1) {
       const inGate = x >= GATE.left && x <= GATE.right;
@@ -146,31 +153,21 @@ export function buildMap() {
     }
   }
 
-  // A street along the outside of the wall, then sand again below it.
-  fillRect(grid, 0, 21, COLS, 2, () => T.road);
-
-  // Stone avenue from the temple, through the gate, down the beach.
-  // It does not replace the wall; the gate cells are already road.
-  for (let y = 6; y <= 32; y += 1) {
+  // One road, the same width as the gate, from the temple steps to the beach.
+  for (let y = 5; y <= 31; y += 1) {
     if (y >= WALL.top && y <= WALL.bottom) continue;
-    for (let x = 28; x <= 31; x += 1) grid[y][x] = T.road;
+    for (let x = GATE.left; x <= GATE.right; x += 1) grid[y][x] = T.road;
   }
 
-  // A few loose stones on the ground. Walkable — they are just dark pixels.
-  const decals = [
-    [22, 10], [38, 9], [20, 12], [40, 14], [26, 8], [34, 15],
-    [18, 25], [42, 26], [22, 29], [40, 28],
-  ];
-  for (const [x, y] of decals) {
-    if (grid[y][x] === T.plaza || grid[y][x] === T.plazaAlt || grid[y][x] === T.sand || grid[y][x] === T.sandAlt) {
-      grid[y][x] = T.rubble;
-    }
-  }
+  // Dry weeds along the foot of the wall, and a few cracks in the paving.
   for (let x = 2; x < COLS - 2; x += 1) {
     if (x >= GATE.left - 1 && x <= GATE.right + 1) continue;
-    if ((x * 3) % 5 === 0 && (grid[16][x] === T.plaza || grid[16][x] === T.plazaAlt)) {
-      grid[16][x] = T.rubble;
-    }
+    if (x % 4 === 0) grid[16][x] = T.weed;
+    if (x % 5 === 2) grid[21][x] = T.weed;
+  }
+  const cracks = [[20, 8], [36, 7], [24, 12], [40, 11], [18, 27], [44, 26]];
+  for (const [x, y] of cracks) {
+    if (WALKABLE.has(grid[y][x]) && grid[y][x] !== T.road) grid[y][x] = T.pebble;
   }
 
   // Solid rocks: map edges on land, plus a few boulders off the path.

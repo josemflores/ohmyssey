@@ -28,14 +28,14 @@ const CARDS = [
   {
     kicker: 'Tonight',
     title: 'Inside the walls',
-    text: 'Night has fallen on Troy. The horse is inside the walls. The hidden warriors have slipped out.',
+    text: 'Night has fallen on Troy. The city sleeps. The men hidden in the horse have slipped out and opened the gate.',
     art: 'night',
   },
   {
-    kicker: 'Your move',
-    title: 'Through the fire',
-    text: 'Odysseus, find your way through the burning city…',
-    art: 'fire',
+    kicker: 'The gate',
+    title: 'Through the gate',
+    text: 'Odysseus, lead your men inside. The city sleeps, and the gate stands open…',
+    art: 'gate',
   },
 ];
 
@@ -106,7 +106,7 @@ function StoryArt({ name }) {
       {name === 'war' && <War />}
       {name === 'horse' && <Horse />}
       {name === 'night' && <NightWalls />}
-      {name === 'fire' && <Burning />}
+      {name === 'gate' && <OpenGate />}
     </svg>
   );
 }
@@ -156,23 +156,20 @@ function NightWalls() {
       <circle cx="132" cy="36" r="8" fill="#f0d48a" />
       <path d="M58 90 H86 V70 H94 V90 H108 V70 H116 V90 H142 V78 H134 V68 H126 V78 H112 V62 H96 V78 H82 V70 H74 V78 H66 V72 H58 Z" fill="#c8bfae" />
       <rect x="94" y="78" width="14" height="12" fill="#1a120e" />
-      <circle cx="70" cy="48" r="2" fill="#ffb15a" />
-      <circle cx="124" cy="52" r="2" fill="#ffb15a" />
+      <circle cx="70" cy="48" r="1.5" fill="#e6c27a" />
+      <circle cx="124" cy="52" r="1.5" fill="#e6c27a" />
     </g>
   );
 }
 
-function Burning() {
+function OpenGate() {
   return (
     <g>
-      <rect x="62" y="62" width="22" height="30" fill="#6a5e50" />
-      <path d="M60 62 L73 46 L86 62 Z" fill="#9c3b2e" />
-      <rect x="116" y="58" width="24" height="34" fill="#5c5146" />
-      <path d="M114 58 L128 42 L142 58 Z" fill="#7a3a2c" />
-      <path d="M70 70 C66 60 74 56 72 48 C78 56 80 58 78 68 Z" fill="#ffb15a" />
-      <path d="M124 66 C120 54 130 50 128 42 C136 52 138 56 134 66 Z" fill="#ff7a2a" />
-      <circle cx="100" cy="84" r="5" fill="#f0d2b0" />
-      <path d="M94 90 L100 78 L106 90 Z" fill="#1c3a5a" />
+      <circle cx="132" cy="38" r="7" fill="#f0d48a" />
+      <path d="M58 92 H78 V68 H86 V92 H114 V68 H122 V92 H142 V78 H58 Z" fill="#d9d0c0" />
+      <rect x="86" y="74" width="28" height="18" fill="#1a2430" />
+      <circle cx="78" cy="86" r="4" fill="#1a7f96" />
+      <circle cx="122" cy="84" r="4" fill="#a32030" />
     </g>
   );
 }

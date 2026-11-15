@@ -10,7 +10,7 @@ There is no walk cycle yet. The game bobs that idle frame. See `ANIM_CONFIG` in 
 
 ## Scenery
 
-The beach, wall, temple, houses, horse, and props are drawn in code (`src/game/textures.js`). No downloaded tileset.
+The beach, wall, temple, houses, horse, props, and both armies are drawn in code (`src/game/textures.js` and `src/game/warriorArt.js`). No downloaded tileset. Greeks wear teal. Trojans wear crimson.
 
 ## Fonts
 

@@ -10,14 +10,15 @@ import Phaser from 'phaser';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
+  LAMPS,
   MAP_H,
   MAP_W,
   PROPS,
   SPAWN,
   WALKABLE,
   buildMap,
-  fireSpots,
 } from './map.js';
+import { Battle } from './battle.js';
 import { routeReport } from './routeCheck.js';
 import { buildWorldTextures } from './textures.js';
 
@@ -73,20 +74,18 @@ export class TroyScene extends Phaser.Scene {
       this.add.image(decor.x, decor.baseY, decor.id).setOrigin(0.5, 1).setDepth(decor.baseY);
     }
 
-    this.fires = fireSpots();
-    for (const fire of this.fires) addFire(this, fire.x, fire.y);
-    this.embers = createEmbers(this, this.fires);
     this.glints = createGlints(this);
-
-    // A light blue wash. Kept thin so the sand and the walls stay readable.
-    const night = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0x0c1c33, 0.16);
-    night.setDepth(7000);
+    // Cool moonlight over the warm ground. Lamps are drawn later, above this.
+    const moon = this.add.rectangle(MAP_W / 2, MAP_H / 2, MAP_W, MAP_H, 0xc5d4ee, 1);
+    moon.setBlendMode(Phaser.BlendModes.MULTIPLY);
+    moon.setDepth(6000);
+    for (const lamp of LAMPS) addLamp(this, lamp.x, lamp.y);
 
     this.vignette = this.add.image(0, 0, 'vignette')
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(15000)
-      .setAlpha(0.55);
+      .setAlpha(0.35);
     const fitVignette = () => {
       this.vignette.setDisplaySize(this.scale.width, this.scale.height);
     };
@@ -98,6 +97,8 @@ export class TroyScene extends Phaser.Scene {
     this.feet.setVisible(false);
     this.feet.setCollideWorldBounds(true);
     this.feet.body.setAllowGravity(false);
+    // Warriors bounce off him. He does not get pushed, so a crowd cannot pin him.
+    this.feet.body.pushable = false;
     this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
     // A smaller bias so the short feet-box does not get shoved off thin gaps.
     this.physics.world.TILE_BIAS = 4;
@@ -107,6 +108,12 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, ground);
     this.physics.add.collider(this.feet, this.blockers);
+
+    this.battle = new Battle(this, {
+      heroBody: this.feet,
+      ground,
+      blockers: this.blockers,
+    });
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, MAP_W, MAP_H);
@@ -181,11 +188,11 @@ export class TroyScene extends Phaser.Scene {
     this.hero.setDepth(groundY);
 
     const dt = delta / 1000;
-    stepEmbers(this.embers, this.fires, dt);
     for (const glint of this.glints) {
       glint.x += glint.speed * dt;
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
+    this.battle.update(time, delta);
   }
 }
 
@@ -207,6 +214,15 @@ function publishDebug(scene) {
     teleport(x, y) {
       feet.setPosition(x, y);
       feet.body.reset(x, y);
+    },
+    armies() {
+      return scene.battle.summary();
+    },
+    lookAt(x, y, zoom) {
+      const cam = scene.cameras.main;
+      cam.stopFollow();
+      cam.setZoom(zoom);
+      cam.centerOn(x, y);
     },
   };
 }
@@ -240,6 +256,8 @@ function poseHero(hero, facing, moving, time) {
 }
 
 function addSolidProp(scene, group, prop) {
+  const shadow = scene.add.ellipse(prop.x, prop.baseY - 1, prop.bodyW * 0.9, 6, 0x3a2c18, 0.28);
+  shadow.setDepth(prop.baseY - 2);
   scene.add.image(prop.x, prop.baseY, prop.id).setOrigin(0.5, 1).setDepth(prop.baseY);
   const bottom = prop.baseY - prop.insetBottom;
   const blocker = group.create(prop.x, bottom - prop.bodyH / 2, 'blank');
@@ -248,66 +266,20 @@ function addSolidProp(scene, group, prop) {
   blocker.setVisible(false);
 }
 
-function addFire(scene, x, y) {
-  // Drawn above the night tint so the flame stays warm.
-  const glow = scene.add.circle(x, y, 16, 0xff6a2c, 0.28);
+function addLamp(scene, x, y) {
+  const glow = scene.add.circle(x, y, 7, 0xffc27a, 0.16);
   glow.setBlendMode(Phaser.BlendModes.ADD);
   glow.setDepth(8200);
-  const core = scene.add.circle(x, y, 3, 0xfff1c2, 0.95);
+  const core = scene.add.circle(x, y, 1.5, 0xffe7b0, 0.9);
   core.setDepth(8300);
   scene.tweens.add({
     targets: glow,
-    alpha: 0.16,
-    scale: 1.28,
-    duration: 380 + Math.random() * 320,
+    alpha: 0.12,
+    duration: 900,
     yoyo: true,
     repeat: -1,
     ease: 'Sine.easeInOut',
   });
-  scene.tweens.add({
-    targets: core,
-    alpha: 0.45,
-    duration: 140 + Math.random() * 180,
-    yoyo: true,
-    repeat: -1,
-  });
-}
-
-function createEmbers(scene, fires) {
-  const embers = [];
-  for (let i = 0; i < 32; i += 1) {
-    const dot = scene.add.circle(0, 0, 1.4, 0xffb15a, 0.9);
-    dot.setBlendMode(Phaser.BlendModes.ADD);
-    dot.setDepth(9000);
-    const ember = { dot, life: 1, age: 0, x: 0, y: 0, rise: 30, sway: 0 };
-    resetEmber(ember, fires);
-    ember.age = Math.random() * ember.life;
-    embers.push(ember);
-  }
-  return embers;
-}
-
-function resetEmber(ember, fires) {
-  const fire = fires[(Math.random() * fires.length) | 0];
-  ember.x = fire.x + (Math.random() * 12 - 6);
-  ember.y = fire.y;
-  ember.age = 0;
-  ember.life = 0.7 + Math.random() * 1.1;
-  ember.rise = 26 + Math.random() * 34;
-  ember.sway = Math.random() * Math.PI * 2;
-}
-
-function stepEmbers(embers, fires, dt) {
-  for (const ember of embers) {
-    ember.age += dt;
-    if (ember.age >= ember.life) resetEmber(ember, fires);
-    const t = ember.age / ember.life;
-    ember.dot.setPosition(
-      ember.x + Math.sin(ember.sway + t * 8) * 4,
-      ember.y - t * ember.rise,
-    );
-    ember.dot.setAlpha((1 - t) * 0.9);
-  }
 }
 
 function createGlints(scene) {
