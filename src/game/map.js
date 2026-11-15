@@ -106,6 +106,47 @@ export const DECOR = [
   { id: 'tower', x: (GATE.right + 1) * TILE + 16, baseY: (WALL.bottom + 1) * TILE },
 ];
 
+// How close his feet must be before "Press E" shows up.
+// One spot can use a different radius. This number is the usual one.
+export const INTERACT_RADIUS = 28;
+
+// Spots he can use. x and y are pixels, the same kind of numbers as SPAWN.
+// To add one, copy an entry, change id, and set x/y to where he should stand.
+// type tells React what to open later (a gate, a place, a hatch, ...).
+// Gate center: columns 26 through 33. (26 + 33 + 1) / 2 * 16 = 480.
+const GATE_X = ((GATE.left + GATE.right + 1) / 2) * TILE;
+// One tile south of the wall, on the road, so his feet can reach it.
+const GATE_Y = (WALL.bottom + 1) * TILE + 8;
+
+export const INTERACTABLES = [
+  {
+    id: 'gate',
+    x: GATE_X,
+    y: GATE_Y,
+    radius: INTERACT_RADIUS,
+    prompt: 'Press E to look through the gate',
+    type: 'gate',
+  },
+  {
+    id: 'temple',
+    x: 480,
+    y: 176,
+    radius: INTERACT_RADIUS,
+    prompt: 'Press E to approach the temple',
+    type: 'place',
+  },
+  // The Trojan horse hatch is not playable yet. A later PR removes the slashes.
+  // Stand just south of the horse. That prop is x 480, baseY 228.
+  // {
+  //   id: 'horse_hatch',
+  //   x: 480,
+  //   y: 252,
+  //   radius: INTERACT_RADIUS,
+  //   prompt: 'Press E to open the hatch',
+  //   type: 'hatch',
+  // },
+];
+
 // Every entry is a real standing lamp. The glow is drawn on its flame.
 // The Greeks opened the gate quietly. Nothing is on fire.
 export const LAMPS = [

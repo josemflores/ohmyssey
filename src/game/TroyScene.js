@@ -11,6 +11,8 @@ import Phaser from 'phaser';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
+  INTERACT_RADIUS,
+  INTERACTABLES,
   LAMPS,
   MAP_H,
   MAP_W,
@@ -167,15 +169,41 @@ export class TroyScene extends Phaser.Scene {
       arrowDown: Phaser.Input.Keyboard.KeyCodes.DOWN,
       arrowLeft: Phaser.Input.Keyboard.KeyCodes.LEFT,
       arrowRight: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      keyE: Phaser.Input.Keyboard.KeyCodes.E,
     });
     this.input.keyboard.addCapture([
-      'W', 'A', 'S', 'D', 'UP', 'DOWN', 'LEFT', 'RIGHT',
+      'W', 'A', 'S', 'D', 'E', 'UP', 'DOWN', 'LEFT', 'RIGHT',
     ]);
+
+    // A dialogue or puzzle sets this so he stops walking.
+    // E still works while locked: it asks React to close the box.
+    this.inputLocked = false;
+    this.nearest = null;
+    this.prompt = makePrompt(this);
+
+    const lockInput = () => { this.inputLocked = true; };
+    const unlockInput = () => { this.inputLocked = false; };
+    this.game.events.on('lockInput', lockInput);
+    this.game.events.on('unlockInput', unlockInput);
 
     publishDebug(this);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off('lockInput', lockInput);
+      this.game.events.off('unlockInput', unlockInput);
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
+    });
+  }
+
+  // React listens for this. payload.id is the spot from map.js.
+  interact(target) {
+    if (!target || this.inputLocked) return;
+    this.game.events.emit('interact', {
+      id: target.id,
+      type: target.type,
+      x: target.x,
+      y: target.y,
+      prompt: target.prompt,
     });
   }
 
@@ -196,10 +224,12 @@ export class TroyScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    const left = this.keys.left.isDown || this.keys.arrowLeft.isDown;
-    const right = this.keys.right.isDown || this.keys.arrowRight.isDown;
-    const up = this.keys.up.isDown || this.keys.arrowUp.isDown;
-    const down = this.keys.down.isDown || this.keys.arrowDown.isDown;
+    // While a box is open he stands still. Keys do nothing until it closes.
+    const locked = this.inputLocked;
+    const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);
+    const right = !locked && (this.keys.right.isDown || this.keys.arrowRight.isDown);
+    const up = !locked && (this.keys.up.isDown || this.keys.arrowUp.isDown);
+    const down = !locked && (this.keys.down.isDown || this.keys.arrowDown.isDown);
 
     let vx = 0;
     let vy = 0;
@@ -239,6 +269,23 @@ export class TroyScene extends Phaser.Scene {
     this.heroRim.setDepth(sort - 1);
     this.hero.setDepth(sort);
 
+    // The closest spot he is standing inside, or null.
+    this.nearest = locked ? null : nearestInteractable(this.feet.x, this.feet.y);
+    if (this.nearest) {
+      this.prompt.setVisible(true);
+      this.prompt.setPosition(Math.round(this.feet.x), Math.round(groundY) - 48);
+      this.prompt.setDepth(sort + 4);
+    } else {
+      this.prompt.setVisible(false);
+    }
+
+    // JustDown is true only on the frame E goes down, so holding E does not repeat.
+    // If a box is already open, the same key asks React to close it.
+    if (Phaser.Input.Keyboard.JustDown(this.keys.keyE)) {
+      if (locked) this.game.events.emit('closeInteract');
+      else if (this.nearest) this.interact(this.nearest);
+    }
+
     const dt = delta / 1000;
     for (const glint of this.glints) {
       glint.x += glint.speed * dt;
@@ -246,6 +293,38 @@ export class TroyScene extends Phaser.Scene {
     }
     this.battle.update(time, delta);
   }
+}
+
+// "Press E" floats over his head. The camera is zoomed 3×, so the letters
+// are drawn at 15px and then shrunk to 1/3. 15 × (1/3) × 3 = 15 screen
+// pixels, which keeps the letters sharp instead of blurry.
+function makePrompt(scene) {
+  const label = scene.add.text(0, 0, 'Press E', {
+    fontFamily: 'monospace',
+    fontSize: '15px',
+    color: '#f6ead2',
+    backgroundColor: '#121820',
+    padding: { left: 6, right: 6, top: 3, bottom: 3 },
+  });
+  label.setScale(1 / 3);
+  label.setOrigin(0.5, 1);
+  label.setVisible(false);
+  return label;
+}
+
+// The spot whose circle contains his feet, picking the closest if two overlap.
+function nearestInteractable(x, y) {
+  let best = null;
+  let bestDist = Infinity;
+  for (const spot of INTERACTABLES) {
+    const radius = spot.radius ?? INTERACT_RADIUS;
+    const dist = Math.hypot(spot.x - x, spot.y - y);
+    if (dist <= radius && dist < bestDist) {
+      best = spot;
+      bestDist = dist;
+    }
+  }
+  return best;
 }
 
 // The playtest reads window.__troy. It is not shown on screen.
@@ -259,6 +338,8 @@ function publishDebug(scene) {
     get frame() { return Number(hero.frame.name); },
     get scaleY() { return hero.scaleY; },
     get facing() { return scene.facing; },
+    get interactable() { return scene.nearest; },
+    get inputLocked() { return scene.inputLocked; },
     get texture() { return hero.texture.key; },
     get anim() { return hero.anims.currentAnim ? hero.anims.currentAnim.key : ''; },
     get feetBox() {
