@@ -8,7 +8,6 @@
 // The picture is taller than the box, so he can stand "behind" columns and roofs.
 
 import Phaser from 'phaser';
-import { ENCOUNTER_RESULT_EVENT, requestEncounter } from '../learn/encounters/bus.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
   DECOR,
@@ -20,7 +19,6 @@ import {
   MAP_W,
   PROPS,
   SPAWN,
-  TILE,
   WALKABLE,
   buildMap,
 } from './map.js';
@@ -44,9 +42,6 @@ import { buildWorldTextures } from './textures.js';
 // with the army sprites (about 30px tall) and stays on whole screen pixels
 // at the camera's 3× zoom.
 const HERO_SCALE = 4 / 3;
-// About one fight per half minute of walking, and never twice inside the cooldown.
-const STEP_CHANCE = 0.005;
-const ENCOUNTER_COOLDOWN = 22000;
 
 export class TroyScene extends Phaser.Scene {
   constructor() {
@@ -213,9 +208,6 @@ export class TroyScene extends Phaser.Scene {
     // A dialogue or puzzle sets this so he stops walking.
     // E still works while locked: it asks React to close the box.
     this.inputLocked = false;
-    this.encounterOpen = false;
-    this.encounterReadyAt = 0;
-    this.lastTile = null;
     this.nearest = null;
     this.prompt = makePrompt(this);
 
@@ -238,12 +230,6 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.on('fightStrike', onStrike);
     this.game.events.on('fightAttack', onAttack);
     this.game.events.on('fightEnemyAct', onEnemyAct);
-    this.onEncounterResult = () => {
-      this.encounterOpen = false;
-      this.encounterReadyAt = this.time.now + ENCOUNTER_COOLDOWN;
-      if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
-    };
-    window.addEventListener(ENCOUNTER_RESULT_EVENT, this.onEncounterResult);
 
     publishDebug(this);
 
@@ -253,8 +239,6 @@ export class TroyScene extends Phaser.Scene {
       this.game.events.off('fightStrike', onStrike);
       this.game.events.off('fightAttack', onAttack);
       this.game.events.off('fightEnemyAct', onEnemyAct);
-      window.removeEventListener(ENCOUNTER_RESULT_EVENT, this.onEncounterResult);
-      if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -262,13 +246,6 @@ export class TroyScene extends Phaser.Scene {
   init(data) {
     // HorseScene sends him back here, beside the horse, instead of the beach.
     this.arrive = data && Number.isFinite(data.x) ? data : null;
-  }
-
-  openEncounter() {
-    this.encounterOpen = true;
-    this.feet.setVelocity(0, 0);
-    if (this.input.keyboard) this.input.keyboard.enabled = false;
-    requestEncounter(1);
   }
 
   // React listens for this. payload.id is the spot from map.js.
@@ -324,13 +301,6 @@ export class TroyScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    // A monster question covers the city. Feet and the sentries wait.
-    if (document.body.dataset.encounter === 'open' || this.encounterOpen) {
-      this.feet.setVelocity(0, 0);
-      if (this.input.keyboard) this.input.keyboard.enabled = false;
-      return;
-    }
-
     // While a box is open he stands still. Keys do nothing until it closes.
     const locked = this.inputLocked;
     const left = !locked && (this.keys.left.isDown || this.keys.arrowLeft.isDown);
@@ -401,18 +371,7 @@ export class TroyScene extends Phaser.Scene {
       if (glint.x > MAP_W + 20) glint.x = -20;
     }
 
-    // New tiles can start a fight. Not during a dialog or a sentry battle,
-    // and not again until the cooldown. The horse and the intro never reach here.
-    if (!locked && !this.fighting && moving && time >= this.encounterReadyAt) {
-      const tileKey = `${Math.round(this.feet.x / TILE)},${Math.round(this.feet.y / TILE)}`;
-      if (this.lastTile == null) this.lastTile = tileKey;
-      else if (tileKey !== this.lastTile) {
-        this.lastTile = tileKey;
-        if (Math.random() < STEP_CHANCE) this.openEncounter();
-      }
-    }
-
-    this.patrol.update(dt, this.feet.x, this.feet.y, locked || this.fighting || this.encounterOpen);
+    this.patrol.update(dt, this.feet.x, this.feet.y, locked || this.fighting);
     this.maybeHintRun();
     if (!this.fighting && !locked) this.maybeStartFight();
     aimArrow(this);
