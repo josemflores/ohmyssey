@@ -52,7 +52,7 @@ const HUT = [
   { who: 'Telemachus', line: 'Father? After twenty years, you stand in this hut.' },
   { who: 'Odysseus', line: 'We take the palace together. Tell no one until I say.', conceal: true },
 ];
-const EUMAEUS_AT = { x: 248, y: 508 };
+const EUMAEUS_AT = { x: 248, y: 496 };
 // Telemachus walks in from off screen to the east, through SON_FROM on the
 // path, and stops right at Eumaeus' side (SON_BESIDE px left or right of
 // him, whichever side Odysseus is not standing on), facing him.

@@ -142,7 +142,6 @@ export const PROPS = [
   { id: 'cave', x: 152, baseY: 704, bodyW: 56, bodyH: 26, insetBottom: 4 },
 
   // Olive groves along the hill road, clear of the stones.
-  olive(296, 520),
   olive(344, 584),
   olive(264, 648),
   olive(680, 520),
