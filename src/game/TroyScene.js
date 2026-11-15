@@ -10,7 +10,7 @@
 import Phaser from 'phaser';
 import { loadHeroActions, createHeroActions } from './heroAnimations.js';
 import { loadSoldierActions, createSoldierActions, createSoldierWalks, playSoldierIdle } from './soldierAnimations.js';
-import { GATE_VIEW_Y, boardShip, endGateBattle, startGateBattle } from './gateBattle.js';
+import { GATE_VIEW_Y, boardShip, endGateBattle, placeWaitingArmy, startGateBattle } from './gateBattle.js';
 import { shipTexture } from './level2/art.js';
 import { ANIM_CONFIG, facingFromVector } from './animConfig.js';
 import {
@@ -347,6 +347,9 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.on('fightFlee', onFlee);
     this.game.events.on('gatePick', onGatePick);
     this.game.events.on('gateDismiss', onGateDismiss);
+
+    // The Greek army waits outside the shut gate until he opens it.
+    if (!this.questDone) placeWaitingArmy(this);
 
     publishDebug(this);
     this.publishObjective();

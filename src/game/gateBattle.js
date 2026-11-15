@@ -16,8 +16,9 @@
 //    stops at a door, and a moment later that house goes up in flames
 //    (burning.js). They stay there, guarding the fire.
 //
-// Nobody appears out of thin air: the Greeks come along the beach from off
-// screen, and each Trojan starts out of view on a line that is checked
+// Nobody appears out of thin air: the Greeks stand waiting in a column on the
+// beach road just outside the gate from the start of the level (see
+// placeWaitingArmy), and each Trojan starts out of view on a line that is checked
 // against the walls, houses, trees and lamps before he runs it.
 
 import Phaser from 'phaser';
@@ -238,13 +239,15 @@ function sendTorchBearers(scene, westX, eastX, avoid) {
     // on open ground to his door: around houses, trees, lamps and the
     // duelists' spots, never through them.
     const startAt = { x: west ? westX : eastX, y: 730 + (index % 2) * 13 };
-    const man = addSoldier(scene, 'greek', startAt.x, startAt.y, 'greek-hoplite');
-    man.torch = addTorch(scene, man);
+    // Normally he is already waiting, torch lit, beside the column.
+    const waiting = scene.waitingTorches?.[index];
+    const man = waiting || addSoldier(scene, 'greek', startAt.x, startAt.y, 'greek-hoplite');
+    if (!waiting) man.torch = addTorch(scene, man);
     const gateIn = { x: GATE_X + lane, y: INSIDE_Y };
-    const beach = [{ x: GATE_X + lane, y: startAt.y }, gateIn];
+    const beach = waiting ? [gateIn] : [{ x: GATE_X + lane, y: startAt.y }, gateIn];
     const onward = routePath(avoid, gateIn, door);
     let path = onward ? [...beach, ...onward] : [...beach, { x: GATE_X + lane, y: door.y }, door];
-    if (!pathClear(avoid, startAt, beach)) {
+    if (!waiting && !pathClear(avoid, startAt, beach)) {
       man.sprite.setPosition(GATE_X + lane, startAt.y);
       path = path.slice(1);
     }
@@ -370,6 +373,39 @@ function trojanStart(boxes, spot, viewTop) {
   return { x: spot.x, y: spot.y };
 }
 
+// The Greek army waiting outside the shut gate: a column on the beach road,
+// two files of duelists (front rank nearest the gate), with the
+// torch-bearers in an outer file on each side. They stand there, facing the
+// doors, from the start of the level, and run in when the gate falls.
+const WAIT_Y = 670; // front rank, just south of the wall
+const WAIT_STEP = 12; // between ranks
+const TORCH_LANE = 30; // the torch-bearers' outer files, from the road's middle
+
+export function placeWaitingArmy(scene) {
+  const stand = (x, y, torch) => {
+    const man = addSoldier(scene, 'greek', x, y, 'greek-hoplite');
+    man.sprite.setAlpha(1);
+    man.shadow.setAlpha(0.5);
+    man.facing = 'n';
+    playIdle(man);
+    if (torch) man.torch = addTorch(scene, man);
+    return man;
+  };
+  scene.waitingGreeks = DUEL_SPOTS.map((spot, index) => {
+    const west = spot.x < GATE_X;
+    const rank = west ? index : index - WEST_COUNT;
+    return stand(GATE_X + (west ? -10 : 10), WAIT_Y + rank * WAIT_STEP, false);
+  });
+  const perSide = { west: 0, east: 0 };
+  scene.waitingTorches = BURN_HOUSES.map((target) => {
+    const west = target.x < GATE_X;
+    const side = west ? 'west' : 'east';
+    const rank = 1 + perSide[side];
+    perSide[side] += 1;
+    return stand(GATE_X + (west ? -TORCH_LANE : TORCH_LANE), WAIT_Y + rank * WAIT_STEP, true);
+  });
+}
+
 // Call once, when the gate falls. Returns the pairs so the scene can find them.
 // scene.gateBattleMs is how long until the last man reaches his spot.
 export function startGateBattle(scene) {
@@ -406,7 +442,9 @@ export function startGateBattle(scene) {
     // Along the wet sand, south of the oak outside the gate (map.js), then
     // north up the road. Each leg is checked against everything solid.
     const beachY = 730 + (rank % 3) * 13;
-    const greek = addSoldier(scene, 'greek', beachX, beachY, 'greek-hoplite');
+    // Normally he is already waiting in the column outside the gate.
+    const waiting = scene.waitingGreeks?.[index];
+    const greek = waiting || addSoldier(scene, 'greek', beachX, beachY, 'greek-hoplite');
     const tSpot = { x: trojanX, y: spot.y };
     const tFrom = trojanStart(boxes, tSpot, viewTop);
     const trojan = addSoldier(scene, 'trojan', tFrom.x, tFrom.y, 'trojan-soldier');
@@ -419,7 +457,10 @@ export function startGateBattle(scene) {
       { x: GATE_X + lane, y: INSIDE_Y },
       { x: greekX, y: spot.y },
     ];
-    if (!pathClear(boxes, { x: beachX, y: beachY }, greekPath)) {
+    if (waiting) {
+      // From his place in the column, straight up the road and through.
+      greekPath = greekPath.slice(1);
+    } else if (!pathClear(boxes, { x: beachX, y: beachY }, greekPath)) {
       // Something new is in the way on the beach: start him on the road
       // itself, out of view to the south, and fade him in. Never through it.
       greek.sprite.setPosition(GATE_X + lane, beachY);
@@ -445,6 +486,8 @@ export function startGateBattle(scene) {
   sendTorchBearers(scene, westX, eastX, [...boxes, ...duelBoxes]);
   scene.gateBattle = pairs;
   scene.gateBattleMs = lastMs;
+  scene.waitingGreeks = null;
+  scene.waitingTorches = null;
   return pairs;
 }
 
