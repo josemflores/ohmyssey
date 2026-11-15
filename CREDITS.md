@@ -223,3 +223,11 @@ Layer credits, from the generator's CREDITS.csv:
 - `beards/beard/basic`: by JaidynReiman,Carlo Enrico Victoria (Nemisys). Licenses: CC-BY-SA 3.0,GPL 3.0. Sources: https://opengameart.org/content/lpc-white-beard
 - `hair/balding/adult`: by ElizaWy. Licenses: OGA-BY 3.0. Sources: https://opengameart.org/content/lpc-hair
 - `weapon/polearm/cane/male`: by bluecarrot16. Licenses: CC-BY-SA 3.0,GPL 3.0. Sources: https://opengameart.org/content/lpc-gentleman
+
+## Telemachus (LPC idle, Ithaca)
+
+`public/assets/sprites/npcs/telemachus/telemachus_32.png` comes from `art/scripts/build_ithaca_people_lpc.py` too. New layers beyond those listed above:
+
+- `legs/pants/male`: by bluecarrot16,JaidynReiman,ElizaWy,Matthew Krohn (makrohn),Johannes Sjölund (wulax),Stephen Challener (Redshrike). Licenses: OGA-BY 3.0,GPL 3.0,CC-BY-SA 3.0. Sources: https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles, https://opengameart.org/content/lpc-medieval-fantasy-character-sprites, https://opengameart.org/content/lpc-expanded-pants
+- `torso/armour/leather/male`: by Johannes Sjölund (wulax),bluecarrot16,JaidynReiman. Licenses: OGA-BY 3.0,CC-BY-SA 3.0,GPL 3.0. Sources: https://opengameart.org/content/lpc-medieval-fantasy-character-sprites, https://opengameart.org/content/lpc-clothing-updates, https://opengameart.org/content/lpc-expanded-armor
+- `arms/wrists/lace/male`: by bluecarrot16,JaidynReiman. Licenses: OGA-BY 3.0. Sources: https://opengameart.org/content/lpc-pirates

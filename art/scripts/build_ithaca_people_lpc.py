@@ -22,6 +22,7 @@ code reads them the same way). Each row is the LPC idle breath: frames
 0, 0, 1, 1.
 
   eumaeus/eumaeus_32.png
+  telemachus/telemachus_32.png
   suitor_lpc/suitor_a_1.png ... suitor_c_4.png
 
 Run from the repo root (needs Pillow):
@@ -100,6 +101,29 @@ def eumaeus() -> list[dict]:
         {"id": "head", "path": "head/heads/human/male_elderly/idle.png", "head": True},
         {"id": "stubble", "path": "beards/beard/5oclock_shadow/idle.png", "ramp": GRAY_STUBBLE, "head": True},
         {"id": "hair", "path": "hair/unkempt/adult/idle.png", "ramp": WHITE_HAIR, "head": True},
+    ]
+
+
+# Telemachus, Odysseus' son, a young man: short dark curls, no beard, an
+# off-white long-sleeved shirt under dark gray leather armor, leather wrist
+# wraps, dark trousers and sandals. The costume follows published set
+# photos of a recent film's Telemachus (dark gray leather armor with wrist
+# wraps over an off-white shirt); it is a costume, not anyone's likeness.
+DARK_LEATHER_GRAY = ramp("#121214", "#1e1e22", "#2c2c31", "#3c3b40", "#4e4c52", "#646168")
+WRAP_LEATHER = ramp("#1a120c", "#2e2016", "#463222", "#5e4630")
+DARK_TROUSERS = ramp("#0e0c0a", "#1a1612", "#28221c", "#383028", "#4a4034")
+
+
+def telemachus() -> list[dict]:
+    return [
+        {"id": "body", "path": "body/bodies/male/idle.png"},
+        {"id": "sandals", "path": "feet/sandals/male/idle.png", "ramp": LEATHER},
+        {"id": "trousers", "path": "legs/pants/male/idle.png", "ramp": DARK_TROUSERS},
+        {"id": "shirt", "path": "torso/clothes/longsleeve/longsleeve/male/idle.png", "ramp": LINEN},
+        {"id": "armor", "path": "torso/armour/leather/male/idle.png", "ramp": DARK_LEATHER_GRAY},
+        {"id": "wraps", "path": "arms/wrists/lace/male/idle.png", "ramp": WRAP_LEATHER},
+        {"id": "head", "path": "head/heads/human/male/idle.png", "head": True},
+        {"id": "hair", "path": "hair/curly_short/adult/idle.png", "ramp": HAIR_DARK, "head": True},
     ]
 
 
@@ -207,6 +231,11 @@ def main() -> None:
     built["eumaeus"] = build_sheet(eumaeus())
     path.parent.mkdir(parents=True, exist_ok=True)
     built["eumaeus"].save(path)
+    print(f"wrote {path.relative_to(lpc.ROOT)}")
+    built["telemachus"] = build_sheet(telemachus())
+    path = NPCS / "telemachus" / "telemachus_32.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    built["telemachus"].save(path)
     print(f"wrote {path.relative_to(lpc.ROOT)}")
     for outfit in "abc":
         for n, (main_ramp, accent) in enumerate(COMBOS, start=1):
