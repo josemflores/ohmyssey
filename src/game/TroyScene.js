@@ -1207,6 +1207,17 @@ function openGateDoors(scene) {
   const y = src ? src.y : 652;
   if (src) src.setVisible(false);
   if (door.blocker) door.blocker.destroy();
+  // The closed doors cast a shadow on the road. Once they swing open there
+  // is nothing left to cast it, so it fades out with them.
+  if (door.shadow) {
+    scene.tweens.add({
+      targets: door.shadow,
+      alpha: 0,
+      duration: 500,
+      ease: 'Cubic.easeIn',
+      onComplete: () => door.shadow.destroy(),
+    });
+  }
   // One picture holds both leaves. Crop each half, then swing them open.
   const left = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
   const right = scene.add.image(x, y, 'gate-door').setOrigin(0.5, 1).setDepth(7420);
@@ -1277,7 +1288,7 @@ function addSolidProp(scene, group, prop) {
   blocker.setDisplaySize(prop.bodyW, prop.bodyH);
   blocker.refreshBody();
   blocker.setVisible(false);
-  if (prop.id === 'gate-door') scene.gateDoor = { sprite, blocker };
+  if (prop.id === 'gate-door') scene.gateDoor = { sprite, blocker, shadow };
 }
 
 function addLamp(scene, group, lamp) {
