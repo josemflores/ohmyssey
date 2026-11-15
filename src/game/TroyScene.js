@@ -643,6 +643,10 @@ export class TroyScene extends Phaser.Scene {
       heroHp: this.heroHp,
       foes: this.foeView(),
       note,
+      // Structured copy of the note, for the battle log plaque.
+      log: correct
+        ? { who: 'greek', name: 'Odysseus', action: attack.label, damage, splash: attack.id === 'heavy' ? SPLASH : 0 }
+        : { who: 'greek', name: 'Odysseus', action: 'misses', damage: 0 },
       side: 'hero',
     });
     const wait = Math.max(BLOW_MS[correct ? attack.anim : 'whiff'] || 700, fallen.length ? 880 : 0);
@@ -694,6 +698,7 @@ export class TroyScene extends Phaser.Scene {
       heroHp: shown,
       foes: this.foeView(),
       note,
+      log: { who: 'trojan', name: fight.foes[index]?.name || 'Trojan', action: 'strikes', damage: ENEMY_SWING },
       side: 'enemy',
     });
     this.time.delayedCall(BLOW_MS.counter, () => {

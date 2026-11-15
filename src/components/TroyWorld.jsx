@@ -11,6 +11,7 @@ import {
   choicesClass,
   useChoiceKeys,
 } from './QuestionCard.jsx';
+import BattleLog from './BattleLog.jsx';
 
 const MOVES = [ATTACKS.light, ATTACKS.heavy];
 
@@ -96,6 +97,7 @@ export default function TroyWorld({ onSail }) {
           blow: (current.blow || 0) + 1,
           side: payload.side || current.side,
           note: payload.note || '',
+          log: payload.log || null,
           float: !payload.damage && !miss ? null : {
             text: miss ? 'Miss' : `-${payload.damage}`,
             side: onHero ? 'hero' : 'foe',
@@ -390,6 +392,7 @@ export default function TroyWorld({ onSail }) {
             <li className={fight.side === 'hero' && fight.phase !== 'enemy' ? 'is-now' : ''}>Odysseus</li>
             <li className={fight.side === 'enemy' || fight.phase === 'enemy' ? 'is-now' : ''}>{fight.name}</li>
           </ol>
+          <BattleLog key={`log-${fight.blow || 0}`} log={fight.log} note={fight.note} fresh={Boolean(fight.blow)} />
           <div className="battle-stage">
             <div className="battle-side">
               <p className="battle-name">Odysseus</p>
@@ -430,7 +433,6 @@ export default function TroyWorld({ onSail }) {
             </div>
           </div>
           <div className="battle-dock">
-            {fight.note && <p className="battle-note">{fight.note}</p>}
             {fight.phase === 'question' && fight.question && (
               <div className="battle-question q-card">
                 <QuestionHeader eyebrow="Ω · Battle at Troy" title={fight.attack || 'Strike'} />
