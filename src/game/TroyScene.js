@@ -66,8 +66,27 @@ const CITY_GROUPS = [
   { id: 'center', x: 480, y: 340, count: 3 },
   { id: 'east', x: 600, y: 312, count: 2 },
 ];
-// Space between the men of one group, in pixels.
-const GROUP_SPACING = 30;
+// How the men of a group stand around their group's center, by group size.
+// Loose clusters, not a line: some forward, some back, turned slightly
+// toward each other or out at the street. dx/dy are pixels; face is the
+// way he looks (the idle animation has all eight facings).
+const GROUP_FORMATIONS = {
+  2: [
+    { dx: -13, dy: -5, face: 'se' },
+    { dx: 11, dy: 7, face: 's' },
+  ],
+  3: [
+    { dx: -22, dy: 4, face: 'se' },
+    { dx: 2, dy: -10, face: 's' },
+    { dx: 21, dy: 8, face: 'sw' },
+  ],
+  4: [
+    { dx: -28, dy: -2, face: 'se' },
+    { dx: -6, dy: 10, face: 's' },
+    { dx: 12, dy: -11, face: 'sw' },
+    { dx: 31, dy: 5, face: 'w' },
+  ],
+};
 
 // Wet sand at the end of the beach road, hull overlapping the sea.
 const SHIP = { x: 480, y: 786 };
@@ -869,14 +888,16 @@ export class TroyScene extends Phaser.Scene {
     if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
     for (const spot of CITY_GROUPS) {
       const members = [];
-      const start = -((spot.count - 1) * GROUP_SPACING) / 2;
+      const formation = GROUP_FORMATIONS[spot.count] || GROUP_FORMATIONS[4];
       for (let i = 0; i < spot.count; i += 1) {
-        const x = spot.x + start + i * GROUP_SPACING;
-        const y = spot.y;
+        const place = formation[i % formation.length];
+        const x = spot.x + place.dx;
+        const y = spot.y + place.dy;
         const shadow = this.add.ellipse(x + 3, y + 1, 14, 5, 0x0c1424, 0.55);
         const sprite = this.add.sprite(x, y, key, 0).setOrigin(0.5, 1);
-        // The Trojans wait facing south, breathing in place.
-        playSoldierIdle(sprite, 'trojan', 's');
+        // Each man faces his own way and breathes in place, out of step
+        // with the others (playSoldierIdle adds a small random delay).
+        playSoldierIdle(sprite, 'trojan', place.face);
         const depth = 7000 + y;
         shadow.setDepth(depth - 2);
         sprite.setDepth(depth);
