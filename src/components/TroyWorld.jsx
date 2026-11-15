@@ -47,8 +47,13 @@ export default function TroyWorld() {
     function onFightQuestion(question) {
       setFight((current) => current && { ...current, phase: 'question', question });
     }
-    function onFightBlow(payload) {
-      setFight((current) => current && { ...current, phase: 'menu', question: null, ...payload });
+    function onFightTurn(payload) {
+      setFight((current) => current && {
+        ...current,
+        ...payload,
+        phase: payload.side === 'enemy' ? 'enemy' : 'menu',
+        question: null,
+      });
     }
     function onFightEnd(payload) {
       setFight(null);
@@ -65,7 +70,7 @@ export default function TroyWorld() {
     game.events.on('hatchQuestion', onHatchQuestion);
     game.events.on('fightStart', onFightStart);
     game.events.on('fightQuestion', onFightQuestion);
-    game.events.on('fightBlow', onFightBlow);
+    game.events.on('fightTurn', onFightTurn);
     game.events.on('fightEnd', onFightEnd);
     game.events.on('questDone', () => setQuestDone(true));
     game.events.on('runHint', () => setRunHint(true));
@@ -76,7 +81,7 @@ export default function TroyWorld() {
       game.events.off('hatchQuestion', onHatchQuestion);
       game.events.off('fightStart', onFightStart);
       game.events.off('fightQuestion', onFightQuestion);
-      game.events.off('fightBlow', onFightBlow);
+      game.events.off('fightTurn', onFightTurn);
       game.events.off('fightEnd', onFightEnd);
       game.events.off('questDone');
       game.events.off('runHint');
@@ -124,6 +129,10 @@ export default function TroyWorld() {
 
   function placeholder(label) {
     setFight((current) => current && { ...current, note: `${label} is not ready yet.` });
+  }
+
+  function enemyContinue() {
+    gameRef.current?.events.emit('fightEnemyAct');
   }
 
   useEffect(() => {
@@ -237,38 +246,56 @@ export default function TroyWorld() {
         </div>
       )}
       {fight && (
-        <div className="troy-talk troy-fight" role="dialog" aria-label={fight.name}>
-          <p className="troy-talk-id">{fight.name}</p>
-          <p className="troy-fight-hp">
-            Odysseus {fmtHp(fight.heroHp)}/{fight.heroMax}
-            {' · '}
-            Sentry {fmtHp(fight.foeHp)}/{fight.foeMax}
-          </p>
-          {fight.note && <p className="troy-quiz-note">{fight.note}</p>}
-          {fight.phase === 'question' && fight.question ? (
-            <>
-              <p className="troy-talk-line">{fight.question.prompt}</p>
-              <div className="troy-quiz-choices">
-                {fight.question.choices.map((choice, index) => (
-                  <button
-                    key={choice}
-                    type="button"
-                    className="troy-quiz-choice"
-                    onClick={() => pickFight(index)}
-                  >
-                    {choice}
-                  </button>
-                ))}
+        <div className="battle-screen" role="dialog" aria-label="Battle">
+          <ol className="battle-order">
+            <li className={fight.side === 'hero' ? 'is-now' : ''}>Odysseus</li>
+            <li className={fight.side === 'enemy' ? 'is-now' : ''}>{fight.name}</li>
+          </ol>
+          <div className="battle-stage">
+            <div className="battle-side">
+              <p className="battle-name">Odysseus</p>
+              <p className="battle-hp-num">{fmtHp(fight.heroHp)} / {fight.heroMax}</p>
+              <div className="battle-hp-track">
+                <span style={{ width: `${(fight.heroHp / fight.heroMax) * 100}%` }} />
               </div>
-            </>
-          ) : fight.phase === 'menu' && (
-            <div className="troy-quiz-choices">
-              <button type="button" className="troy-quiz-choice" onClick={attack}>Attack</button>
-              <button type="button" className="troy-quiz-choice" onClick={() => placeholder('Brace')}>Brace</button>
-              <button type="button" className="troy-quiz-choice" onClick={() => placeholder('Item')}>Item</button>
-              <button type="button" className="troy-quiz-choice" onClick={() => placeholder('Slip away')}>Slip away</button>
             </div>
-          )}
+            <div className="battle-side is-foe">
+              <p className="battle-name">{fight.name}</p>
+              <p className="battle-hp-num">{fmtHp(fight.foeHp)} / {fight.foeMax}</p>
+              <div className="battle-hp-track">
+                <span style={{ width: `${(fight.foeHp / fight.foeMax) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+          <div className="battle-dock">
+            {fight.note && <p className="battle-note">{fight.note}</p>}
+            {fight.phase === 'question' && fight.question && (
+              <div className="battle-question">
+                <p>{fight.question.prompt}</p>
+                <div className="battle-choices">
+                  {fight.question.choices.map((choice, index) => (
+                    <button key={choice} type="button" className="battle-choice" onClick={() => pickFight(index)}>
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {fight.phase === 'enemy' && (
+              <button type="button" className="battle-continue" onClick={enemyContinue}>
+                Continue
+              </button>
+            )}
+            {fight.phase === 'menu' && (
+              <div className="battle-commands">
+                <button type="button" className="battle-command" onClick={attack}>Attack</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Skills')}>Skills</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Item')}>Item</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Defend')}>Defend</button>
+                <button type="button" className="battle-command" onClick={() => placeholder('Flee')}>Flee</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -165,9 +165,91 @@
   pointer-events: none;
 }
 .troy-banner { bottom: 112px; }
-.troy-fight-hp {
-  margin: 0 0 0.55rem;
-  font-size: 0.82rem;
-  letter-spacing: 0.03em;
-  color: #d7f3ee;
+.battle-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: radial-gradient(ellipse at center, #1a2433 0%, #070b12 72%);
+  color: #f6ead2;
 }
+.battle-order {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 1.1rem 1rem 0;
+  list-style: none;
+}
+.battle-order li {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid rgba(230, 194, 122, 0.28);
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #b7c0cc;
+}
+.battle-order li.is-now {
+  color: #1a1208;
+  background: #f0d48a;
+  border-color: #f0d48a;
+}
+.battle-stage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10vw;
+}
+.battle-side { width: min(280px, 34vw); }
+.battle-side.is-foe { text-align: right; }
+.battle-name {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0d48a;
+}
+.battle-hp-num { margin: 0.25rem 0 0.4rem; font-size: 0.95rem; }
+.battle-hp-track {
+  height: 8px;
+  background: #121820;
+  border: 1px solid rgba(230, 194, 122, 0.35);
+}
+.battle-side.is-foe .battle-hp-track { margin-left: auto; }
+.battle-hp-track span {
+  display: block;
+  height: 100%;
+  background: #d7f3c2;
+}
+.battle-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.7rem;
+  padding: 0 8vw 2.2rem;
+}
+.battle-note { margin: 0; align-self: stretch; color: #f0d48a; }
+.battle-commands {
+  display: flex;
+  flex-direction: column;
+  width: min(240px, 70vw);
+}
+.battle-command,
+.battle-continue,
+.battle-choice {
+  font: inherit;
+  color: #f6ead2;
+  text-align: left;
+  background: transparent;
+  border: 1px solid rgba(230, 194, 122, 0.4);
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+}
+.battle-command + .battle-command { border-top: 0; }
+.battle-continue { align-self: flex-end; min-width: 140px; }
+.battle-question { align-self: stretch; }
+.battle-question p { margin: 0 0 0.6rem; }
+.battle-choices { display: flex; flex-direction: column; gap: 0.35rem; }
+.battle-choice { background: rgba(8, 14, 24, 0.55); }

@@ -211,6 +211,7 @@ export class TroyScene extends Phaser.Scene {
     const lockInput = () => { this.inputLocked = true; };
     const unlockInput = () => { this.inputLocked = false; };
     const onStrike = (payload) => this.resolveStrike(payload);
+    const onEnemyAct = () => this.enemyAct();
     const onAttack = () => {
       if (!this.fight) return;
       const question = this.patrol.question();
@@ -225,6 +226,7 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.on('unlockInput', unlockInput);
     this.game.events.on('fightStrike', onStrike);
     this.game.events.on('fightAttack', onAttack);
+    this.game.events.on('fightEnemyAct', onEnemyAct);
 
     publishDebug(this);
 
@@ -233,6 +235,7 @@ export class TroyScene extends Phaser.Scene {
       this.game.events.off('unlockInput', unlockInput);
       this.game.events.off('fightStrike', onStrike);
       this.game.events.off('fightAttack', onAttack);
+      this.game.events.off('fightEnemyAct', onEnemyAct);
       if (globalThis.__troy?.owner === this) delete globalThis.__troy;
     });
   }
@@ -394,6 +397,7 @@ export class TroyScene extends Phaser.Scene {
     this.game.events.emit('fightStart', {
       id: enemy.id,
       name: 'Trojan sentry',
+      side: 'hero',
       heroHp: this.heroHp,
       heroMax: HERO_MAX,
       foeHp: enemy.hp,
@@ -401,8 +405,8 @@ export class TroyScene extends Phaser.Scene {
     });
   }
 
-  // React sends the choice index. A right answer is a full hit.
-  // A wrong one still lands, at 75 percent. Then the sentry strikes back.
+  // His turn only. A right answer is a full hit. A wrong one still lands, at 75 percent.
+  // The sentry's turn is a separate step after that.
   resolveStrike(payload) {
     const fight = this.fight;
     if (!fight || !this.fighting) return;
@@ -419,6 +423,19 @@ export class TroyScene extends Phaser.Scene {
       this.endFight(true, correct ? 'The sentry falls.' : 'A weak blow, but it was enough.');
       return;
     }
+    this.game.events.emit('fightTurn', {
+      side: 'enemy',
+      heroHp: this.heroHp,
+      foeHp: fight.foeHp,
+      note: correct
+        ? `A clean hit for ${FULL_HIT}.`
+        : `A glancing blow for ${WEAK_HIT}.`,
+    });
+  }
+
+  enemyAct() {
+    const fight = this.fight;
+    if (!fight || !this.fighting) return;
     this.heroHp = Math.max(0, this.heroHp - FOE_HIT);
     this.heroHpStay();
     if (this.heroHp <= 0) {
@@ -436,12 +453,11 @@ export class TroyScene extends Phaser.Scene {
       this.endFight(false, 'You fall back. The sentry recovers.');
       return;
     }
-    this.game.events.emit('fightBlow', {
+    this.game.events.emit('fightTurn', {
+      side: 'hero',
       heroHp: this.heroHp,
       foeHp: fight.foeHp,
-      note: correct
-        ? `A clean hit for ${FULL_HIT}. The sentry strikes back for ${FOE_HIT}.`
-        : `A glancing blow for ${WEAK_HIT}. The sentry strikes back for ${FOE_HIT}.`,
+      note: `The sentry strikes for ${FOE_HIT}.`,
     });
   }
 
