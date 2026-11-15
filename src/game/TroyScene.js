@@ -211,9 +211,9 @@ export class TroyScene extends Phaser.Scene {
 
     this.physics.add.collider(this.feet, this.blockers);
 
-    // The road stays empty. Four sentries brace the shut doors until the
-    // gate battle is won. Street foes still come from relief, if it starts.
-    addGateSentries(this);
+    // The road and the gate stay empty. Kevin removed the four Trojan
+    // sentries that used to stand in front of the shut doors, so nobody
+    // guards the gate. Street foes still come from relief, if it starts.
     this.questions = createBattleQuestions();
     this.relief = createRelief(this);
     this.cityGroups = [];
@@ -451,7 +451,6 @@ export class TroyScene extends Phaser.Scene {
     this.maybeHintRun(moving);
     if (!this.fighting && !locked && this.questDone) this.maybeMeetGroup(moving);
     if (!this.fighting && !locked) this.maybeMeetFoe();
-    this.poseGateSentries(time);
     aimArrow(this);
   }
 
@@ -492,18 +491,6 @@ export class TroyScene extends Phaser.Scene {
   nearGroup(x, y, radius) {
     if (!this.cityGroups) return false;
     return this.cityGroups.some((group) => !group.gone && Math.hypot(group.x - x, group.y - y) < radius);
-  }
-
-  poseGateSentries(time) {
-    if (this.gateFalling || !this.gateSentries) return;
-    for (const man of this.gateSentries) {
-      const wave = Math.sin(time / 260 + man.phase);
-      const squat = (Math.sin(time / 210 + man.phase) + 1) / 2;
-      man.sprite.setPosition(Math.round(man.x + wave * 1.6), Math.round(man.y + squat * 2));
-      man.sprite.setAngle(wave * 3.2);
-      man.sprite.setScale(1 + squat * 0.05, 1 - squat * 0.07);
-      man.shadow.setPosition(man.sprite.x + 3, man.y + 2);
-    }
   }
 
   maybeHintRun(moving) {
@@ -1157,27 +1144,6 @@ function addShip(scene) {
   });
 }
 
-function addGateSentries(scene) {
-  const key = WARRIOR_CONFIG.teams.trojan.key;
-  const tex = scene.textures.get(key);
-  if (tex) tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
-  const frame = WARRIOR_CONFIG.facingFrames.s;
-  const spots = [
-    { x: 438, y: 642 },
-    { x: 466, y: 648 },
-    { x: 494, y: 648 },
-    { x: 522, y: 642 },
-  ];
-  scene.gateSentries = spots.map((spot, index) => {
-    const shadow = scene.add.ellipse(spot.x + 3, spot.y + 1, 14, 5, 0x0c1424, 0.55);
-    const sprite = scene.add.sprite(spot.x, spot.y, key, frame).setOrigin(0.5, 1);
-    const depth = 7692 + index;
-    shadow.setDepth(depth - 2);
-    sprite.setDepth(depth);
-    return { ...spot, sprite, shadow, phase: index * 0.8 };
-  });
-}
-
 // Doors crash outward, the brace is thrown clear, and the Greeks surge in.
 // The player stays in the city afterwards.
 function playGateFall(scene, onDone) {
@@ -1186,7 +1152,6 @@ function playGateFall(scene, onDone) {
   cam.pan(480, 636, 320, 'Sine.easeOut');
   cam.shake(260, 0.008);
   openGateDoors(scene);
-  throwGateSentries(scene);
   surgeArmy(scene);
 
   const flash = scene.add.rectangle(0, 0, cam.width, cam.height, 0xfff6e0, 1)
@@ -1207,40 +1172,6 @@ function playGateFall(scene, onDone) {
   scene.time.delayedCall(2400, () => {
     cam.startFollow(scene.feet, true, 0.16, 0.16);
     if (onDone) onDone();
-  });
-}
-
-function throwGateSentries(scene) {
-  const doorX = scene.gateDoor && scene.gateDoor.sprite ? scene.gateDoor.sprite.x : 480;
-  (scene.gateSentries || []).forEach((man, index) => {
-    const dir = man.x < doorX ? -1 : 1;
-    const fallX = man.x + dir * 22;
-    const fallY = man.y - 46;
-    scene.tweens.add({
-      targets: man.sprite,
-      delay: 180 + index * 40,
-      duration: 380,
-      x: fallX,
-      y: fallY,
-      angle: dir * 96,
-      ease: 'Quad.easeIn',
-    });
-    scene.tweens.add({
-      targets: man.sprite,
-      delay: 560 + index * 40,
-      duration: 480,
-      alpha: 0,
-      y: fallY - 10,
-      onComplete: () => man.sprite.destroy(),
-    });
-    scene.tweens.add({
-      targets: man.shadow,
-      delay: 180 + index * 40,
-      duration: 860,
-      x: fallX,
-      alpha: 0,
-      onComplete: () => man.shadow.destroy(),
-    });
   });
 }
 
