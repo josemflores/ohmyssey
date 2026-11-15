@@ -13,6 +13,7 @@ import {
   TILE,
   buildHallGrid,
   hallSolids,
+  personRect,
 } from './hallMap.js';
 
 const SORT = 7000;
@@ -134,7 +135,7 @@ export function buildHall(scene, blockers) {
   const map = scene.make.tilemap({ data: grid, tileWidth: TILE, tileHeight: TILE });
   const tiles = map.addTilesetImage('hall-tiles');
   map.createLayer(0, tiles, HALL.x, HALL.y).setDepth(0);
-  for (const rect of hallSolids(grid)) addRect(scene, blockers, rect);
+  for (const rect of hallSolids(grid, { people: false })) addRect(scene, blockers, rect);
 
   // Firelight: a warm, dim grade over the floor (people and props sit above).
   scene.add.rectangle(HALL.x + HALL.w / 2, HALL.y + HALL.h / 2, HALL.w, HALL.h, 0xb08a62, 1)
@@ -166,10 +167,13 @@ export function buildHall(scene, blockers) {
     .setOrigin(0.5, 1)
     .setDepth(SORT + HALL.y + HALL.h + 20);
 
-  // The suitors and their hound, idling at the tables.
+  // The suitors and their hound, idling at the tables. Returned so the
+  // scene can clear them out once the hall is won.
+  const people = [];
   for (const person of HALL_PEOPLE) {
     // Under the feet: the sprite stands at y + 1 and LPC feet are 1 px up.
-    scene.add.ellipse(person.x + 1, person.y, 18, 6, 0x1a120c, 0.45).setDepth(5200);
+    const shadow = scene.add.ellipse(person.x + 1, person.y, 18, 6, 0x1a120c, 0.45).setDepth(5200);
+    const block = addRect(scene, blockers, personRect(person));
     const sprite = scene.add.sprite(person.x, person.y + 1, person.key, person.row * 4)
       .setOrigin(0.5, 1)
       .setScale(PERSON_SCALE)
@@ -182,6 +186,19 @@ export function buildHall(scene, blockers) {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+    people.push({ id: person.id, sprite, shadow, block });
+  }
+  return { people };
+}
+
+// The fight is over: the suitors are gone from the hall (the hound stays).
+export function clearSuitors(scene, hall) {
+  for (const person of hall.people) {
+    if (person.id === 'hound') continue;
+    scene.tweens.killTweensOf(person.sprite);
+    person.sprite.destroy();
+    person.shadow.destroy();
+    person.block.destroy();
   }
 }
 

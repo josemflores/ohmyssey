@@ -1,0 +1,159 @@
+/* The contest of the bow (BowContest.jsx): pixel pictures with a caption
+   plaque, then the question card over the hall, then the shot. */
+
+.l2-contest {
+  /* Fixed, like the battle (.troy is fixed too), so it covers the HUD. */
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 16px;
+  background: #07060a;
+  color: #f6ead2;
+}
+
+.l2-contest-frame {
+  position: relative;
+  width: min(960px, 100%, calc((100vh - 120px) * 16 / 9));
+  margin: 0;
+  animation: contest-in 0.5s ease-out;
+}
+@keyframes contest-in {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: none; }
+}
+.l2-contest-pic {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  image-rendering: pixelated;
+  border: 2px solid #b08a4a;
+  box-shadow: 0 0 0 4px #1a120a, 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+.l2-contest-caption {
+  margin: 12px auto 0;
+  max-width: 720px;
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(230, 194, 122, 0.8);
+  border-radius: 8px;
+  background: rgba(14, 10, 8, 0.92);
+  text-align: center;
+  line-height: 1.45;
+}
+.l2-contest-who {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: #f0d48a;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.l2-contest-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(720px, 100%);
+}
+.l2-contest-dots {
+  display: flex;
+  gap: 6px;
+  margin: 0 auto 0 0;
+}
+.l2-contest-dots i,
+.l2-contest-pips i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid #c8963c;
+  border-radius: 50%;
+  background: transparent;
+}
+.l2-contest-dots i.is-now { background: #f0d48a; }
+.l2-contest-bar .q-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 42px;
+  padding: 0.45rem 1.3rem;
+  border: 1px solid #8a6424;
+  border-radius: 999px;
+  background: linear-gradient(#f3dd9a, #c4963c);
+  color: #2a1c0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.l2-contest-bar .q-action.is-quiet {
+  background: rgba(14, 10, 8, 0.9);
+  color: #f0d48a;
+  border-color: rgba(230, 194, 122, 0.7);
+}
+.l2-contest-bar .q-action:hover { filter: brightness(1.08); }
+.l2-contest-bar .q-action:focus-visible { outline: 3px solid #f0d48a; outline-offset: 3px; }
+.l2-contest-skip { margin-left: auto; }
+.l2-contest-dots + .l2-contest-next,
+.l2-contest-bar > .l2-contest-next:only-child { margin-left: auto; }
+
+/* The question over the hall: the picture fills the screen, dim. */
+.l2-contest.is-shoot { background: #07060a; }
+.l2-contest-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  filter: brightness(0.45);
+}
+.l2-contest-card.q-card {
+  position: relative;
+  width: min(580px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.l2-contest-pips {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 0.5rem;
+}
+.l2-contest-pips i { width: 14px; height: 14px; }
+.l2-contest-pips i.is-made { background: #c8963c; box-shadow: 0 0 8px rgba(240, 212, 138, 0.8); }
+
+/* The shot: the arrow flies through the twelve rings. The rings are at
+   66.7% of the picture's height; the bow is at 15% of its width. */
+.l2-contest-shot {
+  position: relative;
+  overflow: hidden;
+}
+.l2-contest-arrow {
+  position: absolute;
+  top: 66.7%;
+  left: 15%;
+  width: 6.7%;
+  aspect-ratio: 16 / 5;
+  margin-top: -1.05%;
+  background: url('/assets/battle/arrow.png') center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  animation: contest-arrow 1.5s cubic-bezier(0.3, 0, 0.8, 1) 0.5s both;
+}
+@keyframes contest-arrow {
+  from { left: 15%; }
+  to { left: 108%; }
+}
+.l2-contest.is-through .l2-contest-line {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.3rem;
+  color: #f0d48a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .l2-contest-frame { animation: none; }
+  .l2-contest-arrow { animation-duration: 0.01s; }
+}
