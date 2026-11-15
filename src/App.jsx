@@ -5,19 +5,25 @@ import LoginScreen from './components/LoginScreen.jsx';
 import PauseMenu from './components/PauseMenu.jsx';
 import TroyLearn from './components/TroyLearn.jsx';
 import TroyWorld from './components/TroyWorld.jsx';
+import VoyageScreen from './components/VoyageScreen.jsx';
 import { applySettings, loadSettings } from './lib/settings.js';
 
 // The playable path for the hackathon demo:
-//   login  →  story intro  →  Troy at night
+//   login  →  story intro  →  Troy at night  →  the voyage  →  Ithaca
+//
+// Dev mode and ?level2 open Ithaca directly. They do not play the voyage.
 //
 // TroyLearn sits on top of the city. It opens Ask Athena and the two
 // lessons in the current scope (Troy, then Ithaca). It does not replace
 // the login, the story, or the walk.
 
-// ?level2 in the URL opens Level 2 (Ithaca) directly, for building and
-// testing it before it joins the story flow.
+// ?level2 opens Ithaca directly and skips the voyage. ?voyage opens the
+// sea interlude on its own, the same way, for a look at the cards.
 function openingScreen() {
-  return new URLSearchParams(window.location.search).has('level2') ? 'level2' : 'login';
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('level2')) return 'level2';
+  if (params.has('voyage')) return 'voyage';
+  return 'login';
 }
 
 // Brightness and text size apply before the first screen draws.
@@ -41,10 +47,11 @@ export default function App() {
       {screen === 'intro' && <IntroScreen onBegin={() => setScreen('world')} />}
       {screen === 'world' && (
         <>
-          <TroyWorld key={run} onSail={() => goto('level2')} />
+          <TroyWorld key={run} onSail={() => goto('voyage')} />
           <TroyLearn />
         </>
       )}
+      {screen === 'voyage' && <VoyageScreen key={run} onArrive={() => goto('level2')} />}
       {screen === 'level2' && (
         <>
           <Level2World key={run} />
