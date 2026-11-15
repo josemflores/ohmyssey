@@ -1,6 +1,6 @@
 /* The word of advice before the horse (LessonsTip.jsx): a parchment card
    on a night sky, with the two keys drawn as bronze key caps and a thin
-   gold bar that runs out over the five seconds. */
+   gold bar that runs out over the ten seconds. */
 
 .lessons-tip {
   position: fixed;
@@ -103,7 +103,7 @@
   color: var(--ink-soft, #5a4630);
 }
 
-/* Five seconds, running out. */
+/* Ten seconds, running out. */
 .lessons-tip-bar {
   height: 3px;
   margin: 0 auto 1rem;

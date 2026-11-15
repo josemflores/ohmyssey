@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react';
 import './LessonsTip.css';
 
 // A short word before the first level: where help lives. Shown for about
-// five seconds between the story intro and the horse, or until the player
+// ten seconds between the story intro and the horse, or until the player
 // presses Enter / Space or clicks Continue.
-const TIP_MS = 5500;
+const TIP_MS = 10000;
 
 export default function LessonsTip({ onDone }) {
   const done = useRef(false);
